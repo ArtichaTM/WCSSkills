@@ -1,0 +1,10 @@
+/packages/
+/Python3/
+/docs/
+/data/source-python-data.zip
+/data/source-python/
+/data/custom/
+/bin/
+/.idea
+/data/plugins/WCSSkills/db/
+/data/plugins/WCSSkills/json/disconnected_players.json

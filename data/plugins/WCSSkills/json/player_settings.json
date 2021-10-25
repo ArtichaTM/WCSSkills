@@ -1,0 +1,30 @@
+{
+    "ultimate_hud": {
+        "name": "Статус ультимейта на экране",
+        "default_value": true
+    },
+    "ability_hud": {
+        "name": "Статус абилити на экране",
+        "default_value": true
+    },
+    "xp_add_notify": {
+        "name": "Оповещения получении опыта",
+        "default_value": true
+    },
+    "skills_activate_notify": {
+        "name": "Умения в начале раунда в чате",
+        "default_value": true
+    },
+    "ultimates_activate_notify": {
+        "name": "Писать ультимейты/абилити в чате",
+        "default_value": true
+    },
+    "skill_parameter_change_notify": {
+        "name": "Писать об изменениях параметров навыка",
+        "default_value": true
+    },
+    "sound_level_up": {
+        "name": "Звук повышения уровня",
+        "default_value": true
+    }
+}
