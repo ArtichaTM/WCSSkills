@@ -320,7 +320,7 @@ class _DB_admin:
             # Returning list with all punishments
             return all_punishments
 
-    def _unload_instance(self) -> None:
+    def unload_instance(self) -> None:
         """ Method that safely unloads database """
 
         # Stopping update repeat
@@ -416,7 +416,7 @@ class _Disconnected_players:
         """Returning list with all left players"""
         return self.json
 
-    def _unload_instance(self) -> None:
+    def unload_instance(self) -> None:
         """ CLosing class, saving information """
 
         # Saving information about players to JSON

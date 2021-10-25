@@ -152,7 +152,7 @@ class _DB_users:
 
         self.db.commit()
 
-    def _unload_instance(self) -> None:
+    def unload_instance(self) -> None:
         wcs_logger('db', f'DB_users closing')
         self.db.commit()
         self.db.close()

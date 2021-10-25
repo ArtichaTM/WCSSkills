@@ -61,8 +61,7 @@ __all__ = ('Heal_per_step',
            'Ammo_gain_on_hit',
            'Additional_percent_dmg',
            'Auto_BunnyHop',
-           'Paralyze'
-           )
+           'Paralyze')
 
 # =============================================================================
 # >> Skills

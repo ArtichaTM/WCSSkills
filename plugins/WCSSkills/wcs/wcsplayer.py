@@ -8,7 +8,6 @@ from random import uniform as randfloat
 from random import randint
 
 # Source.Python Imports
-# AutoUnload from core to unload WCS_Player
 # Players
 from players.entity import Player
 from players.helpers import index_from_userid
@@ -45,7 +44,8 @@ from WCSSkills.other_functions.functions import wcs_logger
 # >> Events on loading/unloading player
 # =============================================================================
 
-required_xp = lambda lvl : ((80*lvl**0.5)**2)**0.5*3
+required_xp = lambda lvl: ((80 * lvl ** 0.5) ** 2) ** 0.5 * 3
+
 
 @Event('player_activate')
 def WCS_Player_load(ev) -> None:
@@ -53,7 +53,6 @@ def WCS_Player_load(ev) -> None:
 
     # Check if new player is a bot
     if Player(index_from_userid(ev['userid'])).steamid == 'BOT':
-
         # Then canceling function
         return
 
@@ -66,13 +65,13 @@ def WCS_Player_load(ev) -> None:
     # Adding WCS_Player in the dict
     WCS_Players[user.userid]: wcs_player_entity = user
 
+
 @Event('player_disconnect')
 def WCS_Player_unload(ev) -> None:
     """ When player disconnects, save data to db and delete him from WCS_Players """
 
     # Check if event called on BOT
     if ev['networkid'] == 'BOT':
-
         # Then canceling function
         return
 
@@ -87,17 +86,18 @@ def WCS_Player_unload(ev) -> None:
     except KeyError:
 
         # No. Logging warning and returning
-        wcs_logger('player state','User without '
-                      'WCS_Player disconnected', console=True)
+        wcs_logger('player state', 'User without '
+                                   'WCS_Player disconnected', console=True)
         return
     else:
         # If nothing bad happened,
 
         # Unloading player
-        user._unload_instance()
+        user.unload_instance()
 
         # And popping him from the dict
         WCS_Players.pop(ev['userid'])
+
 
 # =============================================================================
 # >> WCS_Player class
@@ -118,7 +118,7 @@ class WCS_Player(Player):
 
     """
 
-    def __init__(self, userid:int, caching: bool = True):
+    def __init__(self, userid: int, caching: bool = True):
 
         # Executing Player __init__
         super().__init__(index_from_userid(userid), caching)
@@ -185,7 +185,7 @@ class WCS_Player(Player):
                 # Skill exist, calculating new_lvl value
                 default_xp = required_xp(value)
                 self.skills_selected_next_lvl.append(
-                    default_xp - randint(0,int(default_xp//2)))
+                    default_xp - randint(0, int(default_xp // 2)))
 
         # Skills, that is active right now
         # • Added at start of round
@@ -226,11 +226,10 @@ class WCS_Player(Player):
         # Check if new skills exist
         owned_skills = set([skill_name for skill_name in self.data_skills])
         change_skills = set(self.skills_change).difference({None, 'Empty'
-                              ''}) if set(self.skills_change) != {None} else None
+                                                                  ''}) if set(self.skills_change) != {None} else None
 
         if change_skills is not None:
             for skill in change_skills.difference(owned_skills):
-
                 # Logging
                 wcs_logger('skill change', f"{self.name}: Selected new skill {skill}")
 
@@ -246,11 +245,11 @@ class WCS_Player(Player):
                 # Saving previous skill
                 previous_skill: str = self.skills_selected[num]
                 if previous_skill is not None and previous_skill != 'Empty' and \
-                    previous_skill != 'BLOCKED':
+                        previous_skill != 'BLOCKED':
                     self.data_skills[previous_skill] = (self.skills_selected_lvls[num],
-                                              int(self.skills_selected_xp[num]),
-                                              self.skills_selected_lvl[num],
-                                              self.skills_selected_settings[num])
+                                                        int(self.skills_selected_xp[num]),
+                                                        self.skills_selected_lvl[num],
+                                                        self.skills_selected_settings[num])
 
                 # Loading info about new skill
                 skill_name = skill_change
@@ -270,7 +269,7 @@ class WCS_Player(Player):
                     self.skills_selected_settings[num]: int = skill_settings
                     next_lvl_xp: int = required_xp(skill_lvl)
                     self.skills_selected_next_lvl[num]: int = \
-                        next_lvl_xp - randint(0,int(next_lvl_xp//2))
+                        next_lvl_xp - randint(0, int(next_lvl_xp // 2))
 
                 # Logging skill change
                 wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")
@@ -301,7 +300,6 @@ class WCS_Player(Player):
 
                             # Check for skill type
                             if skill_settings[setting] == 'bool':
-
                                 # If bool, setting to default value (False)
                                 self.skills_selected_settings[num][setting] = SKILL_SETTING_DEFAULT_BOOL
 
@@ -310,14 +308,14 @@ class WCS_Player(Player):
 
                     # Not selected, calling with maximum lvl
                     self.skills_active.add(eval(f"{skill}({self.userid},"
-                        f"{self.skills_selected_lvls[num]},"
-                        f"{self.skills_selected_settings[num]})"))
+                                                f"{self.skills_selected_lvls[num]},"
+                                                f"{self.skills_selected_settings[num]})"))
                 else:
 
                     # Selected custom lvl, calling with selected lvl
                     self.skills_active.add(eval(f"{skill}({self.userid},"
-                        f"{self.skills_selected_lvl[num]},"
-                        f"{self.skills_selected_settings[num]})"))
+                                                f"{self.skills_selected_lvl[num]},"
+                                                f"{self.skills_selected_settings[num]})"))
 
                 # Adding to not-repeat list
                 loaded.add(skill)
@@ -326,22 +324,21 @@ class WCS_Player(Player):
         self.Buttons.round_start()
 
         # Notifying player, if he has no active skills
-        if len(self.skills_active)==0:
+        if len(self.skills_active) == 0:
             SayText2(f"\4[WCS]\1 У вас нет активных навыков").send(self.index)
 
         # Updating data_skills
-        Delay(randfloat(1,4), self._data_skills_update)
+        Delay(randfloat(1, 4), self._data_skills_update)
 
         # Logging
         wcs_logger('skills', f"{self.name}: started round with "
-                                 f"{', '.join(self.skills_selected)}.")
+                             f"{', '.join(self.skills_selected)}.")
 
     def _skills_deactivate(self):
         """ Deactivates skills in the end of round"""
 
         # Iterating over all skills
         for skill in self.skills_active:
-
             # Deactivating them
             skill.close()
 
@@ -351,7 +348,7 @@ class WCS_Player(Player):
         # Unloading ultimate/ability
         self.Buttons._unload()
 
-    def skills_deactivate(self, ev = None) -> None:
+    def skills_deactivate(self, ev=None) -> None:
         if ev is None:
             self._skills_deactivate()
             return
@@ -361,7 +358,7 @@ class WCS_Player(Player):
 
             # If player_death, died player might be NOT the owner
             if ev['userid'] == self.userid:
-                 self._skills_deactivate()
+                self._skills_deactivate()
             return
         else:
             self._skills_deactivate()
@@ -371,16 +368,16 @@ class WCS_Player(Player):
         for num, skill in enumerate(self.skills_selected):
             if skill != 'Empty' and skill != 'BLOCKED':
                 self.data_skills[skill] = (self.skills_selected_lvls[num],
-                                        int(self.skills_selected_xp[num]),
-                                        self.skills_selected_lvl[num],
-                                        self.skills_selected_settings[num])
+                                           int(self.skills_selected_xp[num]),
+                                           self.skills_selected_lvl[num],
+                                           self.skills_selected_settings[num])
 
     def _data_info_update(self):
         self.data_info["total_lvls"]: int = self.total_lvls
         self.data_info['skills_selected']: str = f"{self.skills_selected}"
         self.data_info["LK_lvls"]: int = self.lk_lvls
 
-    def heal(self, hp, ignore = False) -> int:
+    def heal(self, hp, ignore=False) -> int:
 
         # If ignoring max_hp, add all hp
         if ignore:
@@ -417,15 +414,15 @@ class WCS_Player(Player):
             else:
                 # If reason is present
                 SayText2(f"\4[WCS]\1 Вы получили \5{amount}\1 "
-                f"опыта за \5{reason}\1").send(self.index)
-        amount: float = amount//skills_amount
+                         f"опыта за \5{reason}\1").send(self.index)
+        amount: float = amount // skills_amount
 
         # Going through every skill
         for num, current_xp in enumerate(self.skills_selected_xp):
 
             if self.skills_selected[num] is None or \
-               self.skills_selected[num] == 'Empty' or \
-               self.skills_selected[num] == 'BLOCKED':
+                    self.skills_selected[num] == 'Empty' or \
+                    self.skills_selected[num] == 'BLOCKED':
                 continue
 
             # Checking, if in this slot skill is present
@@ -439,7 +436,6 @@ class WCS_Player(Player):
 
             # Adding lvl, if there's enough xp
             while self.skills_selected_xp[num] > self.skills_selected_next_lvl[num]:
-
                 # Leveled up?
                 leveled_up = True
 
@@ -454,15 +450,15 @@ class WCS_Player(Player):
 
                 # Notifying player
                 SayText2("\4[WCS]\1 Вы повысили уровень навыка "
-                f"\4{Skills_info.get_name(self.skills_selected[num])}\1 "
-                f"до \5{self.skills_selected_lvls[num]}\1").send(self.index)
+                         f"\4{Skills_info.get_name(self.skills_selected[num])}\1 "
+                         f"до \5{self.skills_selected_lvls[num]}\1").send(self.index)
 
             if leveled_up and self.data_info['sound_level_up']:
                 # Playing sound
                 self.emit_sound(f'{WCS_FOLDER}/level_up.mp3',
-                                attenuation = 1.1)
+                                attenuation=1.1)
 
-    def _unload_instance(self) -> None:
+    def unload_instance(self) -> None:
         """ Func saves player data to db's and remove WCS_Player from WCS_Players """
 
         # Event unregister
@@ -489,6 +485,7 @@ class WCS_Player(Player):
         # Logging
         wcs_logger('player state', f"{self.name} WCS_Player unloaded")
 
+
 # =============================================================================
 # >> Other
 # =============================================================================
@@ -498,10 +495,8 @@ if server.is_active():
 
     # If running, adding every player to WCS_Players set
     for player in PlayerIter():
-
         # Calling load function
         WCS_Player_load({'userid': player.userid})
-
 
 # =============================================================================
 # >> Imports that use WCS_Player

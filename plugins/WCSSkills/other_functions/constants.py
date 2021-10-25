@@ -11,6 +11,7 @@ from entities.constants import DamageTypes
 # Plugin path
 from paths import PLUGIN_DATA_PATH
 from paths import EVENT_PATH
+from paths import PLUGIN_PATH
 
 # Plugin Imports
 # Folder name
@@ -49,8 +50,8 @@ orb_sprites = (
 # Files
 PATH_DATABASE_USERS = PLUGIN_DATA_PATH / WCS_FOLDER / 'db' / 'users.db'
 PATH_DATABASE_ADMIN = PLUGIN_DATA_PATH / WCS_FOLDER / 'db' / 'SourceBan.db'
-PATH_JSON_SKILLS_INFO = PLUGIN_DATA_PATH / WCS_FOLDER / 'json' / 'skills_info.json'
-PATH_JSON_PLAYER_SETTINGS = PLUGIN_DATA_PATH / WCS_FOLDER / 'json' / 'player_settings.json'
+PATH_JSON_SKILLS_INFO = PLUGIN_PATH / WCS_FOLDER / 'JSONs' / 'skills_info.json'
+PATH_JSON_PLAYER_SETTINGS = PLUGIN_PATH / WCS_FOLDER / 'JSONs' / 'player_settings.json'
 PATH_JSON_DISCONNECTED_PLAYERS = PLUGIN_DATA_PATH / WCS_FOLDER / 'json' / 'disconnected_players.json'
 PATH_EVENTS = EVENT_PATH / WCS_FOLDER
 
