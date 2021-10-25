@@ -1,33 +1,32 @@
-# Introduction
-Warcraft skills is open-source project that uses Source.Python to give players various abilities, like aimbot, speed, walk on air and others
-**Caution!** Mod is in russian language!
+# Вступление
+Мод Warcraft для CS:GO, который даёт возможность игрокам самим выбирать свои способности
 
 ## Directory Structure
-* __WCSSkills__ - main plugin folder
-    * __../admin/__ - admin files
-    * __../commands/__ - say/console filters and other functions
-    * __../db/__ - contains classes, that works with db and JSONs
-    * __../JSONs/__ - this folder contains static JSONs
-    * __../menus/__ - radio menu
-    * __../other_functions/__ - random useful functions
-    * __../python/__ - code, that uses most python imports
-    * __../skills/__ - here lays skills classes
-    * __../wcs/__ - folder with main code
+* __WCSSkills__ - Главная папка
+    * __../admin/__ - Админ
+    * __../commands/__ - функции команд в чате/консоли
+    * __../db/__ - Базы данных / JSON
+    * __../JSONs/__ - Здесь лежат статичные JSON
+    * __../menus/__ - Ради меню
+    * __../other_functions/__ - Разные важные функции / файлы
+    * __../python/__ - Питонистский код, не связанный с Source.Python
+    * __../skills/__ - Здесь лежат классы всех скиллов
+    * __../wcs/__ - Папка с главным кодом
 
-# Contributing
-This is the categories, how u can contribute
+# Помощь
+Здесь описаны способы помочь мне писать WCS
 
-## Adding new skills
-There's several ways, how to suggest new skill
-* _Forking_ - Code yourself
-    1. Fork repository
-    2. Create new skill in WCSSkills/skills/skills.py
-    3. Request pull
-* _Texting_ - Describe new skill. Most simple
-    1. Create new issue
-    2. Text your new skill
-    3. Send
-* _Third party suggestions_ - using literature
-    * URL to original usage of suggested skill (Dota 2, LoL, etc)
-    * Video of usage, something other
-    * URL to model, sound that accompaniment skill
+## Добавление новых способностей
+Есть несколько способов предложить новую способность
+* _Forking_ - Написать код самому
+    1. Создать ответвление
+    2. Написать новую способность в `WCSSkills/skills/skills.py`
+    3. Запросить объединение
+* _Текстовый_ - Просто написать словами, как скилл работает
+    1. Создать новую проблему
+    2. Написать название, описание, описание в игре
+    3. Примерно описать, как должен работать
+* _С ссылками на литературу_ - текстовый вариант + сторонняя литература
+    * Ссылка на игру, в которой используется скилл + название скилла
+    * Видео с использованием скилла
+    * Текстовый вариант с приложением модельки, спрайта, другого
