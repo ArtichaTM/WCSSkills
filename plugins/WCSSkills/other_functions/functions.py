@@ -261,7 +261,7 @@ class WCS_Logger:
         # Opening file
         self.file = open(log_path, mode='a', encoding='utf-8')
 
-    def _unload_instance(self):
+    def unload_instance(self):
 
         # Closing logs on exit
         self.file.close()

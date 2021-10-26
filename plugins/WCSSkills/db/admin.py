@@ -20,8 +20,8 @@ from listeners.tick import Repeat
 # Plugin Imports
 from .functions import db_cursor
 # Constants
-from WCSSkills.other_functions.constants import PATH_DATABASE_ADMIN
-from WCSSkills.other_functions.constants import PATH_JSON_DISCONNECTED_PLAYERS
+from WCSSkills.other_functions.constants import PATH_FILE_DATABASE_ADMIN
+from WCSSkills.other_functions.constants import PATH_FILE_JSON_DISCONNECTED_PLAYERS
 from WCSSkills.admin.constants import Punishment_types
 from WCSSkills.admin.constants import amount_of_players_in_history as history_count
 # Logger
@@ -54,12 +54,6 @@ class _DB_admin:
         # Connecting db
         self.db = sqlite3.connect(path_to_db)
 
-        # Setting Pragmas
-        with db_cursor(self.db) as cur:
-            cur.execute('PRAGMA main.synchronous = NORMAL')
-            cur.execute('PRAGMA main.journal_mode = OFF')
-            cur.execute('PRAGMA temp_store = MEMORY')
-
         with db_cursor(self.db) as cur:
 
             # Checking for tables in DB
@@ -80,7 +74,7 @@ class _DB_admin:
                     reason INT
                     )"""
                             )
-                wcs_logger('warning db', f"No DB_admin 'permanent' found. "
+                wcs_logger('warning', f"No DB_admin 'permanent' found. "
                               f"New DB file is created without any entry")
 
             if 'active' not in tables:
@@ -97,7 +91,7 @@ class _DB_admin:
                     duration INTEGER NOT NULL
                     )"""
                             )
-                wcs_logger('warning db', f"No DB_admin 'active' found. "
+                wcs_logger('warning', f"No DB_admin 'active' found. "
                               f"New DB file is created without any entry")
 
             if 'history' not in tables:
@@ -115,7 +109,7 @@ class _DB_admin:
                     expire_time INTEGER
                     )"""
                             )
-                wcs_logger('warning db', f"No DB_admin 'history' found. "
+                wcs_logger('warning', f"No DB_admin 'history' found. "
                               f"New DB file is created without any entry")
 
             if 'once' not in tables:
@@ -131,13 +125,13 @@ class _DB_admin:
                     reason INT
                     )"""
                             )
-                wcs_logger('warning db', f"No DB_admin 'once' found. "
+                wcs_logger('warning', f"No DB_admin 'once' found. "
                               f"New DB file is created without any entry")
 
 
             # Setting Pragmas
             cur.execute('PRAGMA main.synchronous = FULL')
-            cur.execute('PRAGMA main.journal_mode = TRUNCATE')
+            cur.execute('PRAGMA main.journal_mode = OFF')
             cur.execute('PRAGMA temp_store = MEMORY')
 
             self.db.commit()
@@ -424,5 +418,5 @@ class _Disconnected_players:
             dump(self.json, file, ensure_ascii = False)
 
 # Creating singletons
-DB_admin         =   _DB_admin             (PATH_DATABASE_ADMIN)
-DC_history       =   _Disconnected_players  (PATH_JSON_DISCONNECTED_PLAYERS)
+DB_admin         =   _DB_admin             (PATH_FILE_DATABASE_ADMIN)
+DC_history       =   _Disconnected_players  (PATH_FILE_JSON_DISCONNECTED_PLAYERS)

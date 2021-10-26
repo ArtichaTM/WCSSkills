@@ -5,7 +5,7 @@ WCS_FOLDER = 'WCSSkills'
 def load():
     global WCSSkills
     import WCSSkills
-    WCSSkills.wcs_logger('info', 'Plugin loaded successfully')
+    WCSSkills.other_functions.functions.wcs_logger('info', 'Plugin loaded successfully')
 
 def unload():
 

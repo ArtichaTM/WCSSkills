@@ -24,7 +24,7 @@ from players.entity import Player
 from messages import SayText2
 
 # Plugin Imports
-from WCSSkills.other_functions.constants import PATH_EVENTS
+from WCSSkills.other_functions.constants import PATH_FOLDER_EVENTS
 # Types of punish
 from WCSSkills.admin.constants import Punishment_types
 from WCSSkills.admin.constants import tell_admin_about_all_demutes as TAAAD
@@ -47,7 +47,7 @@ class Punishment_expired(CustomEvent):
     reason = ShortVariable('Reason of punishment')
     duration = LongVariable('Length of issued punishment')
 
-resource_file = ResourceFile(PATH_EVENTS, Punishment_expired)
+resource_file = ResourceFile(PATH_FOLDER_EVENTS, Punishment_expired)
 resource_file.write()
 resource_file.load_events()
 

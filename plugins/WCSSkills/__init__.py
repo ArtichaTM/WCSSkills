@@ -17,5 +17,6 @@ from .other_functions.functions import wcs_logger
 # Downloadables
 from stringtables.downloads import Downloadables
 from .WCSSkills import WCS_FOLDER
+from WCSSkills.other_functions.constants import SOUND_PATH
 # Sounds
 Downloadables().add_directory(f'sound/{WCS_FOLDER}/')
