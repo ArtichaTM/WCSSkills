@@ -32,6 +32,12 @@ def increase():
         yield x
 sc = increase()
 
+# from engines.precache import Model
+# from entities.entity import Entity
+# from colors import RED
+
+# entitys = [Entity.create('env_beam') for i in range(0,0)]
+
 @ClientCommand('rtd')
 def test(_, index):
     player = WCS_Players[userid_from_index(index)]
@@ -110,33 +116,33 @@ def lk(comm):
 # >> Admin
 # =============================================================================
 
-@TypedSayCommand('admin')
-def wcs(comm):
+@TypedSayCommand('admin', 'wcs_admin_base')
+def admin(comm):
     AdminMain(WCS_Players[userid_from_index(comm.index)])
     return CommandReturn.BLOCK
 
-@TypedSayCommand('админ')
-def wcs(comm):
+@TypedSayCommand('админ', 'wcs_admin_base')
+def admin(comm):
     AdminMain(WCS_Players[userid_from_index(comm.index)])
     return CommandReturn.BLOCK
 
-@TypedSayCommand('!админ')
-def wcs(comm):
+@TypedSayCommand('!админ', 'wcs_admin_base')
+def admin(comm):
     AdminMain(WCS_Players[userid_from_index(comm.index)])
     return CommandReturn.CONTINUE
 
-@TypedSayCommand('!admin')
-def wcs(comm):
+@TypedSayCommand('!admin', 'wcs_admin_base')
+def admin(comm):
     AdminMain(WCS_Players[userid_from_index(comm.index)])
     return CommandReturn.CONTINUE
 
-@TypedSayCommand('/admin')
-def wcs(comm):
+@TypedSayCommand('/admin', 'wcs_admin_base')
+def admin(comm):
     AdminMain(WCS_Players[userid_from_index(comm.index)])
     return CommandReturn.BLOCK
 
-@TypedSayCommand('/админ')
-def wcs(comm):
+@TypedSayCommand('/админ', 'wcs_admin_base*')
+def admin(comm):
     AdminMain(WCS_Players[userid_from_index(comm.index)])
     return CommandReturn.BLOCK
 

@@ -353,5 +353,20 @@
             "cooldown_pass notify": 10,
             "hit notify": 0
         }
+    },
+
+    "Smoke_on_wall_hit": {
+        "name": "Детонация смока при касании",
+        "description": [
+            "Ваши дымовые гранаты улучшены. Теперь они взрываются",
+            "при касании с любым объектом. Ваш уровень кидания",
+            "дымовых гранат повысится, так ведь?"
+        ],
+        "max_lvl": 1,
+        "min_player_lvl": 0,
+        "settings_type": {},
+        "settings_name": {},
+        "settings_cost": {}
     }
+
 }

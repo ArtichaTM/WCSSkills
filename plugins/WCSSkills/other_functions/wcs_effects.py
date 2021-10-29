@@ -13,6 +13,8 @@ from filters.recipients import RecipientFilter
 from engines.precache import engine_server
 # Effects entity
 from effects.base import TempEntity
+# Entity
+from entities.entity import Entity
 
 # Vector
 from mathlib import Vector
@@ -33,18 +35,29 @@ __all__ = (
 # =============================================================================
 
 class temporary_entity:
-    __slots__ = ('type', 'users', 'tempEnt')
+    __slots__ = ('users', 'tempEnt')
 
     def __init__(self, type, users):
-        self.type = type
+        self.tempEnt = TempEntity(type)
         self.users = users
 
     def __enter__(self):
-        self.tempEnt = TempEntity(self.type)
         return self.tempEnt
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.tempEnt.create(RecipientFilter(*self.users))
+
+class persistent_entity:
+    __slots__ = ('entity',)
+
+    def __init__(self, class_name):
+        self.entity = Entity.create(class_name)
+
+    def __enter__(self):
+        return self.entity
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.entity.spawn()
 
 # =============================================================================
 # >> Effects

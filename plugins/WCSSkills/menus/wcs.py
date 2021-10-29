@@ -1,4 +1,4 @@
-# ../WCSSkills/menus/__init__.py
+# ../WCSSkills/menus/wcs.py
 """
 This file is working with wcs radios menu
 """
@@ -29,7 +29,7 @@ from WCSSkills.wcs.wcsplayer import WCS_Players
 # Modified default PagedMenu
 from .radio import PagedMenu
 from .radio import player_skills
-from .admin import AdminPlayers_player
+from WCSSkills.admin.menus import AdminPlayers_player
 # Logging
 from WCSSkills.other_functions.functions import wcs_logger
 
@@ -48,8 +48,12 @@ __all__ = ('MainMenu', 'MainMenu_callback',
            'players_list', 'players_list_callback',
            'player_info', 'player_info_callback',
            'player_info_opened',
-           'player_info_selected', 'player_info_selected_callback', )
-
+           'player_info_selected', 'player_info_selected_callback',
+           'LK', 'LK_callback',
+           'LK_user', 'LK_user_callback',
+           'LK_user_keyboard',
+           'LK_send', 'LK_send_callback',
+           'LK_send_keyboard')
 
 # =============================================================================
 # >> WCS

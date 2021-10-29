@@ -1,4 +1,4 @@
-# ../WCSSkills/menus/admin.py
+# ../WCSSkills/admin/menus.py
 """
 This file is working with фвьшт radio menu
 """
@@ -33,7 +33,7 @@ from WCSSkills.admin.constants import MoveTypes
 # WCS_Player
 from WCSSkills.wcs.wcsplayer import WCS_Players
 # Modified default PagedMenu
-from .radio import PagedMenu
+from WCSSkills.menus.radio import PagedMenu
 
 # =============================================================================
 # >> Admin

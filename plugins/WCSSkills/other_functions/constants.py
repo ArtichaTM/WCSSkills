@@ -81,5 +81,4 @@ for local in locals().copy().items():
 if WCSSkills_DEBUG:
     PATH_TO_LOG = f"{WCS_FOLDER}/log.log"
 else:
-    PATH_TO_LOG = f"{WCS_FOLDER}/{datetime.today().strftime('%Y-%m-%d')}/"\
-                  f"{datetime.today().strftime('%H-%M-%S')}.log"
+    PATH_TO_LOG = f"{WCS_FOLDER}/{datetime.today().strftime('%Y-%m-%d')}.log"

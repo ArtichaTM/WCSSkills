@@ -7,12 +7,36 @@ using implemented method .add_xp(amount, reason) in WCS_Player class
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
+# Python Imports
+from random import randint
 
+# Source.Python Imports
 # Event
 from events import Event
 
 # WCS_Players dictionary
 from WCSSkills.wcs.wcsplayer import WCS_Players
+
+# =============================================================================
+# >> All
+# =============================================================================
+
+__all__ = ('round_start',
+           'round_end',
+           'player_death',
+           'bomb_planted',
+           'bomb_exploded',
+           'bomb_defused',
+           'required_xp',
+           'next_lvl_xp_calculate'
+           )
+
+# =============================================================================
+# >> Other functions
+# =============================================================================
+
+required_xp = lambda lvl: ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
+next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - randint(0, int(required_xp(lvl) // 2))
 
 # =============================================================================
 # >> Events to give XP
@@ -27,7 +51,7 @@ def round_start(_):
 def round_end(_):
     for player in WCS_Players.values():
         player.add_xp(10*player.xp_multiplier, 'конец раунда')
-
+ 
 @Event('player_death')
 def player_death(ev):
 
@@ -45,21 +69,22 @@ def player_death(ev):
     multiplier = killer.xp_multiplier
     if is_headshot:
         multiplier += 1
+        head = ' в голову'
+    else:
+        head = ''
 
     if killer is not None:
         if ev['weapon'] == 'elite':
-            killer.add_xp(40*multiplier, 'убийство берретами')
+            killer.add_xp(40*multiplier, f'убийство берретами{head}')
         elif ev['weapon'] == 'hkp2000':
-            killer.add_xp(50*multiplier, 'убийство с P2000')
+            killer.add_xp(50*multiplier, f'убийство с P2000{head}')
         elif ev['weapon'] == 'glock':
-            killer.add_xp(50*multiplier, 'убийство с глока')
+            killer.add_xp(50*multiplier, f'убийство с глока{head}')
         elif ev['weapon'] == 'p250':
-            killer.add_xp(40*multiplier, 'убийство с P250')
+            killer.add_xp(40*multiplier, f'убийство с P250{head}')
         elif ev['weapon'] == 'revolver':
-            killer.add_xp(50*multiplier, 'убийство с револьвера')
-        elif ev['weapon'] == 'ainferno':
-            killer.add_xp(70*multiplier, 'убийство молотовым')
-        elif ev['weapon'] == 'inferno':
+            killer.add_xp(50*multiplier, f'убийство с револьвера')
+        elif ev['weapon'] == 'ainferno' or ev['weapon'] == 'inferno':
             killer.add_xp(70*multiplier, 'убийство молотовым')
         elif ev['weapon'] == 'hegrenade':
             killer.add_xp(70*multiplier, 'убийство гранатой')
@@ -68,7 +93,7 @@ def player_death(ev):
         elif ev['weapon'] == 'knife' or ev['weapon'] == 'knife_t':
             killer.add_xp(100*multiplier, 'убийство \2ножом\1')
         else:
-            killer.add_xp(30*multiplier, 'убийство')
+            killer.add_xp(30*multiplier, f'убийство{head}')
 
     if assister is not None:
         assister.add_xp(15, 'помощь')

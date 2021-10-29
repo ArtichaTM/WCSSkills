@@ -39,13 +39,12 @@ from WCSSkills.other_functions.constants import WCS_FOLDER
 from WCSSkills.other_functions.constants import SKILL_SETTING_DEFAULT_BOOL
 # Logger
 from WCSSkills.other_functions.functions import wcs_logger
+# Xp calculator
+from WCSSkills.other_functions.xp import next_lvl_xp_calculate
 
 # =============================================================================
 # >> Events on loading/unloading player
 # =============================================================================
-
-required_xp = lambda lvl: ((80 * lvl ** 0.5) ** 2) ** 0.5 * 3
-
 
 @Event('player_activate')
 def WCS_Player_load(ev) -> None:
@@ -182,10 +181,8 @@ class WCS_Player(Player):
 
             else:
 
-                # Skill exist, calculating new_lvl value
-                default_xp = required_xp(value)
-                self.skills_selected_next_lvl.append(
-                    default_xp - randint(0, int(default_xp // 2)))
+                    # Skill exist, calculating new_lvl value
+                    next_lvl_xp_calculate(value)
 
         # Skills, that is active right now
         # • Added at start of round
@@ -267,9 +264,7 @@ class WCS_Player(Player):
                     self.skills_selected_lvls[num]: int = skill_lvl
                     self.skills_selected_xp[num]: int = skill_xp
                     self.skills_selected_settings[num]: int = skill_settings
-                    next_lvl_xp: int = required_xp(skill_lvl)
-                    self.skills_selected_next_lvl[num]: int = \
-                        next_lvl_xp - randint(0, int(next_lvl_xp // 2))
+                    self.skills_selected_next_lvl[num]: int = next_lvl_xp_calculate(skill_lvl)
 
                 # Logging skill change
                 wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")
@@ -402,7 +397,7 @@ class WCS_Player(Player):
             return hp
 
     def add_xp(self, amount: int, reason: str = None) -> None:
-
+        pass
         skills_amount: int = len(self.skills_active)
         if skills_amount == 0:
             return
@@ -436,17 +431,22 @@ class WCS_Player(Player):
 
             # Adding lvl, if there's enough xp
             while self.skills_selected_xp[num] > self.skills_selected_next_lvl[num]:
+
                 # Leveled up?
                 leveled_up = True
 
                 # Adding lvl
                 self.skills_selected_lvls[num] += 1
 
-                # Adding +1 to lvls count
+                # Adding +1 to overall lvls count
                 self.total_lvls += 1
 
                 # Subtracting xp, that needed to lvl up
                 self.skills_selected_xp[num] -= self.skills_selected_next_lvl[num]
+
+                # Adding new max_xp
+                self.skills_selected_next_lvl[num] = next_lvl_xp_calculate(
+                                            self.skills_selected_lvls[num])
 
                 # Notifying player
                 SayText2("\4[WCS]\1 Вы повысили уровень навыка "

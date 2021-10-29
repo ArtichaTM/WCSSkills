@@ -10,6 +10,7 @@ from random import randint
 # Entity
 from entities.entity import Entity
 from entities.constants import MoveType, EntityEffects, RenderMode
+from filters.entities import EntityIter
 # Player
 from players.constants import PlayerButtons
 from players.helpers import index_from_userid, userid_from_index
@@ -61,7 +62,8 @@ __all__ = ('Heal_per_step',
            'Ammo_gain_on_hit',
            'Additional_percent_dmg',
            'Auto_BunnyHop',
-           'Paralyze')
+           'Paralyze',
+           'Smoke_on_wall_hit')
 
 # =============================================================================
 # >> Skills
@@ -1091,3 +1093,24 @@ class Paralyze(BaseSkill):
     def close(self) -> None:
         super().close()
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
+class Smoke_on_wall_hit(BaseSkill):
+
+    def __init__(self, userid: int, lvl: int, settings: dict):
+        super().__init__(lvl, userid, settings)
+        if self.lvl != 0:
+            event_manager.register_for_event('grenade_bounce', self.grenade_bounce)
+
+    def grenade_bounce(self, ev):
+        if ev['userid'] == self.owner.userid:
+            for ent in EntityIter():
+                if ent.class_name == 'smokegrenade_projectile':
+                    index = ent.get_datamap_property_short('m_hThrower')
+                    if index == self.owner.index:
+                        ent.detonate()
+
+    def close(self) -> None:
+        super().close()
+
+        if self.lvl != 0:
+            event_manager.unregister_for_event('grenade_bounce', self.grenade_bounce)

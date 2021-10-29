@@ -11,6 +11,8 @@ from . import db
 from . import commands
 # Radio menu
 from . import menus
+from .other_functions import xp
+
 # Logging plugin load
 from .other_functions.functions import wcs_logger
 
