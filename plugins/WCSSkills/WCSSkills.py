@@ -3,25 +3,26 @@ from contextlib import suppress
 WCS_FOLDER = 'WCSSkills'
 
 def load():
-    global WCSSkills
     import WCSSkills
-    WCSSkills.other_functions.functions.wcs_logger('info', 'Plugin loaded successfully')
 
 def unload():
 
     # Unloading players
-    for player in WCSSkills.wcs.wcsplayer.WCS_Players.values():
+    from WCSSkills.wcs.wcsplayer import WCS_Players as WCSP
+    for player in WCSP.values():
         with suppress(AttributeError):
             player.unload_instance()
 
     # Unloading Databases and JSONs
-    WCSSkills.db.wcs.DB_users.unload_instance()
-    WCSSkills.db.admin.DB_admin.unload_instance()
-    WCSSkills.db.admin.DC_history.unload_instance()
+    from WCSSkills.db.wcs import DB_users
+    from WCSSkills.db.admin import DB_admin, DC_history
+    DB_users.unload_instance()
+    DB_admin.unload_instance()
+    DC_history.unload_instance()
 
     # Logging plugin unload
-    WCSSkills.other_functions.functions.wcs_logger(
-        'info','Plugin unloaded successfully')
+    from WCSSkills.other_functions.functions import wcs_logger
+    wcs_logger('info','Plugin unloaded successfully')
 
     # Unloading wcs_logger
-    WCSSkills.other_functions.functions.wcs_logger.unload_instance()
+    wcs_logger.unload_instance()

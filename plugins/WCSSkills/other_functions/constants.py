@@ -22,7 +22,7 @@ from WCSSkills.WCSSkills import WCS_FOLDER
 # >> Constants
 # =============================================================================
 
-WCSSkills_DEBUG = True
+WCSSKILLS_DEBUG = True
 
 # WCS_magic_damage ID
 WCS_DAMAGE_ID = DamageTypes.PHYSGUN
@@ -78,7 +78,7 @@ for local in locals().copy().items():
             if not parent.isdir(): parent.makedirs()
 
 # Logs
-if WCSSkills_DEBUG:
+if WCSSKILLS_DEBUG:
     PATH_TO_LOG = f"{WCS_FOLDER}/log.log"
 else:
     PATH_TO_LOG = f"{WCS_FOLDER}/{datetime.today().strftime('%Y-%m-%d')}.log"

@@ -1,4 +1,4 @@
-# ../WCSSkills/commands/commands.py
+# ../WCSSkills/commands/chat.py
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
@@ -150,37 +150,53 @@ def admin(comm):
 # >> Other
 # =============================================================================
 
-@ClientCommand('tp')
-def self_tp(_, index):
-    player = WCS_Players[userid_from_index(index)]
-    origin = player.origin
-    origin[0] = 308
-    origin[1] = 2318
-    origin[2] = -117
-    player.teleport(origin=origin)
-    return CommandReturn.BLOCK
+# =============================================================================
+# >> Debug commands
+# =============================================================================
+from WCSSkills.other_functions.constants import WCSSKILLS_DEBUG
 
-@ClientCommand('bot_tp')
-def bot_tp(_, index):
-    player = WCS_Players[userid_from_index(index)]
-    for entity in EntityIter():
-        if entity.class_name == 'player' and entity.index != player.index:
-            origin = player.view_coordinates
-            origin[0] += randint(-100,100)
-            origin[1] += randint(-100,100)
-            origin[2] += 10
-            entity.teleport(origin = origin)
+if WCSSKILLS_DEBUG:
+    @ClientCommand('tp')
+    def self_tp(_, index):
+        player = WCS_Players[userid_from_index(index)]
+        origin = player.origin
+        origin[0] = 308
+        origin[1] = 2318
+        origin[2] = -117
+        player.teleport(origin=origin)
+        return CommandReturn.BLOCK
 
-    return CommandReturn.BLOCK
+    @ClientCommand('bot_tp')
+    def bot_tp(_, index):
+        player = WCS_Players[userid_from_index(index)]
+        for entity in EntityIter():
+            if entity.class_name == 'player' and entity.index != player.index:
+                origin = player.view_coordinates
+                origin[0] += randint(-100,100)
+                origin[1] += randint(-100,100)
+                origin[2] += 10
+                entity.teleport(origin = origin)
 
-@TypedSayCommand('cash')
-def cash(comm):
-    player = WCS_Players[userid_from_index(comm.index)]
-    player.cash += 5000
-    return CommandReturn.BLOCK
+        return CommandReturn.BLOCK
 
-@ClientCommand('dmg')
-def dmg(_, index):
-    player = WCS_Players[userid_from_index(index)]
-    player.take_damage(20)
-    return CommandReturn.BLOCK
+    @TypedSayCommand('cash')
+    def cash(comm):
+        player = WCS_Players[userid_from_index(comm.index)]
+        player.cash += 5000
+        return CommandReturn.BLOCK
+
+    @ClientCommand('dmg')
+    def dmg(_, index):
+        player = WCS_Players[userid_from_index(index)]
+        player.take_damage(20)
+        return CommandReturn.BLOCK
+
+    @TypedSayCommand('wcsplists')
+    def wcsp_lists(comm):
+        player = WCS_Players[userid_from_index(comm.index)]
+
+        print(f"lvls: {player.skills_selected_lvls}")
+        print(f"lvl:  {player.skills_selected_lvl}")
+        print(f"xp:   {player.skills_selected_xp}")
+        print(f"ne_l:  {player.skills_selected_next_lvl}")
+        print(f"sett: {player.skills_selected_settings}")

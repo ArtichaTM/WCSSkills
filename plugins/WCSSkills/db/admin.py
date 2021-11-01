@@ -27,7 +27,7 @@ from WCSSkills.admin.constants import amount_of_players_in_history as history_co
 # Logger
 from WCSSkills.other_functions.functions import wcs_logger
 # Punishment expire event
-from WCSSkills.admin.admin_custom_events import Punishment_expired
+from WCSSkills.events.custom_events import Punishment_expired
 
 # =============================================================================
 # >> ALL DECLARATION

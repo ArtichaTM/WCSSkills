@@ -67,7 +67,8 @@ __all__ = ('on_take_physical_damage',
            'open_players',
            'force_buttons',
            'repeat_functions',
-           'wcs_logger'
+           'wcs_logger',
+           'skill_timings_calculate'
            )
 
 # =============================================================================
@@ -205,6 +206,7 @@ def force_buttons(player: Player_entity, buttons: int, once: bool = True, time: 
     else:
         return forced_buttons
 
+
 class repeat_functions:
     """
     Class that MUST be implemented.
@@ -213,7 +215,6 @@ class repeat_functions:
 
     repeat_delay = 0
     repeat = RepeatStatus
-
 
     def _repeat_start(self) -> bool:
         if self.repeat.status != RepeatStatus.RUNNING:
@@ -227,23 +228,28 @@ class repeat_functions:
             return True
         return False
 
+    def close(self):
+        self._repeat_stop()
 
-def skill_timings_calculate():
-    """ Skill timings reload function """
 
-    global SKILL_TIMINGS
+def skill_timings_calculate() -> float:
+    """
+    Skill timings calculate function
+
+    :return: float = delay in float
+    """
 
     # Delay round end -> restart
     restart_delay = ConVar('mp_round_restart_delay').get_float()
 
     # Getting live players
-    amount_of_players = server.num_clients()
+    amount_of_players = server.num_players
 
     if restart_delay < 2:
-        SKILL_TIMINGS = (0, 0)
+        return 0
     else:
-        delay = restart_delay - 1 - amount_of_players // 5
-        SKILL_TIMINGS = (delay, restart_delay-delay)
+        delay = 1 + amount_of_players // 5
+        return restart_delay - random.uniform(0, delay)
 
 
 class WCS_Logger:
@@ -286,7 +292,7 @@ wcs_logger = WCS_Logger(PATH_TO_LOG)
 
 # Logging exceptions
 @ExceptHook
-def exception_log(exc_type, value, trace_back):
+def exception_log(exc_type, _, trace_back):
     PtH = trace_back.tb_frame.f_code.co_filename
     index = PtH.find('WCSSkills')
     if index != -1:

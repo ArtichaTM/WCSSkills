@@ -3,7 +3,10 @@
 # >> Imports
 # =============================================================================
 # Python Imports
+# Type helpers
 from typing import Union
+from collections.abc import Iterable
+# Random
 from random import randint as ri
 
 # Source.Python Imports
@@ -63,10 +66,10 @@ class persistent_entity:
 # >> Effects
 # =============================================================================
 
-class effects:
+class effect:
 
     @staticmethod
-    def beam_laser(users,           # Entity indexes that receive this effect
+    def beam_laser(users: Iterable, # Entity indexes that receive this effect
              start: Vector,         # Start position of beam
              end: Vector,           # End position of beam
              width: float = 1,      # Radius of tube
@@ -96,10 +99,10 @@ class effects:
             tempEnt.model_index = modelIndex
 
     @staticmethod
-    def explosion(users,
-                         origin,
-                         smoke = True # Only sparks or add smoke
-                         ) -> None:
+    def explosion(users: Iterable,
+                  origin,
+                  smoke = True # Only sparks or add smoke
+                  ) -> None:
         tempEnt = TempEntity('Explosion')
 
         # Position
@@ -111,7 +114,7 @@ class effects:
         tempEnt.create(RecipientFilter(*users))
 
     @staticmethod
-    def energy_splash(users,
+    def energy_splash(users: Iterable,
                       origin,
                       explosion = False
                       ) -> None:
@@ -121,7 +124,7 @@ class effects:
                 tempEnt.direction = origin
 
     @staticmethod
-    def shards(users,
+    def shards(users: Iterable,
                origin,
                width: float,
                height: float,
@@ -156,7 +159,7 @@ class effects:
             tempEnt.set_property_int('m_uchBackColor[2]', back_color[2])
 
     @staticmethod
-    def orb(users,
+    def orb(users: Iterable,
             origin: Vector,
             life: float = 1,         # LifeTime in seconds
             brightness: float = 255, # Alpha (0-255)
@@ -184,7 +187,7 @@ class effects:
             tempEnt.scale = scale
 
     @staticmethod
-    def muzzle_flash(users,
+    def muzzle_flash(users: Iterable,
                      origin: Vector,
                      angle: Vector,      # Angle of muzzle_flash
                      scale: float = 1,
@@ -205,7 +208,7 @@ class effects:
             tempEnt.type = 4 if dark else 1
 
     @staticmethod
-    def smoke(users,            # Entity indexes to show effect
+    def smoke(users: Iterable,  # Entity indexes to show effect
              origin: Vector,    # Position at which smoke will be spawned
              scale: float = 1   # Scale of model
              ) -> None:
@@ -217,7 +220,7 @@ class effects:
             tempEnt.scale = scale
 
     @staticmethod
-    def sparks(users,               # Entity indexes to show effect
+    def sparks(users: Iterable,     # Entity indexes to show effect
                origin: Vector,      # Start position
                end: Vector,         # End position, to which sparks will be fired
                height: float = 0,   # Coefficient to add some height
@@ -240,21 +243,20 @@ class effects:
             tempEnt.magnitude = trails
 
     @staticmethod
-    def sprite(users,                     # Entity indexes to show effect
-               origin: Vector,            # Start position
-               scale: float = 1,          # Scale of model
-               brightness: int = 255,     # Alpha (0-255)
-               model: Union[str, int] = 1 # Link to .vmt or number in sprite_sprites
+    def sprite(users: Iterable,                    # Entity indexes to show effect
+               origin: Vector = Vector(0,0,0), # Start position
+               scale: float = 1,               # Scale of model
+               brightness: int = 255,          # Alpha (0-255)
+               model: str = 'sprites/glow.vmt' # Link to .vmt
                ) -> None:
 
-        # Checking for errors in arguments
-        if isinstance(model, int):
-            global sprite_sprites
-            model = sprite_sprites[model]
-        elif isinstance(model, str):
+        if not isinstance(users, Iterable) :
+            raise TypeError('Wrong users argument')
+
+        if isinstance(model, str):
             pass
         else:
-            raise TypeError('Wrong model')
+            raise TypeError('Wrong model argument')
 
         with temporary_entity('Sprite', users) as tempEnt:
             model_index = engine_server.precache_model(model)
@@ -265,7 +267,7 @@ class effects:
             tempEnt.brightness = brightness
 
     @staticmethod
-    def sprite_spray(users,                    # Entity indexes to show effect
+    def sprite_spray(users: Iterable,          # Entity indexes to show effect
                      origin: Vector,           # Start position
                      model: str,               # Link to .vmt
                      end: Vector = None,       # Position, where particle will be thrown to
@@ -290,7 +292,7 @@ class effects:
                 tempEnt.noise = noise
 
     @staticmethod
-    def shot(users,                       # Entity indexes to show effect
+    def shot(users: Iterable,             # Entity indexes to show effect
              origin: Vector,              # Start position
              inaccuracy: float = 0,       # Accuracy (0 — 100%, 1 — 0%)
              angle: Vector = Vector(0,0), # Angle of fire

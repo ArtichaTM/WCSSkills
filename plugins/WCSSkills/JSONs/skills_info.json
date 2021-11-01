@@ -87,9 +87,15 @@
         ],
         "max_lvl": 1000,
         "min_player_lvl": 200,
-        "settings_type": {},
-        "settings_name": {},
-        "settings_cost": {}
+        "settings_type": {
+            "allow_bhop": "bool"
+        },
+        "settings_name": {
+            "allow_bhop": "Включить распрыжку"
+        },
+        "settings_cost": {
+            "allow_bhop": 500
+        }
     },
 
     "Slow_fall": {
@@ -368,5 +374,4 @@
         "settings_name": {},
         "settings_cost": {}
     }
-
 }

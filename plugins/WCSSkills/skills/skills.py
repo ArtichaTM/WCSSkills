@@ -18,7 +18,7 @@ from players.entity import Player
 # Weapon
 from weapons.engines.csgo import Weapon
 # Listeners
-from listeners.tick import Repeat, Delay, RepeatStatus
+from listeners.tick import Repeat, Delay
 # Events
 from events.manager import event_manager
 from events.hooks import pre_event_manager
@@ -30,10 +30,12 @@ from engines.precache import Model
 from colors import Color
 
 # Plugin Imports
+# Functions
+from .functions import *
 # WCS_Player
 from WCSSkills.wcs.wcsplayer import WCS_Players
 # Effects
-from WCSSkills.other_functions.wcs_effects import effects
+from WCSSkills.other_functions.wcs_effects import effect
 # Skills information
 from WCSSkills.db.wcs import Skills_info
 # Useful functions
@@ -70,19 +72,11 @@ __all__ = ('Heal_per_step',
 # =============================================================================
 
 class BaseSkill:
-    __slots__ = ('owner', 'max_lvl', 'lvl', 'settings')
+    __slots__ = ('owner', 'lvl', 'settings')
 
     def __init__(self, lvl: int, userid: int, settings: dict):
         self.owner = WCS_Players[userid]
-        self.max_lvl = Skills_info.get_max_lvl(type(self).__name__)
-
-        # Lvl restriction check
-        if lvl > self.max_lvl:
-            self.lvl = self.max_lvl
-        elif lvl < 0:
-            self.lvl = 0
-        else:
-            self.lvl = lvl
+        max_lvl = Skills_info.get_max_lvl(type(self).__name__)
 
         # Getting settings
         self.settings = settings
@@ -92,84 +86,147 @@ class BaseSkill:
 
         # Subtract lvl for each setting
         for setting, value in self.settings.items():
+
+            # If setting active
             if value is True:
-                self.lvl -= costs[setting]
+
+                # Subtracting it's cost
+                lvl -= costs[setting]
+
+        # Lvl limits check
+
+        # Lvl above maximum -> Change lvl to max
+        if lvl > max_lvl:
+            self.lvl = max_lvl
+
+        # Lvl below minimum -> Change lvl to 0
+        elif lvl < 0:
+
+            self.lvl = 0
+
+        # All is ok, set lvl as in arguments
+        else:
+
+            self.lvl = lvl
 
     def close(self) -> None:
         pass
 
 class ActiveSkill(BaseSkill):
+    """
+    Inherit this class, if u need to create ultimate/ability
+    """
     __slots__ = ('delay',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(userid, lvl, settings),
+
+        # Adding skill to active skills class
         self.owner.Buttons.add_new_button(self)
+
+        # Cooldown of skills (uses listeners.tick.Delay class)
         self.delay = None
 
     def bind_pressed(self) -> bool:
+        """
+        Triggered when active button pressed
+
+        :return: Has cd passed?
+        """
+
         if self.delay.running:
             SayText2("\4[WCS]\1 Ещё не готово! Осталось "
             f"\5{self.delay.time_remaining:.1f}\1").send(self.owner.index)
             return False
         else:
-            Delay(0, self.owner.Buttons.hud_update)
+            Delay(0.1, self.owner.Buttons.hud_update)
             return True
 
     def bind_released(self) -> bool:
+        """
+        Triggered when active button released
+        :return: Has cd passed?
+        """
+
         if self.delay.running:
             SayText2("\4[WCS]\1 Ещё не готово! Осталось "
             f"\5{self.delay.time_remaining:.1f}\1").send(self.owner.index)
             return False
         else:
-            Delay(0, self.owner.Buttons.hud_update)
+            Delay(0.1, self.owner.Buttons.hud_update)
             return True
 
     def cd_passed(self) -> None:
         Delay(0, self.owner.Buttons.hud_update)
 
-class PeriodicSkill(BaseSkill):
-    __slots__ = ('infect_dict', 'repeat_delay', 'repeat', 'token')
+class PeriodicSkill(BaseSkill, repeat_functions):
+    __slots__ = ('infect_dict',)
 
     def __init__(self, lvl: int, userid: int, settings: dict):
         super().__init__(lvl, userid, settings)
+
+        # Dictionary that stores infected players
         self.infect_dict = dict()
+
+        # How often call infect_activate and remove tokens?
         self.repeat_delay = 1
-        self.repeat = None
-        self.token = 1
 
     def infect_activate(self) -> None:
-        pass
+        """ Adds tokens to victim """
+        raise NotImplemented('infect_activate should be changed')
 
-    def _repeat_start(self) -> bool:
-        if self.repeat.status != RepeatStatus.RUNNING:
-            self.repeat.start(self.repeat_delay, execute_on_start=False)
-            return True
-        return False
+    def tick(self) -> None:
+        """ Triggers to infected players every {repeat_delay} """
+        for key in self.infect_dict:
+            self._remove_token(key)
 
-    def _repeat_stop(self) -> bool:
-        if self.repeat.status == RepeatStatus.RUNNING:
-            self.repeat.stop()
-            return True
-        return False
+    def add_token(self, userid: int, amount: int = 1) -> None:
+        """
+        Adds tokens to userid
 
-    def _add_token(self, userid: int) -> None:
+        :param userid: userid of victim
+        :param amount: how many tokens to add
 
+        """
+
+        # Is player already under this periodic skill?
         if userid in self.infect_dict:
-            self.infect_dict[userid] += self.token
+
+            # Yes, adding tokens
+            self.infect_dict[userid] += amount
+
         else:
-            self.infect_dict[userid]: int = self.token
+
+            # No, creating and add tokens
+            self.infect_dict[userid]: int = amount
 
     def _remove_token(self, userid: int) -> None:
+
+        # Getting amount of tokens
         tokens: int = self.infect_dict[userid]
+
+        # Removing one
         tokens -= 1
+
+        # All tokens used?
         if tokens == 0:
+
+            # Remove user from dict
             self.infect_dict.pop(userid)
+
+        # If not
         else:
+
+            # Apply new value of tokens to him
             self.infect_dict[userid] = tokens
 
     def close(self) -> None:
         super().close()
+
+        # Clearing dict on infected players
         self.infect_dict.clear()
+
+        # Stop repeat
         self._repeat_stop()
 
 class Heal_per_step(BaseSkill):
@@ -324,7 +381,9 @@ class Long_jump(BaseSkill):
     def jump(self, ev) -> None:
         # Check if event is fired by owner of this skill
         if ev['userid'] == self.owner.userid:
-            Delay(0, self.speed_up)
+            if self.owner.get_property_bool('m_bHasWalkMovedSinceLastJump'
+                '') or self.settings['allow_bhop']:
+                Delay(0, self.speed_up)
 
     def speed_up(self) -> None:
         vel = self.owner.velocity
@@ -336,9 +395,8 @@ class Long_jump(BaseSkill):
         super().close()
         event_manager.unregister_for_event('player_jump', self.jump)
 
-class Regenerate(BaseSkill):
-
-    __slots__ = ('interval', 'hp', 'repeat')
+class Regenerate(BaseSkill, repeat_functions):
+    __slots__ = ('interval', 'hp')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(lvl, userid, settings)
@@ -350,9 +408,9 @@ class Regenerate(BaseSkill):
             self.interval = 17 - self.lvl
             self.hp = 5
 
-        # Setting repeat func
         self.repeat = Repeat(self.heal)
-        self.repeat.start(interval=self.interval)
+        self.repeat_delay = self.interval
+        self._repeat_start()
 
         if self.owner.data_info['skills_activate_notify']:
             # Notifies player about perk activation
@@ -367,7 +425,7 @@ class Regenerate(BaseSkill):
 
     def close(self) -> None:
         super().close()
-        self.repeat.stop()
+        self._repeat_stop()
 
 class Health(BaseSkill):
     """
@@ -739,7 +797,6 @@ class WalkOnAir(ActiveSkill):
     def _create_prop(self) -> None:
         self.entity = Entity.create('prop_physics')
         self.entity.model = self.model
-        # TODO: Add phyz_constrait
         self.entity.effects = EntityEffects.NOSHADOW | EntityEffects.NORECEIVESHADOW
         self.entity.render_color = Color(255, 255, 255, 0)
         self.entity.render_mode = RenderMode.TRANS_ALPHA
@@ -796,7 +853,7 @@ class Poison(PeriodicSkill):
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(lvl, userid, settings)
         self.chance = self.lvl/30
-        self.token = self.length = 1 + self.lvl//100
+        self.length = 1 + self.lvl // 100
         self.dmg = self.length//2
         self.repeat_delay = 1
 
@@ -814,10 +871,12 @@ class Poison(PeriodicSkill):
             return
         if chance(self.chance, 100) and ev['attacker'] == self.owner.userid:
             userid = ev['userid']
-            self._add_token(userid)
+            self.add_token(userid, self.length)
             self._repeat_start()
 
     def tick(self) -> None:
+        super().tick()
+
         iterations = None
         for iterations, userid in enumerate(self.infect_dict.copy()):
             victim = Player(index_from_userid(userid))
@@ -827,11 +886,6 @@ class Poison(PeriodicSkill):
                 attacker_index = self.owner.index)
             tokens = self.infect_dict[userid]
             tokens -= 1
-
-            if tokens == 0:
-                self.infect_dict.pop(userid)
-            else:
-                self.infect_dict[userid] = tokens
 
             if victim.dead:
                 self.infect_dict.pop(userid)
@@ -867,12 +921,11 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
                 SayText2(f"\4[WCS]\1 При попадении восполняется \5{self.amount}\1 "
                     f"патрон с шансом \5{self.chance}%\1").send(self.owner.index)
 
-    def _add_ammo(self, weapon) -> None:
+    def add_ammo(self, weapon) -> None:
+        self._repeat_start()
         try:
-            if weapon.clip > 200:
-                return
-        except ValueError:
-            return
+            if weapon.clip > 200: return
+        except ValueError: return
         weapon.clip += self.amount
 
         if weapon in self.ammo_added:
@@ -882,22 +935,22 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
 
     def player_hurt(self, owner, info) -> bool:
 
-        # Enter data
-        try:
-            attacker = WCS_Players[userid_from_index(info.attacker)]
-        except KeyError:
-            return True
-        except ValueError:
-            return True
+        # Looking for attacker
+        try: attacker = WCS_Players[userid_from_index(info.attacker)]
+
+        # Attacker is not WCS_Player
+        except KeyError: return True
+
+        # Attacker is not Player (this happens)
+        except ValueError: return True
 
         # Check if attacker has this perk
-        if attacker is None or attacker.index != self.owner.index or \
+        if attacker.index != self.owner.index or \
             owner.team_index == attacker.team_index:
             return True
 
         if chance(self.chance, 100):
-            self._add_ammo(Weapon(info.weapon))
-            self._repeat_start()
+            self.add_ammo(Weapon(info.weapon))
 
         return True
 
@@ -928,8 +981,10 @@ class Additional_percent_dmg(BaseSkill):
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(lvl, userid, settings)
 
+        # Amount of additional dmg
         self.percent: float = (self.lvl//10)/100
 
+        # Adding to dmg function
         on_take_physical_damage.add(self.player_hurt)
 
         # Notifying player
@@ -1000,8 +1055,8 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
 
                 # Disabling jump button
                 self.owner.set_datamap_property_int(
-                 'm_Local.m_nOldButtons',
-                 self.owner.get_datamap_property_int('m_Local.m_nOldButtons') & ~PlayerButtons.JUMP)
+                    'm_Local.m_nOldButtons',
+                    self.owner.get_datamap_property_int('m_Local.m_nOldButtons') & ~PlayerButtons.JUMP)
 
                 # Marking, that jump is performed
                 self.current_hops += 1
@@ -1039,6 +1094,7 @@ class Paralyze(BaseSkill):
             f"откатом в \5{self.cd_length:.1f}\1с").send(self.owner.index)
 
     def player_hurt(self, ev):
+
         try:
             attacker = WCS_Players[ev['attacker']]
             victim = WCS_Players[ev['userid']]
@@ -1050,28 +1106,12 @@ class Paralyze(BaseSkill):
         if attacker != self.owner or self.cd.running is True:
             return
 
-        try:
-            victim.paralyze_length
-        except AttributeError:
-            setattr(victim, 'frozen_length', Delay(0, lambda:None))
-
-        # Paralyzed?
-        if victim.get_frozen() is False:
-
-            # No, then paralyzing
-            victim.set_frozen(True)
-
-            # And adding cooldown, that DeParalyze victim
-            victim.paralyze_length = Delay(self.length, victim.set_frozen, args=(False,))
-
-        # Paralyzed => have frozen_length. Adding time to it
-        else:
-            victim.paralyze_length.exec_time += self.length
+        paralyze(attacker, victim, self.length)
 
         self.cd = Delay(self.cd_length, self.cd_passed)
 
         # Beam effect
-        effects.beam_laser(
+        effect.beam_laser(
             users=player_indexes(),
             start=attacker.eye_location,
             end=attacker.view_coordinates,
@@ -1084,7 +1124,8 @@ class Paralyze(BaseSkill):
             a=150)
 
         if self.settings['hit notify']:
-            SayText2(f"\4[WCS]\1 Вы парализовали игрока \5{victim.name:.10}\1 на \5{self.length:.1f}\1с").send(self.owner.index)
+            SayText2(f"\4[WCS]\1 Вы парализовали игрока \5{victim.name:.10}\1 на"
+                 f" \5{self.length:.1f}\1с").send(self.owner.index)
 
     def cd_passed(self):
         if self.settings['cooldown_pass notify']:

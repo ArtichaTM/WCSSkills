@@ -5,7 +5,6 @@
 # Python Imports
 # Random
 from random import uniform as randfloat
-from random import randint
 
 # Source.Python Imports
 # Players
@@ -40,7 +39,9 @@ from WCSSkills.other_functions.constants import SKILL_SETTING_DEFAULT_BOOL
 # Logger
 from WCSSkills.other_functions.functions import wcs_logger
 # Xp calculator
-from WCSSkills.other_functions.xp import next_lvl_xp_calculate
+from WCSSkills.other_functions.xp import next_lvl_xp_calculate as next_xp
+# Delay for skill deactivation
+from WCSSkills.other_functions.functions import skill_timings_calculate
 
 # =============================================================================
 # >> Events on loading/unloading player
@@ -102,7 +103,7 @@ def WCS_Player_unload(ev) -> None:
 # >> WCS_Player class
 # =============================================================================
 
-class WCS_Player(Player):
+class WCS_Player(Player): # Short: WCSP
     """
 
     Class that realizes player-based WCS functionality:
@@ -122,8 +123,8 @@ class WCS_Player(Player):
         # Executing Player __init__
         super().__init__(index_from_userid(userid), caching)
 
-        # Ultimate and Ability class
-        self.Buttons = Buttons(self)
+        # Setting target_name
+        self.target_name = f"WCSP_{self.index}"
 
         # Loading information about player from databases
         self.data_info = DB_users.info_load(self.steamid)
@@ -182,7 +183,8 @@ class WCS_Player(Player):
             else:
 
                     # Skill exist, calculating new_lvl value
-                    next_lvl_xp_calculate(value)
+                    self.skills_selected_next_lvl.append(
+                        next_xp(value))
 
         # Skills, that is active right now
         # • Added at start of round
@@ -202,10 +204,13 @@ class WCS_Player(Player):
         for setting in Player_settings.get_values():
             self.data_info[setting] = Player_settings.get_default_value(setting)
 
+        # Ultimate and Ability class
+        self.Buttons = Buttons(self)
+
         # Registering WCS_Player for skills activate/deactivate
         event_manager.register_for_event('round_start', self.skills_activate)
-        event_manager.register_for_event('cs_pre_restart', self.skills_deactivate)
         event_manager.register_for_event('player_death', self.skills_deactivate)
+        event_manager.register_for_event('round_end', self.skills_deactivate)
 
         # Logging initialization
         wcs_logger("player state", f"{self.name}: WCS_Player initialized")
@@ -220,10 +225,16 @@ class WCS_Player(Player):
         • Rejects skill repeats (first - loading, second - reject)
         """
 
+        # Is skills turned off?
+        if len(self.skills_active) != 0:
+
+            # They're active! Turn them off, then run active
+            self.skills_deactivate()
+
         # Check if new skills exist
         owned_skills = set([skill_name for skill_name in self.data_skills])
         change_skills = set(self.skills_change).difference({None, 'Empty'
-                                                                  ''}) if set(self.skills_change) != {None} else None
+                              }) if set(self.skills_change) != {None} else None
 
         if change_skills is not None:
             for skill in change_skills.difference(owned_skills):
@@ -264,7 +275,8 @@ class WCS_Player(Player):
                     self.skills_selected_lvls[num]: int = skill_lvl
                     self.skills_selected_xp[num]: int = skill_xp
                     self.skills_selected_settings[num]: int = skill_settings
-                    self.skills_selected_next_lvl[num]: int = next_lvl_xp_calculate(skill_lvl)
+                    self.skills_selected_next_lvl[num]: int = next_xp(skill_lvl)
+                    print(self.skills_selected_next_lvl[num])
 
                 # Logging skill change
                 wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")
@@ -334,6 +346,7 @@ class WCS_Player(Player):
 
         # Iterating over all skills
         for skill in self.skills_active:
+
             # Deactivating them
             skill.close()
 
@@ -341,11 +354,22 @@ class WCS_Player(Player):
         self.skills_active.clear()
 
         # Unloading ultimate/ability
-        self.Buttons._unload()
+        self.Buttons.unload()
 
     def skills_deactivate(self, ev=None) -> None:
+
+        # Calculating values for round_end
+        delay = skill_timings_calculate()
+
+        # Checking for custom deactivate
         if ev is None:
             self._skills_deactivate()
+            return
+
+        # Is skills turned on?
+        if len(self.skills_active) == 0:
+
+            # Skills deactivated! Abort skills deactivation
             return
 
         # Check what event is fired
@@ -353,11 +377,15 @@ class WCS_Player(Player):
 
             # If player_death, died player might be NOT the owner
             if ev['userid'] == self.userid:
+
+                # It's the owner. Deactivate
                 self._skills_deactivate()
-            return
-        else:
-            self._skills_deactivate()
-            return
+
+        elif ev.name == 'round_end':
+
+            # Round end event, deactivate with delay, to make
+            # skills active even after round end
+            Delay(delay, self._skills_deactivate)
 
     def _data_skills_update(self):
         for num, skill in enumerate(self.skills_selected):
@@ -445,7 +473,7 @@ class WCS_Player(Player):
                 self.skills_selected_xp[num] -= self.skills_selected_next_lvl[num]
 
                 # Adding new max_xp
-                self.skills_selected_next_lvl[num] = next_lvl_xp_calculate(
+                self.skills_selected_next_lvl[num] = next_xp(
                                             self.skills_selected_lvls[num])
 
                 # Notifying player
@@ -454,16 +482,19 @@ class WCS_Player(Player):
                          f"до \5{self.skills_selected_lvls[num]}\1").send(self.index)
 
             if leveled_up and self.data_info['sound_level_up']:
+
                 # Playing sound
                 self.emit_sound(f'{WCS_FOLDER}/level_up.mp3',
-                                attenuation=1.1)
+                                attenuation=1.1,
+                                volume = 0.5
+                                )
 
     def unload_instance(self) -> None:
         """ Func saves player data to db's and remove WCS_Player from WCS_Players """
 
         # Event unregister
         event_manager.unregister_for_event('round_start', self.skills_activate)
-        event_manager.unregister_for_event('cs_pre_restart', self.skills_deactivate)
+        event_manager.unregister_for_event('round_end', self.skills_deactivate)
         event_manager.unregister_for_event('player_death', self.skills_deactivate)
 
         # Deactivating skills

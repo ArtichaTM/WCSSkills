@@ -7,6 +7,10 @@
         "name": "Статус абилити на экране",
         "default_value": true
     },
+    "active_skill_name_length_limit": {
+        "name": "Ограничивать названия в худе",
+        "default_value": false
+    },
     "xp_add_notify": {
         "name": "Оповещения получении опыта",
         "default_value": true

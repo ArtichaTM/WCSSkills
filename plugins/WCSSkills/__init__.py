@@ -2,15 +2,18 @@
 
 # Main mod
 # Events
-from . import admin
+from .events import custom_events
+# Admin
+from .admin import admin_events
 # WCS_Player
 from . import wcs
 # Databases
-from . import db
+from .db import wcs, admin
 # Commands
-from . import commands
+from .commands import chat
 # Radio menu
-from . import menus
+from .menus import wcs
+# XP
 from .other_functions import xp
 
 # Logging plugin load
@@ -19,6 +22,7 @@ from .other_functions.functions import wcs_logger
 # Downloadables
 from stringtables.downloads import Downloadables
 from .WCSSkills import WCS_FOLDER
-from WCSSkills.other_functions.constants import SOUND_PATH
 # Sounds
 Downloadables().add_directory(f'sound/{WCS_FOLDER}/')
+
+wcs_logger('info', 'Plugin loaded successfully')
