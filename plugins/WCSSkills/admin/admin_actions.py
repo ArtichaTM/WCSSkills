@@ -43,8 +43,6 @@ __all__ = ('admin_kick',
 
 def admin_kick(admin, target, reason):
 
-    print(target.is_player())
-
     # Messaging kick to admin
     SayText2("\2[Admin]\1 Вы кикнули игрока "
              f"\5{target.name}\1").send(admin.index)

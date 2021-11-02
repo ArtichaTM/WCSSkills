@@ -276,7 +276,6 @@ class WCS_Player(Player): # Short: WCSP
                     self.skills_selected_xp[num]: int = skill_xp
                     self.skills_selected_settings[num]: int = skill_settings
                     self.skills_selected_next_lvl[num]: int = next_xp(skill_lvl)
-                    print(self.skills_selected_next_lvl[num])
 
                 # Logging skill change
                 wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")

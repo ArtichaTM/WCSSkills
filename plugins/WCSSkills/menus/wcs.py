@@ -53,7 +53,7 @@ __all__ = ('MainMenu', 'MainMenu_callback',
            'player_info_opened',
            'player_info_selected', 'player_info_selected_callback',
            'LK', 'LK_callback',
-           'LK_user', 'LK_user_callback',
+           'LK_user', 'LK_user_skills_callback',
            'LK_user_keyboard',
            'LK_send', 'LK_send_callback',
            'LK_send_keyboard')
@@ -774,7 +774,7 @@ def LK_callback(_, index, choice):
         player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Sending waste menu
-        LK_user(player)
+        LK_user_groups(player)
 
     # He wants to send!
     elif choice.value == "Send":
@@ -788,17 +788,36 @@ def LK_callback(_, index, choice):
 
 
 # noinspection PyTypeChecker
-def LK_user(player):
+def LK_user_groups(player):
     menu = PagedMenu(title=f'Навыки игрока {player.name[0:10]}',
-                     select_callback=LK_user_callback,
+                     select_callback=LK_user_groups_callback,
                      parent_menu = LK,
                      parent_menu_args = (player,))
 
-    menu.extend(player_skills(player, select_selected=True))
+    menu.extend(player_skill_groups())
 
     menu.send(player.index)
 
-def LK_user_callback(_, index, choice):
+def LK_user_groups_callback(_, index, choice):
+
+    # Getting player
+    player = WCS_Players[userid_from_index(index)]
+
+    # Sending skills menu
+    LK_user_skills(player, choice.value)
+
+# noinspection PyTypeChecker
+def LK_user_skills(player, group):
+    menu = PagedMenu(title=f'Навыки игрока {player.name[0:10]}',
+                     select_callback=LK_user_skills_callback,
+                     parent_menu = LK,
+                     parent_menu_args = (player,))
+
+    menu.extend(player_skills(player, group, select_selected=True))
+
+    menu.send(player.index)
+
+def LK_user_skills_callback(_, index, choice):
 
     # Getting player
     player = WCS_Players[userid_from_index(index)]
@@ -818,6 +837,7 @@ def LK_user_callback(_, index, choice):
         register_say_filter(LK_user_keyboard)
     except ValueError:
         pass
+
 
 def LK_user_keyboard(command, index, _):
 
@@ -851,7 +871,7 @@ def LK_user_keyboard(command, index, _):
         player.enter_temp = None
 
         # Sending previous menu
-        LK_user(player)
+        LK_user_groups(player)
 
         # Blocking command
         return CommandReturn.BLOCK
@@ -894,15 +914,19 @@ def LK_user_keyboard(command, index, _):
         return CommandReturn.BLOCK
 
     # EveryThing is ok
+
     # Unregister filter
     unregister_say_filter(LK_user_keyboard)
 
+    # What skill he want to upgrade?
+    skill = player.enter_temp[1]
+
     # Is his skill in selected?
-    if player.enter_temp[1] in player.skills_selected:
+    if skill in player.skills_selected:
         # Yes
 
         # Getting starter values
-        num = player.skills_selected.index(player.enter_temp[1])
+        num = player.skills_selected.index(skill)
         before = player.skills_selected_lvls[num]
 
         # Increasing skill lvl
@@ -910,7 +934,7 @@ def LK_user_keyboard(command, index, _):
 
         # Notifying user about increase
         SayText2(f"\4[WCS]\1 Вы усилили навык "
-        f"\5{Skills_info.get_name(player.enter_temp[1])}\1"
+        f"\5{Skills_info.get_name(skill)}\1"
                  f" до \5{before+entered}\1 уровня").send(index)
 
     # Not in selected
@@ -920,7 +944,7 @@ def LK_user_keyboard(command, index, _):
         for num, value in enumerate(player.data_skills):
 
             # Is this, what we looking for?
-            if value[0] == player.enter_temp[1]:
+            if value[0] == skill:
 
                 # Yes. Getting value
                 data = list(value)
@@ -932,14 +956,9 @@ def LK_user_keyboard(command, index, _):
         else:
 
             # Then he opened this skill, but not selected even once
-            # Notifying player about error
-            SayText2("\4[WCS]\1 Вы ещё не устанавливали этот навык!"
-                     ).send(player.index)
-            SayText2("\4[WCS]\1 Установите навык в слот и попробуйте ещё раз"
-                     ).send(player.index)
+            # Adding skill to data_skills
 
-            # Abort function run
-            return
+            data = [0, 0, None, {}]
 
         # Remember previous amount
         before = data[1]
@@ -948,9 +967,9 @@ def LK_user_keyboard(command, index, _):
         data[1] += entered
 
         # Replace with new value
-        player.data_skills[num] = data
+        player.data_skills[skill] = data
         SayText2("\4[WCS]\1 Вы усилили навык "
-                 f"\5{Skills_info.get_name(player.enter_temp[1])}\1 "
+                 f"\5{Skills_info.get_name(skill)}\1 "
                  f"до \5{str(before+entered)}\1 уровня").send(index)
 
     # Decreasing lk lvls
