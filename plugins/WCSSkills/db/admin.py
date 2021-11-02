@@ -404,6 +404,7 @@ class _Disconnected_players:
 
         # Popping last element
         if len(self.json) > history_count:
+            # noinspection PyStatementEffect
             self.json.pop[0]
 
     def get_info(self):

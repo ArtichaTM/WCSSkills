@@ -47,4 +47,4 @@ def something(ev):
     else:
 
         # Else telling to admin, that his mute on player passed
-        SayText2(f"\2[SYS]\1 Мут игрока {player.name} прошёл").send(admin.index)
+        SayText2(f"\2[SYS]\1 Мут игрока {ev['victim_name']} прошёл").send(admin.index)

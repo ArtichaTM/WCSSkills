@@ -38,6 +38,7 @@ from WCSSkills.other_functions.constants import VOLUME_MENU
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
+
 __all__ = ('MainMenu', 'MainMenu_callback',
            'my_skills', 'my_skills_callback',
            'skill_parameters', 'skill_parameters_callback',
@@ -53,12 +54,21 @@ __all__ = ('MainMenu', 'MainMenu_callback',
            'player_info_opened',
            'player_info_selected', 'player_info_selected_callback',
            'LK', 'LK_callback',
-           'LK_user', 'LK_user_skills_callback',
+           'LK_user_skills', 'LK_user_skills_callback',
+           'LK_user_groups', 'LK_user_groups_callback',
            'LK_user_keyboard',
            'LK_send', 'LK_send_callback',
            'LK_send_keyboard')
 
 # =============================================================================
+# >> Keyboard enter globals
+# =============================================================================
+
+KB_WCS_LEVEL_SET = 0
+KB_LK_WASTE = 0
+KB_LK_SEND = 0
+
+#==============================================================================
 # >> WCS
 # =============================================================================
 
@@ -324,7 +334,7 @@ def skill_parameter_lvls_keyboard(command, index, _):
         # Unload filter
         unregister_say_filter(skill_parameter_lvls_keyboard)
 
-        # Chaning skill by menu callback
+        # Changing skill by menu callback
         skill_parameter_lvls_callback('', index, (player.enter_temp[1], entered))
 
         # Clearing temp
@@ -651,7 +661,7 @@ def player_info_callback(*args):
         player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Sending admin player-control menu
-        AdminPlayers_player(player, choice[1], lambda *args : 0)
+        AdminPlayers_player(player, choice[1])
 
 # noinspection PyTypeChecker
 def player_info_opened(player, target):
@@ -838,7 +848,6 @@ def LK_user_skills_callback(_, index, choice):
     except ValueError:
         pass
 
-
 def LK_user_keyboard(command, index, _):
 
     # Getting starter info
@@ -882,7 +891,7 @@ def LK_user_keyboard(command, index, _):
         # Allow
         return CommandReturn.CONTINUE
 
-    # Is his input really a numbeR?
+    # Is his input really a number?
     try:
         entered = int(entered)
 
@@ -1045,7 +1054,7 @@ def LK_send_keyboard(command, index, _):
         player.enter_temp = None
 
         # Sending previous menu
-        LK_user(player)
+        LK_send(player)
 
         # Blocking command
         return CommandReturn.BLOCK
@@ -1056,7 +1065,7 @@ def LK_send_keyboard(command, index, _):
         # Allow
         return CommandReturn.CONTINUE
 
-    # Is his input really a numbeR?
+    # Is his input really a number?
     try:
         entered = int(entered)
 

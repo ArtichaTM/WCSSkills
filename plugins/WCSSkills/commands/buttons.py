@@ -20,12 +20,10 @@ from colors import Color
 # Repeat
 from listeners.tick import Repeat
 # Events
-from events import event_manager
 
 # Plugin imports
 # Info about skills
 from WCSSkills.db.wcs import Skills_info
-from WCSSkills.events import wcs_custom_events
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -195,21 +193,21 @@ class Buttons:
                 self.button_hud2 = HudMsg(f"{self.button_names[1]}: готов", y=-0.1,
                           channel=21, color1=Col, hold_time=1.2).send(self.owner.index)
 
-    def ult_pressed(self, command, index):
+    def ult_pressed(self, _, index):
         if index == self.owner.index:
             self.buttons[0].bind_pressed()
             return CommandReturn.BLOCK
 
-    def ult_released(self, command, index):
+    def ult_released(self, _, index):
         if index == self.owner.index:
             self.buttons[0].bind_released()
             return CommandReturn.BLOCK
 
-    def abi_pressed(self, command, index):
+    def abi_pressed(self, _, index):
         if index == self.owner.index:
             self.buttons[1].bind_pressed()
 
-    def abi_released(self, command, index):
+    def abi_released(self, _, index):
         if index == self.owner.index:
             self.buttons[1].bind_released()
 

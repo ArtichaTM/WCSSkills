@@ -59,8 +59,9 @@ def player_death(ev):
     try: killer = WCS_Players[ev['attacker']]
     except KeyError: return
 
-    try: victim = WCS_Players[ev['userid']]
-    except KeyError: victim = None
+    # try: victim = WCS_Players[ev['userid']]
+    # except KeyError: victim = None
+
 
     try: assister = WCS_Players[ev['assister']]
     except KeyError: assister = None

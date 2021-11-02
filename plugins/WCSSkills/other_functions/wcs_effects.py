@@ -40,8 +40,8 @@ __all__ = (
 class temporary_entity:
     __slots__ = ('users', 'tempEnt')
 
-    def __init__(self, type, users):
-        self.tempEnt = TempEntity(type)
+    def __init__(self, ent_type, users):
+        self.tempEnt = TempEntity(ent_type)
         self.users = users
 
     def __enter__(self):
@@ -83,7 +83,6 @@ class effect:
              ) -> None:
 
         with temporary_entity('BeamLaser', users) as tempEnt:
-            tempEnt = TempEntity('BeamLaser')
             modelIndex = engine_server.precache_model(model)
 
             tempEnt.red = red
@@ -170,7 +169,6 @@ class effect:
         with temporary_entity('GlowSprite', users) as tempEnt:
 
             # Sprite model
-            global orb_sprites
             modelIndex = engine_server.precache_model(orb_sprites[sprite])
             tempEnt.model_index = modelIndex
 

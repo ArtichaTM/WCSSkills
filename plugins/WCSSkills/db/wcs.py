@@ -221,10 +221,7 @@ class _DB_skills:
 
 
     def get_classes(self) -> tuple:
-        """
-        :param skill_name: Code of string (like Speed)
-        :return: Code names of all skills
-        """
+        """ :return: Code names of all skills """
 
         return tuple([skill for skill in self.json])
 

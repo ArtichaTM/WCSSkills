@@ -4,6 +4,7 @@
 # =============================================================================
 # Python Imports
 # Random
+from abc import ABCMeta
 from random import uniform as randfloat
 
 # Source.Python Imports
@@ -103,7 +104,7 @@ def WCS_Player_unload(ev) -> None:
 # >> WCS_Player class
 # =============================================================================
 
-class WCS_Player(Player): # Short: WCSP
+class WCS_Player(Player, metaclass=ABCMeta): # Short: WCSP
     """
 
     Class that realizes player-based WCS functionality:
@@ -357,9 +358,6 @@ class WCS_Player(Player): # Short: WCSP
 
     def skills_deactivate(self, ev=None) -> None:
 
-        # Calculating values for round_end
-        delay = skill_timings_calculate()
-
         # Checking for custom deactivate
         if ev is None:
             self._skills_deactivate()
@@ -381,6 +379,9 @@ class WCS_Player(Player): # Short: WCSP
                 self._skills_deactivate()
 
         elif ev.name == 'round_end':
+
+            # Calculating values for round_end
+            delay = skill_timings_calculate()
 
             # Round end event, deactivate with delay, to make
             # skills active even after round end

@@ -8,11 +8,11 @@ from typing import TypeVar
 # >> ALL DECLARATION
 # =============================================================================
 
-all = (
-    'wcs_player',
-    'entity'
+__all__ = (
+    'wcs_player_entity',
+    'Entity_entity',
+    'Player_entity'
 )
-
 
 # =============================================================================
 # >> Types

@@ -615,6 +615,7 @@ class Trigger(ActiveSkill):
             SayText2("\4[WCS]\1 Ещё не готово! Осталось "
             f"\5{self.delay.time_remaining:.1f}\1").send(self.owner.index)
 
+        # noinspection PyAttributeOutsideInit
         self.repeat = Repeat(self.tick)
         self.repeat.start(0)
         self.is_pressed = True

@@ -73,7 +73,7 @@ def admin_slay(admin, target, reason):
     # Slaying
     target.take_damage(999999)
 
-    # Slaying
+    # Notifying admin
     if reason.value[1] == '—':
         SayText2(f"\2[Admin]\1 Вы убиты админом "
                  f"\5{admin.name}\1").send(target.index)
@@ -112,7 +112,7 @@ def admin_skills_deactivate(admin, target, reason):
              f"\5{target.name}\1").send(admin.index)
 
     # Deactivating
-    target._skills_deactivate()
+    target.skills_deactivate()
 
     # Slaying
     if reason.value[1] == '—':

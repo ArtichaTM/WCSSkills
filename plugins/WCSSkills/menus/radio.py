@@ -29,6 +29,7 @@ __all__ = ('PagedMenu',
 # =============================================================================
 # >> Functions
 # =============================================================================
+# noinspection PyProtectedMember,PyCallingNonCallable
 class PagedMenu(PagedRadioMenu):
 
     def __init__(
