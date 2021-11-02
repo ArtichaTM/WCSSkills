@@ -128,7 +128,7 @@ class Buttons:
                 f"\5{name}\1").send(self.owner.index)
 
             # Adding skill name to list
-            if self.owner.data_info['active_skill_name_length_restrict']:
+            if self.owner.data_info['active_skill_name_length_limit']:
                 self.button_names.append(f"{name:.10}")
             else: self.button_names.append(name)
 
