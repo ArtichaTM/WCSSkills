@@ -165,65 +165,167 @@ class _DB_skills:
     • Maximum level to upgrade
     • Min player lvl to achieve
     """
-    __slots__ = ('json',)
+    __slots__ = ('json', 'groups')
 
     def __init__(self, path_to_skills) -> None:
+        """
+        :param path_to_skills: Absolute path to JSON file
+        """
+
         if not isfile(path_to_skills):
             with open(path_to_skills, 'w', encoding="utf-8") as f:
-                dump({
-                    "Health": {
+                dump({"Health": {
                         "name": "Здоровье",
                         "description": ["Крепкое тело!",
                             "Вы станете более выносливым."],
+                        "group": "Start",
                         "max_lvl": 1000,
                         "min_player_lvl": 0,
                         "settings_type": {},
                         "settings_name": {},
-                        "settings_cost": {}
-                    }
-                }, f, ensure_ascii=False)
+                        "settings_cost": {}}},
+                        f, ensure_ascii=False)
 
         with open(path_to_skills, encoding="utf-8") as file:
             self.json = loads(file.read())
 
+        self.groups = dict()
+
+        for name, skill in self.json.items():
+            if skill['group'] in self.groups:
+                self.groups[skill['group']].append(name)
+            else:
+                self.groups[skill['group']] = [name,]
+
+
     def get_skill(self, skill_name: str) -> dict:
+        """
+        :param skill_name: Code of string (like Speed)
+        :return: all information about skill by it's string
+        """
         return self.json[skill_name]
 
+
     def get_names(self) -> tuple:
+        """ :return: names of all skills """
         return tuple([value["name"] for value in self.json.values()])
 
+
     def get_name(self, skill_name: str) -> str:
+        """
+        :param skill_name: Code of string (like Speed)
+        :return: name of skill
+        """
+
         return self.json[skill_name]['name']
 
+
     def get_classes(self) -> tuple:
+        """
+        :param skill_name: Code of string (like Speed)
+        :return: Code names of all skills
+        """
+
         return tuple([skill for skill in self.json])
 
+
     def get_min_lvl(self, skill_name: str) -> int:
+        """
+        :param skill_name: code name of skill
+        :return: minimum lvl, required to open skill
+        """
+
         return self.json[skill_name]['min_player_lvl']
 
+
     def get_max_lvl(self, skill_name: str) -> int:
+        """
+        :param skill_name: code name of skill
+        :return: Maximum lvl, that make changes to power of skill
+        """
+
         return self.json[skill_name]['max_lvl']
 
+
     def get_description(self, skill_name: str) -> list:
+        """
+        :param skill_name: code name of skill
+        :return: list with strings, containing skill description
+        """
+
         return self.json[skill_name]['description']
 
+
     def get_settings_type(self, skill_name: str, setting: str = None) -> Union[list, str]:
+        """
+        :param skill_name: code name of skill
+        :param setting: Specify setting (name).
+        :return setting = str: string with setting type
+        :return setting = None: list of setting types
+        """
+
         if setting is None:
             return self.json[skill_name]['settings_type']
         else:
             return self.json[skill_name]['settings_type'][setting]
 
+
     def get_settings_name(self, skill_name: str, setting: str = None) -> Union[list, str]:
+        """
+        :param skill_name: code name of skill
+        :param setting: Specify setting (name).
+        :return setting = str: string with setting name
+        :return setting = None: list of setting names
+        """
+
         if setting is None:
             return self.json[skill_name]['settings_name']
         else:
             return self.json[skill_name]['settings_name'][setting]
 
+
     def get_settings_cost(self, skill_name: str, setting: str = None) -> Union[list, str]:
+        """
+        :param skill_name: code name of skill
+        :param setting: Specify setting (name).
+        :return setting = str: string with setting price
+        :return setting = None: list of setting prices
+        """
+
         if setting is None:
             return self.json[skill_name]['settings_cost']
         else:
             return self.json[skill_name]['settings_cost'][setting]
+
+
+    def get_group_skills(self, group: str) -> list:
+        """
+        :param group: name of group
+        :return: list of skills, that has this group
+        """
+
+        return self.groups[group]
+
+    def get_groups(self) -> list:
+        """
+        :return: list with groups
+        """
+        return list(self.groups.keys())
+
+    def get_group_by_skill(self, skill: str) -> str:
+        """
+        :param skill: code name of skill
+        :return: group name
+        """
+
+        # Iterating over all groups
+        for group, skills in self.groups.items():
+
+            # Skill in the list?
+            if skill in skills:
+
+                # Yes, return it's group
+                return group
 
 
 class _Player_settings:

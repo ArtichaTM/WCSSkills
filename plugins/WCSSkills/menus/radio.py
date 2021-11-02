@@ -19,7 +19,8 @@ from WCSSkills.db.wcs import Skills_info
 # >> ALL DECLARATION
 # =============================================================================
 __all__ = ('PagedMenu',
-           'player_skills')
+           'player_skills',
+           'player_skill_groups')
 
 # =============================================================================
 # >> Functions
@@ -103,12 +104,17 @@ class PagedMenu(PagedRadioMenu):
 
         return super()._select(player_index, choice_index)
 
-
-def player_skills(player, select_selected: bool = False):
+def player_skill_groups():
     menu = []
-    for num, skill in enumerate(Skills_info.get_classes()):
+    for group in Skills_info.get_groups():
+        menu.append(PagedOption(f"{group}", value=group))
+    return menu
+
+def player_skills(player, group, select_selected: bool = False):
+    menu = []
+    for num, skill in enumerate(Skills_info.get_group_skills(group)):
         try:
-            player_lvl = player.data_skills[skill][1]
+            player_lvl = player.data_skills[skill][0]
         except KeyError:
             player_lvl = None
 
@@ -117,8 +123,12 @@ def player_skills(player, select_selected: bool = False):
         min_lvl = Skills_info.get_min_lvl(skill)
 
         if skill in player.skills_selected:
-            menu.append(PagedOption(f"{name} [{player_lvl}/{max_lvl}]", value = skill,
-                                    selectable = select_selected, highlight = select_selected))
+            if player_lvl > max_lvl:
+                menu.append(PagedOption(f"[S] {name} [{player_lvl}ур]", value = skill,
+                                        selectable = select_selected, highlight = select_selected))
+            else:
+                menu.append(PagedOption(f"[S] {name} [{player_lvl}/{max_lvl}]", value = skill,
+                                        selectable = select_selected, highlight = select_selected))
         elif player.total_lvls < min_lvl:
             menu.append(PagedOption(f"{name} [{min_lvl}ур]",
                                     selectable = False, highlight = False))
@@ -128,4 +138,5 @@ def player_skills(player, select_selected: bool = False):
             menu.append(PagedOption(f"{name} [{player_lvl}ур]", value = skill))
         else:
             menu.append(PagedOption(f"{name} [{player_lvl}/{max_lvl}]", value = skill))
+
     return menu

@@ -10,20 +10,22 @@ from random import randint
 # Commands
 from commands import CommandReturn
 from commands.client import ClientCommand
-from commands.typed import *
-# userid_from_index
+from commands.typed import TypedSayCommand
+# userid_from_index helper
 from players.helpers import userid_from_index
-# SayText2
-from messages.base import SayText2
 # EntityIter
 from filters.entities import EntityIter
+# Model PreCache
+from engines.precache import engine_server
+# SayText2
+from messages.base import SayText2
 
 # Plugin imports
 # Player
 from WCSSkills.wcs.wcsplayer import WCS_Players
 # Main Radio Menu
 from WCSSkills.menus.wcs import MainMenu, LK
-from WCSSkills.menus.admin import AdminMain
+from WCSSkills.admin.menus import AdminMain
 # Logger
 from WCSSkills.other_functions.functions import wcs_logger
 
@@ -32,21 +34,16 @@ def increase():
         yield x
 sc = increase()
 
-# from engines.precache import Model
-# from entities.entity import Entity
-# from colors import RED
-
-# entitys = [Entity.create('env_beam') for i in range(0,0)]
-
 @ClientCommand('rtd')
 def test(_, index):
     player = WCS_Players[userid_from_index(index)]
-    wcs_logger(prefix='info', msg='rtd called')
-
+    wcs_logger(prefix='info', msg=f'rtd called by {player.name}')
     return CommandReturn.BLOCK
 
 @TypedSayCommand('t')
 def wcs(comm):
+    player = WCS_Players[userid_from_index(comm.index)]
+    wcs_logger(prefix='info', msg=f't called by {player.name}')
     return CommandReturn.BLOCK
 
 # =============================================================================
