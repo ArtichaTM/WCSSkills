@@ -33,6 +33,7 @@ from WCSSkills.admin.menus import AdminPlayers_player
 from WCSSkills.other_functions.functions import wcs_logger
 # Constants
 from WCSSkills.other_functions.constants import WCS_FOLDER
+from WCSSkills.other_functions.constants import VOLUME_MENU
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -84,7 +85,7 @@ def MainMenu(player):
 
 def MainMenu_callback(*args):
     player = WCS_Players[userid_from_index(args[1])]
-    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
     if args[2].value == 'My skills':
         my_skills(player)
         return
@@ -132,10 +133,10 @@ def my_skills_callback(*args):
     choice = args[2].value
     if choice == 'Back':
         MainMenu(player)
-        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
         return
     else:
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
         skill_parameters(player, choice)
 
 
@@ -165,14 +166,16 @@ def skill_parameters_callback(*args):
     player = WCS_Players[userid_from_index(args[1])]
     choice = args[2].value
     if choice == 'Back':
-        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
         my_skills(player)
     if choice[0] == 'skill_delete':
-        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
+
+        skill = player.skills_selected[choice[1]]
         player.skills_change[choice[1]] = 'Empty'
 
         SayText2(f"\4[WCS]\1 Вы убрали навык \5"
-        f"{Skills_info.get_name(player.skills_selected[choice[1]])}"
+        f"{Skills_info.get_name(skill)}"
         f" \1из слота\5 {choice[1]+1}\1").send(player.index)
 
         # Logging
@@ -180,10 +183,10 @@ def skill_parameters_callback(*args):
             f"{player.skills_selected[choice[1]]} -> Empty")
 
     if choice[0] == 'skill_lvl_select':
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
         skill_parameter_lvls(player, choice[1])
     if choice[0] == 'skill_settings':
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
         skill_settings(player, choice)
 
 
@@ -214,7 +217,7 @@ def skill_parameter_lvls_callback(*args):
     if choice[1] is None:
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
         # Deleting info about selected lvl
         player.skills_selected_lvl[choice[0]] = None
@@ -227,7 +230,7 @@ def skill_parameter_lvls_callback(*args):
     elif choice[1] is 'Keyboard':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Printing information
         SayText2("\2Напишите число в чат.\1").send(player.index)
@@ -244,7 +247,7 @@ def skill_parameter_lvls_callback(*args):
     else:
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
         # Setting new lvl
         player.skills_selected_lvl[choice[0]] = choice[1]
@@ -279,7 +282,7 @@ def skill_parameter_lvls_keyboard(command, index, _):
         if entered[:4] == 'STOP' or entered[:4] == 'stop':
 
             # Sound
-            player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+            player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
             # Unregister filter
             unregister_say_filter(skill_parameter_lvls_keyboard)
@@ -328,7 +331,7 @@ def skill_parameter_lvls_keyboard(command, index, _):
         player.enter_temp = None
 
         # Success sound!
-        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
         return CommandReturn.BLOCK
 
@@ -346,10 +349,13 @@ def skill_settings(player, choice):
 
         value = player.skills_selected_settings[choice[1]][name]
         if parameter_type == 'bool':
-            menu.append(PagedOption(f"{Skills_info.get_settings_name(skill,setting = name)}"
-            f": {'вкл' if value == True else 'выкл'}", value = (choice[1],name,parameter_type,value)))
+            menu.append(PagedOption(""
+                f"{Skills_info.get_settings_name(skill, setting = name)}"
+            f": {'вкл' if value == True else 'выкл'}",
+                    value = (choice[1],name,parameter_type,value)))
         else:
-            menu.append(PagedOption(f"{name} idk", value = (choice[1],name,parameter_type,value)))
+            menu.append(PagedOption(f"{name} idk",
+                        value = (choice[1],name,parameter_type,value)))
     menu.send(player.index)
 
 def skill_settings_callback(_, index, choice):
@@ -365,7 +371,7 @@ def skill_settings_callback(_, index, choice):
     if parameter_type == 'bool':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
         # Getting skill
         skill = player.skills_selected[skill_index]
@@ -402,7 +408,7 @@ def skill_change_groups_callback(*args):
     player = WCS_Players[userid_from_index(args[1])]
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
     # Sending him to skills menu
     skill_change_skills(player, args[2].value)
@@ -423,7 +429,7 @@ def skill_change_skills_callback(*args):
     player = WCS_Players[userid_from_index(args[1])]
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
     # Sending him to this skills list
     skill_change_skills_list(player, args[2].value)
@@ -458,7 +464,7 @@ def skill_change_skills_list_callback(*args):
     if choice == 'Back':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
 
         # Sending to previous menu
         skill_change_groups(player)
@@ -497,7 +503,7 @@ def skill_change_skills_list_callback(*args):
                        f'{player.skills_selected[choice[0]]} -> {choice[1]}')
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
         # Actually changing skill (prepare to change)
         player.skills_change[choice[0]] = choice[1]
@@ -521,7 +527,7 @@ def skills_info_callback(*args):
     choice = args[2].value
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
     # Sending to new menu
     skills_info_description(player, choice)
@@ -559,7 +565,7 @@ def skills_info_description_callback(*args):
     if choice == 'Back':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
 
         # Going to parent
         skills_info(player)
@@ -582,7 +588,7 @@ def players_list_callback(*args):
     player = WCS_Players[userid_from_index(args[1])]
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
     # Sending player previous menu
     player_info(player,args[2].value)
@@ -615,7 +621,7 @@ def player_info_callback(*args):
     if choice == 'Back':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
 
         # Sending previous menu
         players_list(player)
@@ -624,7 +630,7 @@ def player_info_callback(*args):
     elif choice[0] == 'Opened skills':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Sending menu
         player_info_opened(player, choice[1])
@@ -633,7 +639,7 @@ def player_info_callback(*args):
     elif choice[0] == 'Selected skills':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Sending menu
         player_info_selected(player, choice[1])
@@ -642,7 +648,7 @@ def player_info_callback(*args):
     if choice[0] == 'admin':
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Sending admin player-control menu
         AdminPlayers_player(player, choice[1], lambda *args : 0)
@@ -694,7 +700,7 @@ def player_info_selected_callback(*args):
     player = WCS_Players[userid_from_index(args[1])]
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
 
     # Sending previous menu
     player_info(player, args[2].value)
@@ -730,7 +736,7 @@ def player_settings_callback(_, index, choice):
     f"изменена на \5{'вкл' if value == True else 'выкл'}\1'")
 
     # Playing sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
     # Sending THIS menu
     player_settings(player)
@@ -765,7 +771,7 @@ def LK_callback(_, index, choice):
         # Wow, such a selfish dud
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Sending waste menu
         LK_user(player)
@@ -775,7 +781,7 @@ def LK_callback(_, index, choice):
         # Good man))
 
         # Sound
-        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+        player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
         # Sending share menu
         LK_send(player)
@@ -805,7 +811,7 @@ def LK_user_callback(_, index, choice):
     SayText2("\2Введите STOP для отмены.\1").send(player.index)
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/next.mp3', volume=VOLUME_MENU)
 
     # Try to register filter command (he can be registered before)
     try:
@@ -954,7 +960,7 @@ def LK_user_keyboard(command, index, _):
     player.total_lvls += entered
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
     player.enter_temp = None
     return CommandReturn.BLOCK
@@ -1063,7 +1069,7 @@ def LK_send_keyboard(command, index, _):
         return CommandReturn.BLOCK
 
     # Sound
-    player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', attenuation=0)
+    player.emit_sound(f'{WCS_FOLDER}/menus/final.mp3', volume=VOLUME_MENU)
 
     # Unregister filter
     unregister_say_filter(LK_send_keyboard)

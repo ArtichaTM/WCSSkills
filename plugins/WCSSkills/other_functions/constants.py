@@ -82,3 +82,9 @@ if WCSSKILLS_DEBUG:
     PATH_TO_LOG = f"{WCS_FOLDER}/log.log"
 else:
     PATH_TO_LOG = f"{WCS_FOLDER}/{datetime.today().strftime('%Y-%m-%d')}.log"
+
+
+# =============================================================================
+# >> Sound volume
+# =============================================================================
+VOLUME_MENU = 0.2
