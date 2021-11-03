@@ -297,11 +297,14 @@ class _DB_skills:
 
     def get_group_skills(self, group: str) -> list:
         """
+        Note, that this functions returns skill names SORTED by their minimum lvl,
+        regardless of their order in JSON file.
+
         :param group: name of group
-        :return: list of skills, that has this group
+        :return: list of skills, that has this group, sorted by min lvl
         """
 
-        return self.groups[group]
+        return sorted(self.groups[group], key = lambda x: self.get_max_lvl(x))
 
     def get_groups(self) -> list:
         """
