@@ -104,7 +104,7 @@ def WCS_Player_unload(ev) -> None:
 # >> WCS_Player class
 # =============================================================================
 
-class WCS_Player(Player, metaclass=ABCMeta): # Short: WCSP
+class WCS_Player(Player): # Short: WCSP
     """
 
     Class that realizes player-based WCS functionality:
