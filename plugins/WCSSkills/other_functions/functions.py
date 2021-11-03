@@ -22,15 +22,11 @@ from datetime import datetime
 from typing import Union, Any
 
 # Source.Python imports
-# Hooks
-from entities.hooks import EntityPreHook, EntityCondition
 from hooks.exceptions import ExceptHook
 # Helpers
 # Entities
-from entities.entity import BaseEntity, Entity
+from entities.entity import BaseEntity
 from entities.constants import WORLD_ENTITY_INDEX
-from entities import TakeDamageInfo
-from entities.helpers import index_from_pointer
 # Engine trace
 from engines.trace import GameTrace
 from engines.trace import Ray
@@ -40,8 +36,6 @@ from engines.trace import ContentMasks
 from filters.players import PlayerIter
 # Repeat
 from listeners.tick import RepeatStatus
-# Memory
-from memory import make_object
 # CVars
 from cvars import ConVar
 # server
@@ -53,16 +47,12 @@ from paths import LOG_PATH
 
 # WCS_Players
 from WCSSkills.python.types import *
-# WCS_damage id:
-from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
-from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
+# Constants
 from WCSSkills.other_functions.constants import PATH_TO_LOG
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
-__all__ = ('on_take_physical_damage',
-           'on_take_magic_damage',
-           'chance',
+__all__ = ('chance',
            'player_indexes',
            'open_players',
            'force_buttons',
@@ -70,13 +60,6 @@ __all__ = ('on_take_physical_damage',
            'wcs_logger',
            'skill_timings_calculate'
            )
-
-# =============================================================================
-# >> Global variables
-# =============================================================================
-
-on_take_physical_damage = set()
-on_take_magic_damage = set()
 
 # =============================================================================
 # >> Functions
@@ -93,60 +76,6 @@ player_indexes = lambda : [player.index for player in PlayerIter()]
 # def xz(*args):
 #     pass
 
-@EntityPreHook(EntityCondition.is_player, 'on_take_damage')
-def skills_on_take_damage(args) -> Union[None, bool]:
-
-    # Getting TameDamageInfo
-    # info = make_object(TakeDamageInfo, args[1])
-    info = TakeDamageInfo._obj(args[1])
-
-    # Checking if damage was dealt by admin
-    if info.type == ADMIN_DAMAGE_ID:
-
-        # Yes, it is. Canceling skill checks
-        return
-
-    # If damage dealt by magic dmg, iter over magic_damage functions
-    if info.type == info.type | WCS_DAMAGE_ID:
-
-        # Getting player from index arg
-        player = Entity(index_from_pointer(args[0]))
-
-        # Loading magic damage set
-        global on_take_magic_damage
-
-        # Iterating over all entry's in set
-        for func in on_take_magic_damage:
-
-            # Getting his return
-            value: bool = func(player, info)
-
-            # Checking, if function returns False
-            if value is False:
-
-                # Then canceling hit
-                return False
-
-    # In other condition, iterate over physical dmg
-    else:
-
-        # Getting player from index arg
-        player = Entity(index_from_pointer(args[0]))
-
-        # Loading magic damage set
-        global on_take_physical_damage
-
-        # Iterating over all entry's in set
-        for func in on_take_physical_damage:
-
-            # Getting his return
-            value: bool = func(player, info)
-
-            # Checking, if function returns False
-            if value is False:
-
-                # Then canceling hit
-                return False
 
 def open_players(player: Player_entity, only_one=False, same_team = False) -> Entity_entity:
     """ This function checks for other players, that can be hitted by player """

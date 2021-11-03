@@ -29,6 +29,8 @@ __all__ = ('PagedMenu',
 # =============================================================================
 # >> Functions
 # =============================================================================
+
+
 # noinspection PyProtectedMember,PyCallingNonCallable
 class PagedMenu(PagedRadioMenu):
 
@@ -114,11 +116,13 @@ class PagedMenu(PagedRadioMenu):
         Entity(player_index).emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
         super()._select_close(player_index)
 
+
 def player_skill_groups():
     menu = []
     for group in Skills_info.get_groups():
         menu.append(PagedOption(f"{group}", value=group))
     return menu
+
 
 def player_skills(player, group, select_selected: bool = False):
     menu = []

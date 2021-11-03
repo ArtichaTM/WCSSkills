@@ -42,8 +42,7 @@ class Buttons:
     """
 
     __slots__ = ('owner', 'buttons', 'skills', 'active_skills', 'hud_update_repeat',
-                 'button_names',
-                 'button_hud1', 'button_hud2', 'skill_hud1', 'skill_hud2')
+                 'button_names', 'button_hud1', 'button_hud2', 'skill_hud1', 'skill_hud2')
 
     def __init__(self, player):
 

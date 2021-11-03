@@ -160,6 +160,7 @@ class ActiveSkill(BaseSkill):
             return True
 
     def cd_passed(self) -> None:
+        self.owner.emit_sound(f'{WCS_FOLDER}/active_skill_ready')
         Delay(0, self.owner.Buttons.hud_update)
 
 class PeriodicSkill(BaseSkill, repeat_functions):
@@ -352,7 +353,7 @@ class Start_set_gravity(BaseSkill):
                 SayText2("\4[WCS]\1 Ваша гравитация уменьшена на "
                 f"\5{self.grav*100}\1%").send(self.owner.index)
         else:
-            self.owner.move_type = MoveType.FLYGRAVITY
+            self.owner.move_type = MoveType.FLY
             if self.owner.data_info['skills_activate_notify']:
                 SayText2(f"\4[WCS]\1 Ваша гравитация уменьшена на"
                 "\5 100\1%").send(self.owner.index)
@@ -401,6 +402,7 @@ class Long_jump(BaseSkill):
         if ev['userid'] == self.owner.userid:
             if self.owner.get_property_bool('m_bHasWalkMovedSinceLastJump'
                 '') or self.settings['allow_bhop']:
+                print(self.owner.get_property_bool('m_bHasWalkMovedSinceLastJump'))
                 Delay(0, self.speed_up)
 
     def speed_up(self) -> None:
@@ -665,7 +667,7 @@ class Start_add_max_hp(BaseSkill):
         self.owner.max_health += self.lvl//2
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2("\4[WCS]\1 Ваше максимальное здоровье увеличино"
+            SayText2("\4[WCS]\1 Ваше максимальное здоровье увеличено"
             f" на \4{self.lvl//2}\1").send(self.owner.index)
 
 class Teleport(ActiveSkill):
@@ -808,6 +810,9 @@ class WalkOnAir(ActiveSkill):
         self.delay = Delay(self.cd, self.cd_passed)
         self.repeat = Repeat(self.tick)
 
+        # self.owner.emit_sound(f'{WCS_FOLDER}/skills/WalkOnAir/'
+        #                       f'success.mp3', ttenuation=0.8)
+
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             SayText2(f"\4[WCS]\1 Вы можете \5ходить по воздуху\1").send(self.owner.index)
@@ -893,6 +898,8 @@ class Poison(PeriodicSkill):
             self.add_token(userid, self.length)
             self._repeat_start()
 
+            SayText2(f"[\4[WCS]\1 Вы заразили").send(self.owner.index)
+
     def tick(self) -> None:
         super().tick()
 
@@ -934,10 +941,10 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             if self.lvl >= 100:
-                SayText2(f"\4[WCS]\1 При попадении восполняется \5{self.amount}\1 "
+                SayText2(f"\4[WCS]\1 При попадание восполняется \5{self.amount}\1 "
                 "патрон").send(self.owner.index)
             else:
-                SayText2(f"\4[WCS]\1 При попадении восполняется \5{self.amount}\1 "
+                SayText2(f"\4[WCS]\1 При попадание восполняется \5{self.amount}\1 "
                     f"патрон с шансом \5{self.chance}%\1").send(self.owner.index)
 
     def add_ammo(self, weapon) -> None:
@@ -1028,6 +1035,10 @@ class Additional_percent_dmg(BaseSkill):
 
         # Applying
         info.damage += add_damage
+
+        # Sound
+        self.owner.emit_sound(f'{WCS_FOLDER}/skills/Additional_percent_dmg/'
+                              f'success.mp3', Atenuation=0.8)
 
         # Notifying player about damage
         if self.settings['damage_notify']:
@@ -1200,7 +1211,7 @@ class Damage_delay_defend(BaseSkill):
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             SayText2("\4[WCS]\1 Урон по вам задержится на "
-                     f"\4{self.delay_length:.1f}\1с").send(self.owner.index)
+                     f"\5{self.delay_length:.1f}\1с").send(self.owner.index)
 
     def player_hurt(self, victim, info) -> bool:
         if victim.index == self.owner.index:

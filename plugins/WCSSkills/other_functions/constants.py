@@ -22,14 +22,14 @@ from WCSSkills.WCSSkills import WCS_FOLDER
 # >> Constants
 # =============================================================================
 
-WCSSKILLS_DEBUG = True
+WCSSKILLS_DEBUG = False
 
 # WCS_magic_damage ID
 WCS_DAMAGE_ID = DamageTypes.PHYSGUN
 ADMIN_DAMAGE_ID = DamageTypes.DISSOLVE
 
 # Skills unload timings. Returns tuple, where [0] delay, [1] interval
-SKILL_TIMINGS = (0,0)
+SKILL_TIMINGS = (0, 0)
 
 # Default skill setting value
 SKILL_SETTING_DEFAULT_BOOL = False
@@ -87,4 +87,5 @@ else:
 # =============================================================================
 # >> Sound volume
 # =============================================================================
+
 VOLUME_MENU = 0.2
