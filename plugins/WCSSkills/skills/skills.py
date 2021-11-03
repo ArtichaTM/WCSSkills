@@ -5,6 +5,7 @@
 # Python Imports
 # Math
 from random import randint
+from math import sqrt
 
 # Source.Python Imports
 # Entity
@@ -65,7 +66,9 @@ __all__ = ('Heal_per_step',
            'Additional_percent_dmg',
            'Auto_BunnyHop',
            'Paralyze',
-           'Smoke_on_wall_hit')
+           'Smoke_on_wall_hit',
+           'Damage_delay_defend',
+           'Toss')
 
 # =============================================================================
 # >> Skills
@@ -228,6 +231,21 @@ class PeriodicSkill(BaseSkill, repeat_functions):
 
         # Stop repeat
         self._repeat_stop()
+
+class SkillDelay(BaseSkill):
+    __slots__ = ('cd', 'cd_length')
+
+    def __init__(self, lvl: int, userid: int, settings: dict):
+        super().__init__(lvl, userid, settings)
+
+        # length of cd
+        self.cd_length = 0
+
+        # Delay
+        self.cd = Delay(0, self.cd_passed)
+
+    def cd_passed(self):
+        pass
 
 class Heal_per_step(BaseSkill):
     """
@@ -1074,8 +1092,8 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
         self._repeat_stop()
         event_manager.unregister_for_event('player_jump', self.jumped)
 
-class Paralyze(BaseSkill):
-    __slots__ = ('length', 'cd_length', 'cd')
+class Paralyze(SkillDelay):
+    __slots__ = ('length',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(lvl, userid, settings)
@@ -1085,7 +1103,6 @@ class Paralyze(BaseSkill):
 
         self.length: float = self.lvl**0.2
         self.cd_length: float = self.lvl**-0.3*100
-        self.cd = Delay(0, self.cd_passed)
 
         event_manager.register_for_event('player_hurt', self.player_hurt)
 
@@ -1141,7 +1158,14 @@ class Smoke_on_wall_hit(BaseSkill):
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(lvl, userid, settings)
         if self.lvl != 0:
+
+            # Registering for bounce event
             event_manager.register_for_event('grenade_bounce', self.grenade_bounce)
+
+            # Notifying player
+            if self.owner.data_info['skills_activate_notify']:
+                SayText2("\4[WCS]\1 Ваш смок появится при первом соприкосновении "
+                         "со стенкой/полом/потолком").send(self.owner.index)
 
     def grenade_bounce(self, ev):
         if ev['userid'] == self.owner.userid:
@@ -1156,3 +1180,144 @@ class Smoke_on_wall_hit(BaseSkill):
 
         if self.lvl != 0:
             event_manager.unregister_for_event('grenade_bounce', self.grenade_bounce)
+
+class Damage_delay_defend(BaseSkill):
+    __slots__ = ('damage_list', 'delay_length')
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(lvl, userid, settings)
+
+        # List with damages. How it looks like:
+        # [(damage, type, attacker_index, weapon_index), ...]
+        self.damage_list = []
+
+        # How many time to delay
+        self.delay_length = self.lvl / 1000
+
+        # Adding to otd hook
+        on_take_physical_damage.add(self.player_hurt)
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            SayText2("\4[WCS]\1 Урон по вам задержится на "
+                     f"\4{self.delay_length:.1f}\1с").send(self.owner.index)
+
+    def player_hurt(self, victim, info) -> bool:
+        if victim.index == self.owner.index:
+
+            # Adding data to list
+            self.damage_list.append((
+                info.damage,
+                info.type,
+                info.attacker,
+                info.weapon
+            ))
+
+            # Delaying damage
+            Delay(self.delay_length, self.damage)
+
+            # Declining instant damage
+            return False
+
+    def damage(self):
+
+        # Trying to get damage info
+        try:
+
+            # Getting info from list
+            info = self.damage_list.pop(0)
+
+        # Failed. List is empty. (May be skills deactivated during delay)
+        except IndexError:
+
+            # Aborting dealing damage
+            return
+
+        # Dealing damage
+        self.owner.take_damage(
+
+            # Damage (float)
+            damage=info[0],
+
+            # Type of damage + magic damage
+            type=info[1]|WCS_DAMAGE_ID,
+
+            # Index of attacker, to add kills
+            attacker_index=info[2],
+
+            # Index of weapon
+            weapon_index=info[3]
+        )
+
+    def close(self) -> None:
+        super().close()
+
+        # Removing list with delays
+        self.damage_list.clear()
+
+        # Remove from otd hook
+        on_take_physical_damage.remove(self.player_hurt)
+
+class Toss(SkillDelay):
+    __slots__ = ('chance', 'power')
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(lvl, userid, settings)
+
+        # Calculating chance
+        self.chance = sqrt(self.lvl)
+
+        # Calculating power of toss
+        self.power = self.lvl/10
+
+        # Length of cd
+        self.cd_length = 2
+
+        # Registering for hurt event
+        event_manager.register_for_event('player_hurt', self.player_hurt)
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            SayText2(f"\4[WCS]\1 С шансом \5{self.chance:.0f}\1% вы подкинете "
+                 f"противника с силой в \5{self.power:.0f}\1 юнитов").send(self.owner.index)
+
+    def player_hurt(self, ev):
+
+        # Event fired by player?
+        if ev['attacker'] == self.owner.userid and self.cd.running is False:
+
+            # Getting weapon type
+            weapon = ev['weapon']
+
+            # Checking if weapon is inferno
+            if (weapon == 'ainferno' or weapon == 'inferno') \
+                    and not self.settings['allow_inferno']: return
+
+            # Checking, if weapon is he grenade
+            if weapon == 'hegrenade' and not self.settings['allow_he']: return
+
+            # Chance check
+            if not chance(self.chance, 100): return
+
+            # Getting entity
+            victim = Entity(index_from_userid(ev['userid']))
+
+            # Getting entity velocity
+            vel = victim.velocity
+
+            # Applying toss
+            vel[2] += self.power
+
+            # Applying velocity to entity
+            victim.teleport(velocity=vel)
+
+            # Player disabled no_cd?
+            if not self.settings['no_cd']:
+
+                # Launching cooldown
+                self.cd = Delay(1, self.cd_passed)
+
+    def close(self) -> None:
+
+        # Unregistering for hurt event
+        event_manager.unregister_for_event('player_hurt', self.player_hurt)

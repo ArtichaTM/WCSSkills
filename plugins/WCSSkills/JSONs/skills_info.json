@@ -392,5 +392,52 @@
         "settings_type": {},
         "settings_name": {},
         "settings_cost": {}
+    },
+
+    "Damage_delay_defend": {
+        "name": "Защитная задержка урона",
+        "group": "Пассивные",
+        "description": [
+            "Вы окружены какой-то странной аурой,",
+            "которая задерживают пули на определённое время",
+            "Возможно, это проделки Ареса? А может Хроноса?"
+        ],
+        "max_lvl": 10000,
+        "min_player_lvl": 10000,
+        "settings_type": {
+            "hit notify": "bool"
+        },
+        "settings_name": {
+            "hit notify": "Оповещать о задержке урона"
+        },
+        "settings_cost": {
+            "hit notify": 0
+        }
+    },
+
+    "Toss": {
+        "name": "Подкидывание",
+        "group": "Атакующие",
+        "description": [
+            "Ваше пули призывают земляные пики,",
+            "которые подкидывают ваших противников"
+        ],
+        "max_lvl": 10000,
+        "min_player_lvl": 100,
+        "settings_type": {
+            "allow_inferno": "bool",
+            "allow_he": "bool",
+            "no_cd": "bool"
+        },
+        "settings_name": {
+            "allow_inferno": "Срабатывать в огне",
+            "allow_he": "Срабатывать от гранаты",
+            "no_cd": "Отключить откат"
+        },
+        "settings_cost": {
+            "allow_inferno": 500,
+            "allow_he": 50,
+            "no_cd": 3000
+        }
     }
 }
