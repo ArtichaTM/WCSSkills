@@ -95,7 +95,10 @@ player_indexes = lambda : [player.index for player in PlayerIter()]
 
 @EntityPreHook(EntityCondition.is_player, 'on_take_damage')
 def skills_on_take_damage(args) -> Union[None, bool]:
-    info = make_object(TakeDamageInfo, args[1])
+
+    # Getting TameDamageInfo
+    # info = make_object(TakeDamageInfo, args[1])
+    info = TakeDamageInfo._obj(args[1])
 
     # Checking if damage was dealt by admin
     if info.type == ADMIN_DAMAGE_ID:
@@ -104,7 +107,7 @@ def skills_on_take_damage(args) -> Union[None, bool]:
         return
 
     # If damage dealt by magic dmg, iter over magic_damage functions
-    if info.type == WCS_DAMAGE_ID:
+    if info.type == info.type | WCS_DAMAGE_ID:
 
         # Getting player from index arg
         player = Entity(index_from_pointer(args[0]))
