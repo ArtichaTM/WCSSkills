@@ -4,7 +4,6 @@
 # =============================================================================
 # Python Imports
 # Random
-from abc import ABCMeta
 from random import uniform as randfloat
 
 # Source.Python Imports
@@ -34,9 +33,12 @@ from WCSSkills.commands.buttons import Buttons
 from WCSSkills.skills.skills import *
 # Typing types
 from WCSSkills.python.types import *
+# DefaultDict
+from WCSSkills.python.dictionaries import DefaultDict
 # Constants
 from WCSSkills.other_functions.constants import WCS_FOLDER
 from WCSSkills.other_functions.constants import SKILL_SETTING_DEFAULT_BOOL
+from WCSSkills.other_functions.constants import Immune_types
 # Logger
 from WCSSkills.other_functions.functions import wcs_logger
 # Xp calculator
@@ -201,6 +203,11 @@ class WCS_Player(Player): # Short: WCSP
         # lvls, that player has in Level Bank (LK)
         self.lk_lvls = 100000
 
+        # Immune to various skills of WCS_Player
+        self.immunes = DefaultDict()
+        self.immunes.add_ignored(0)
+        self.immunes.set_default(Immune_types.Nothing)
+
         # Loading player settings
         for setting in Player_settings.get_values():
             self.data_info[setting] = Player_settings.get_default_value(setting)
@@ -356,6 +363,9 @@ class WCS_Player(Player): # Short: WCSP
         # Unloading ultimate/ability
         self.Buttons.unload()
 
+        # Clearing immunes
+        self.immunes.clear()
+
     def skills_deactivate(self, ev=None) -> None:
 
         # Checking for custom deactivate
@@ -401,6 +411,7 @@ class WCS_Player(Player): # Short: WCSP
         self.data_info["LK_lvls"]: int = self.lk_lvls
 
     def heal(self, hp, ignore=False) -> int:
+        hp = int(hp)
 
         # If ignoring max_hp, add all hp
         if ignore:

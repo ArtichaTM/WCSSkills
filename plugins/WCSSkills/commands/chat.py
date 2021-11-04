@@ -15,6 +15,8 @@ from commands.typed import TypedSayCommand
 from players.helpers import userid_from_index
 # EntityIter
 from filters.entities import EntityIter
+# SayText2
+from messages import SayText2
 
 # Plugin imports
 # Player

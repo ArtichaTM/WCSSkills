@@ -3,7 +3,10 @@
 # >> IMPORTS
 # =============================================================================
 # Python imports
+import random
 from typing import Union
+from WCSSkills.python.types import wcs_player_entity
+from random import uniform
 
 # Source.Python Imports
 from listeners.tick import Delay
@@ -15,6 +18,7 @@ from entities.hooks import EntityPreHook, EntityCondition
 # WCS_damage id:
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
+
 # =============================================================================
 # >> All
 # =============================================================================
@@ -22,9 +26,10 @@ from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
 __all__ = (
     'paralyze',
     'on_take_physical_damage',
-    'on_take_magic_damage'
+    'on_take_magic_damage',
+    'active_weapon_drop',
+    'screen_angle_distortion'
 )
-
 
 # =============================================================================
 # >> Global variables
@@ -94,10 +99,15 @@ def skills_on_take_damage(args) -> Union[None, bool]:
                 return False
 
 
-def paralyze(owner, victim, length: float) -> bool:
+def paralyze(victim: wcs_player_entity,
+             length: float,
+             form) -> bool:
     try: victim.paralyze_length
     except AttributeError:
         setattr(victim, 'frozen_length', Delay(0, lambda: None))
+
+    # Immune check
+    if form in victim.immunes['paralyze']: return False
 
     # Paralyzed?
     if victim.get_frozen() is False:
@@ -114,4 +124,41 @@ def paralyze(owner, victim, length: float) -> bool:
         # Adding time to paralyze
         victim.paralyze_length.exec_time += length
 
+    return True
+
+def active_weapon_drop(victim: wcs_player_entity, form):
+
+    # Immune check
+    if form in victim.immunes['active_weapon_drop']: return False
+
+    # Dropping weapon
+    victim.drop_weapon(victim.active_weapon)
+
+    # Success return
+    return True
+
+def screen_angle_distortion(victim: wcs_player_entity, form, amount):
+
+    # Immune check
+    if form in victim.immunes['screen_rotate']: return False
+
+    # Normalize amount
+    amount = 180 if amount > 180 else abs(int(amount))
+
+    # Creating different values
+    amount1 = random.randint(0, amount)
+    amount2 = (amount - amount1)/2
+
+    # Getting initial angle
+    angle = victim.view_angle
+
+    # Making distortion to horizontal rotate
+    angle[0] += uniform(-amount1, +amount1)
+    # Making distortion to vertical rotate
+    angle[1] += uniform(-amount2, +amount2)
+
+    # Applying angle
+    victim.view_angle = angle
+
+    # Success return
     return True

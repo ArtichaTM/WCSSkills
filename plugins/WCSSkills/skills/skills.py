@@ -10,10 +10,8 @@ from math import sqrt
 # Source.Python Imports
 # Entity
 from entities.entity import Entity
-from entities.constants import MoveType, EntityEffects, RenderMode
 from filters.entities import EntityIter
 # Player
-from players.constants import PlayerButtons
 from players.helpers import index_from_userid, userid_from_index
 from players.entity import Player
 # Weapon
@@ -29,6 +27,12 @@ from messages.base import SayText2
 from engines.precache import Model
 # Colors
 from colors import Color
+# Enumeratings
+from players.constants import PlayerButtons
+from entities.constants import RenderMode
+from entities.constants import EntityEffects
+from entities.constants import MoveType
+from entities.constants import DamageTypes
 
 # Plugin Imports
 # Functions
@@ -44,31 +48,115 @@ from WCSSkills.other_functions.functions import *
 # Constants
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import WCS_FOLDER
+# Enumeratings
+from WCSSkills.other_functions.constants import Immune_types
 
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
-__all__ = ('Heal_per_step',
-           'Start_add_speed',
-           'Start_set_gravity',
-           'Long_jump',
-           'Regenerate',
-           'Health',
-           'Slow_fall',
-           'Nearly_Aim',
-           'Trigger',
-           'Start_add_max_hp',
-           'Teleport',
-           'Aim',
-           'WalkOnAir',
-           'Poison',
-           'Ammo_gain_on_hit',
-           'Additional_percent_dmg',
-           'Auto_BunnyHop',
-           'Paralyze',
-           'Smoke_on_wall_hit',
-           'Damage_delay_defend',
-           'Toss')
+__all__ = (
+
+# Skills
+'Heal_per_step', # Heals every step
+'Start_add_speed', # Adds speed after start of round
+'Start_set_gravity', # Adds gravity after start of round
+'Long_jump', # Boosts jump
+'Regenerate', # Default regeneration with intervals
+'Health', # Adds health after start of round
+'Slow_fall', # Slowing fall
+'Nearly_Aim', # Helps to aim, when user fires in body/legs/...
+'Trigger', # Fires when player comes into sight
+'Start_add_max_hp', # Adds max health after start of round
+'Teleport', # Teleports player
+'Aim', # Full aim from every angle, but with lower chances
+'WalkOnAir', # Allow player to walk on air and fire without distortion
+'Poison', # Poisons player with damage every second
+'Ammo_gain_on_hit', # Adds ammo on successful hit
+'Additional_percent_dmg', # Deals addition damage as magic
+'Auto_BunnyHop', # Allows players to auto jump with some limit
+'Paralyze', # Paralyze player on hit (with cd)
+'Smoke_on_wall_hit', # Instantly smoke when touch something
+'Damage_delay_defend', # Delays all physical damage
+'Toss', # Toss player in the air
+'Mirror_paralyze', # Paralyze
+'Vampire_damage_percent', # Gives owner hp as percent of damage dealt
+'Drop_weapon_chance', # Drops enemy weapon with such chance
+'Screen_rotate_attack', # Rotates enemy screen with a chance
+
+# Immunities
+'Immune_paralyze',
+'Immune_screen_rotate',
+'Immune_active_weapon_drop',
+)
+
+# =============================================================================
+# >> Immunes
+# =============================================================================
+
+class ImmuneSkill:
+    __slots__ = ('',)
+
+    form = None
+    text = ''
+
+    def __init__(self, lvl: int, userid: int, settings: dict):
+
+        # form and text check
+        if self.form is None:
+            raise NotImplemented("When inherit ImmuneSkill, "
+                                 "change 'form' constant'")
+        if self.text == '':
+            raise NotImplemented("When inherit ImmuneSkill, "
+                                 "change 'text' constant'")
+
+        owner = WCS_Players[userid]
+        max_lvl = Skills_info.get_max_lvl(type(self).__name__)
+
+        # Lvl above maximum -> Change lvl to max
+        lvl = max_lvl if lvl > max_lvl else lvl
+
+        forms = []
+        # Iterating over all settings
+        for key, value in settings:
+
+            # Getting value
+            if value is True:
+
+                # Adding 1 to counter
+                forms.append(key)
+
+        # Division chance by all types of immune
+        trigger_chance = lvl / len(forms)
+
+        for form in self.form:
+
+            # Applying to owner.immunes with chance
+            for key in forms:
+
+                # Chance check
+                if chance(trigger_chance, 1000):
+
+                    # Applying Immune_type to owner.immunes
+                    owner.immunes[form] = eval(f"Immune_types.{key}")
+
+        # Notifying player
+        SayText2(f"[\4[WCS]\1 Вы получите защиту от {self.text}"
+             f" c шансом \5{trigger_chance:.1f}\1%").send(owner.index)
+
+    def close(self):
+        pass
+
+class Immune_paralyze(ImmuneSkill):
+    form = ('paralyze', )
+    text = 'паралича'
+
+class Immune_screen_rotate(ImmuneSkill):
+    form = ('screen_rotate', )
+    text = 'разворота экрана'
+
+class Immune_active_weapon_drop(ImmuneSkill):
+    form = ('active_weapon_drop', )
+    text = 'выброса оружия'
 
 # =============================================================================
 # >> Skills
@@ -96,10 +184,15 @@ class BaseSkill:
                 # Subtracting it's cost
                 lvl -= costs[setting]
 
-        # Lvl limits check
+        # # Lvl limits check
+
+        # Lvl equals -1 -> no limit to lvl
+        if max_lvl == -1:
+
+            self.lvl = lvl
 
         # Lvl above maximum -> Change lvl to max
-        if lvl > max_lvl:
+        elif lvl > max_lvl:
             self.lvl = max_lvl
 
         # Lvl below minimum -> Change lvl to 0
@@ -181,6 +274,7 @@ class PeriodicSkill(BaseSkill, repeat_functions):
 
     def tick(self) -> None:
         """ Triggers to infected players every {repeat_delay} """
+
         for key in self.infect_dict:
             self._remove_token(key)
 
@@ -233,7 +327,7 @@ class PeriodicSkill(BaseSkill, repeat_functions):
         # Stop repeat
         self._repeat_stop()
 
-class SkillDelay(BaseSkill):
+class DelaySkill(BaseSkill):
     __slots__ = ('cd', 'cd_length')
 
     def __init__(self, lvl: int, userid: int, settings: dict):
@@ -247,6 +341,87 @@ class SkillDelay(BaseSkill):
 
     def cd_passed(self):
         pass
+
+class Health(BaseSkill):
+    """
+    Skill, that adds hp (not max_health!) on spawn.
+    Adds 1hp for each lvl
+
+    Maximum lvl: 1000
+    Maximum lvl skill power: +1000 hp
+    """
+
+    def __init__(self, userid: int, lvl: int, settings: dict):
+        super().__init__(lvl, userid, settings)
+
+        # Adding health
+        self.owner.heal(self.lvl, ignore = True)
+
+        if self.owner.data_info['skills_activate_notify']:
+            # Notifying player
+            SayText2(f"\4[WCS]\1 Вы получили \5{self.lvl}\1 к хп").send(self.owner.index)
+
+class Start_add_speed(BaseSkill):
+    """
+    Skill adds speed in the start of the round
+    Each lvl increases speed by 1%
+
+    Max lvl: 1000
+    Max lvl skill: Speed increased by 1000%
+    """
+
+    __slots__ = ('speed',)
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(lvl, userid, settings)
+
+        # Saving basic information into instance
+        self.speed: int = self.lvl//5
+
+        if self.owner.data_info['skills_activate_notify']:
+            # Notifies player about perk activation
+            SayText2("\4[WCS]\1 Ваша скорость увеличена на "
+            f"\5{self.speed}\1%").send(self.owner.index)
+
+        # Adding speed
+        self.owner.speed += self.speed/100
+
+    def close(self) -> None:
+        super().close()
+        # Removing added speed
+        self.owner.speed -= self.speed/100
+
+class Regenerate(BaseSkill, repeat_functions):
+    __slots__ = ('interval', 'hp')
+
+    def __init__(self, userid: int, lvl: int, settings: dict):
+        super().__init__(lvl, userid, settings)
+
+        if self.lvl > 10:
+            self.interval = 7
+            self.hp = 5 + self.lvl // 100
+        else:
+            self.interval = 17 - self.lvl
+            self.hp = 5
+
+        self.repeat = Repeat(self.heal)
+        self.repeat_delay = self.interval
+        self._repeat_start()
+
+        if self.owner.data_info['skills_activate_notify']:
+            # Notifies player about perk activation
+            SayText2("\4[WCS]\1 Регенерация "
+            f"\5{self.hp}\1хп/\5{self.interval}\1с").send(self.owner.index)
+
+    def heal(self) -> None:
+        healed: int = self.owner.heal(self.hp)
+        if self.settings['notify'] and healed > 0:
+            SayText2(f"\4[WCS]\1 Вы исцелились на \5{healed}\1 "
+                      "(регенерация)").send(self.owner.index)
+
+    def close(self) -> None:
+        super().close()
+        self._repeat_stop()
 
 class Heal_per_step(BaseSkill):
     """
@@ -302,36 +477,6 @@ class Heal_per_step(BaseSkill):
 
         # Unregister from footstep event
         event_manager.unregister_for_event('player_footstep', self.step)
-
-class Start_add_speed(BaseSkill):
-    """
-    Skill adds speed in the start of the round
-    Each lvl increases speed by 1%
-
-    Max lvl: 1000
-    Max lvl skill: Speed increased by 1000%
-    """
-
-    __slots__ = ('speed',)
-
-    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
-
-        # Saving basic information into instance
-        self.speed: int = self.lvl//5
-
-        if self.owner.data_info['skills_activate_notify']:
-            # Notifies player about perk activation
-            SayText2("\4[WCS]\1 Ваша скорость увеличена на "
-            f"\5{self.speed}\1%").send(self.owner.index)
-
-        # Adding speed
-        self.owner.speed += self.speed/100
-
-    def close(self) -> None:
-        super().close()
-        # Removing added speed
-        self.owner.speed -= self.speed/100
 
 class Start_set_gravity(BaseSkill):
     """
@@ -414,57 +559,6 @@ class Long_jump(BaseSkill):
     def close(self) -> None:
         super().close()
         event_manager.unregister_for_event('player_jump', self.jump)
-
-class Regenerate(BaseSkill, repeat_functions):
-    __slots__ = ('interval', 'hp')
-
-    def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
-
-        if self.lvl > 10:
-            self.interval = 7
-            self.hp = 5 + self.lvl // 100
-        else:
-            self.interval = 17 - self.lvl
-            self.hp = 5
-
-        self.repeat = Repeat(self.heal)
-        self.repeat_delay = self.interval
-        self._repeat_start()
-
-        if self.owner.data_info['skills_activate_notify']:
-            # Notifies player about perk activation
-            SayText2("\4[WCS]\1 Регенерация "
-            f"\5{self.hp}\1хп/\5{self.interval}\1с").send(self.owner.index)
-
-    def heal(self) -> None:
-        healed: int = self.owner.heal(self.hp)
-        if self.settings['notify'] and healed > 0:
-            SayText2(f"\4[WCS]\1 Вы исцелились на \5{healed}\1 "
-                      "(регенерация)").send(self.owner.index)
-
-    def close(self) -> None:
-        super().close()
-        self._repeat_stop()
-
-class Health(BaseSkill):
-    """
-    Skill, that adds hp (not max_health!) on spawn.
-    Adds 1hp for each lvl
-
-    Maximum lvl: 1000
-    Maximum lvl skill power: +1000 hp
-    """
-
-    def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
-
-        # Adding health
-        self.owner.heal(self.lvl, ignore = True)
-
-        if self.owner.data_info['skills_activate_notify']:
-            # Notifying player
-            SayText2(f"\4[WCS]\1 Вы получили \5{self.lvl}\1 к хп").send(self.owner.index)
 
 class Slow_fall(BaseSkill, repeat_functions):
     """
@@ -665,6 +759,7 @@ class Start_add_max_hp(BaseSkill):
         super().__init__(lvl, userid, settings)
 
         self.owner.max_health += self.lvl//2
+
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             SayText2("\4[WCS]\1 Ваше максимальное здоровье увеличено"
@@ -753,11 +848,15 @@ class Aim(BaseSkill):
         if ev['userid'] != self.owner.userid:
             return
 
+        # Aborting, if chance not worked
+        if not chance(self.lvl, 1500):
+            return
+
         # Looking for player
         target = open_players(self.owner, only_one=True)
 
         # If found, and chance worked
-        if target and chance(self.lvl, 1500):
+        if target:
             target = target[0]
             self.target_loc = self.owner.view_coordinates
             if self.settings['headshot']:
@@ -810,8 +909,8 @@ class WalkOnAir(ActiveSkill):
         self.delay = Delay(self.cd, self.cd_passed)
         self.repeat = Repeat(self.tick)
 
-        # self.owner.emit_sound(f'{WCS_FOLDER}/skills/WalkOnAir/'
-        #                       f'success.mp3', ttenuation=0.8)
+        self.owner.emit_sound(f'{WCS_FOLDER}/skills/WalkOnAir/'
+                              f'success.mp3', Atenuation=0.8)
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
@@ -893,29 +992,47 @@ class Poison(PeriodicSkill):
     def infect_activate(self, ev=None) -> None:
         if ev['weapon'] == 'worldspawn':
             return
-        if chance(self.chance, 100) and ev['attacker'] == self.owner.userid:
+
+        # Aborting, if chance not worked
+        if not chance(self.lvl, 100):
+            return
+
+        # If attack was from owner of this skill
+        if ev['attacker'] == self.owner.userid:
+
+            # Getting victim userid
             userid = ev['userid']
+
+            # Adding token to him
             self.add_token(userid, self.length)
+
+            # Starting infect repeat
             self._repeat_start()
 
-            SayText2(f"[\4[WCS]\1 Вы заразили").send(self.owner.index)
+            # Getting attacker Player class
+            attacker = Player(index_from_userid(userid))
+
+            # Notifying owner about infect
+            SayText2(f"[\4[WCS]\1 Вы заразили {attacker.name}").send(self.owner.index)
+
 
     def tick(self) -> None:
         super().tick()
 
-        iterations = None
         for iterations, userid in enumerate(self.infect_dict.copy()):
             victim = Player(index_from_userid(userid))
             victim.take_damage(
                 damage = self.dmg,
-                damage_type = WCS_DAMAGE_ID,
+                damage_type = WCS_DAMAGE_ID|DamageTypes.ACID,
                 attacker_index = self.owner.index)
             tokens = self.infect_dict[userid]
             tokens -= 1
 
             if victim.dead:
                 self.infect_dict.pop(userid)
-        if iterations is None:
+
+        # If there's no victims left in dict, abort poison
+        if len(self.infect_dict) == 0:
             self._repeat_stop()
 
     def close(self) -> None:
@@ -1103,7 +1220,7 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
         self._repeat_stop()
         event_manager.unregister_for_event('player_jump', self.jumped)
 
-class Paralyze(SkillDelay):
+class Paralyze(DelaySkill):
     __slots__ = ('length',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
@@ -1135,7 +1252,11 @@ class Paralyze(SkillDelay):
         if attacker != self.owner or self.cd.running is True:
             return
 
-        paralyze(attacker, victim, self.length)
+        paralyze(
+            victim = victim,
+            length = self.length,
+            form = Immune_types.Default.value
+            )
 
         self.cd = Delay(self.cd_length, self.cd_passed)
 
@@ -1269,7 +1390,7 @@ class Damage_delay_defend(BaseSkill):
         # Remove from otd hook
         on_take_physical_damage.remove(self.player_hurt)
 
-class Toss(SkillDelay):
+class Toss(DelaySkill):
     __slots__ = ('chance', 'power')
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
@@ -1290,45 +1411,236 @@ class Toss(SkillDelay):
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             SayText2(f"\4[WCS]\1 С шансом \5{self.chance:.0f}\1% вы подкинете "
-                 f"противника с силой в \5{self.power:.0f}\1 юнитов").send(self.owner.index)
+                     f"противника с силой в \5{self.power:.0f}\1"
+                     " юнитов").send(self.owner.index)
 
     def player_hurt(self, ev):
 
         # Event fired by player?
-        if ev['attacker'] == self.owner.userid and self.cd.running is False:
+        if ev['attacker'] != self.owner.userid or self.cd.running is True:
+            return
 
-            # Getting weapon type
-            weapon = ev['weapon']
+        # Getting weapon type
+        weapon = ev['weapon']
 
-            # Checking if weapon is inferno
-            if (weapon == 'ainferno' or weapon == 'inferno') \
-                    and not self.settings['allow_inferno']: return
+        # Checking if weapon is inferno
+        if (weapon == 'ainferno' or weapon == 'inferno') \
+                and not self.settings['allow_inferno']: return
 
-            # Checking, if weapon is he grenade
-            if weapon == 'hegrenade' and not self.settings['allow_he']: return
+        # Checking, if weapon is he grenade
+        if weapon == 'hegrenade' and not self.settings['allow_he']: return
 
-            # Chance check
-            if not chance(self.chance, 100): return
+        # Chance check
+        if not chance(self.chance, 100): return
 
-            # Getting entity
-            victim = Entity(index_from_userid(ev['userid']))
+        # Getting entity
+        victim = Entity(index_from_userid(ev['userid']))
 
-            # Getting entity velocity
-            vel = victim.velocity
+        # Getting entity velocity
+        vel = victim.velocity
 
-            # Applying toss
-            vel[2] += self.power
+        # Applying toss
+        vel[2] += self.power
 
-            # Applying velocity to entity
-            victim.teleport(velocity=vel)
+        # Applying velocity to entity
+        victim.teleport(velocity=vel)
 
-            # Player disabled no_cd?
-            if not self.settings['no_cd']:
+        # Player disabled no_cd?
+        if not self.settings['no_cd']:
 
-                # Launching cooldown
-                self.cd = Delay(1, self.cd_passed)
+            # Launching cooldown
+            self.cd = Delay(1, self.cd_passed)
 
     def close(self) -> None:
 
         # Unregistering for hurt event
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
+class Mirror_paralyze(BaseSkill):
+    __slots__ = ('chance', 'length')
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(lvl, userid, settings)
+
+        # Setting chance of skill
+        self.chance = self.lvl / 100 + 1
+
+        # Length of paralyze
+        self.length: float = self.lvl ** 0.2 + 0.5
+
+        # Registering for player_hurt
+        event_manager.register_for_event('player_hurt', self.player_hurt)
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            SayText2(f"\4[WCS]\1 С шансом \5{self.chance:.0f}\1% "
+                     "вы парализуете противника при защите на "
+                     f"\5{self.length:.1f}\1c").send(self.owner.index)
+
+    def player_hurt(self, ev) -> None:
+
+        # Is our user attacked?
+        if ev['victim'] != self.owner.userid:
+            return
+
+        # Chance check
+        if not chance(self.chance, 150):
+            return
+
+        # Getting attacker
+        try: attacker = WCS_Players[ev['attacker']]
+
+        # No such WCS_Player?
+        except KeyError:
+
+            # Then it's 100% bot. Abort. No mirror paralyze on bots :D
+            return
+
+        paralyze(attacker, self.length, Immune_types.Default_deflect)
+
+        # Notifying victim
+        SayText2(f"\4[WCS]\1 Вас парализовали \5{self.owner.name:.10}\1 "
+                 f"на \5{self.length:.1f}\1с").send(attacker.index)
+
+        # Notifying owner
+        if self.settings['hit notify']:
+            SayText2(f"\4[WCS]\1 Вы парализовали \5{attacker.name:.10}\1 "
+                     f"на \5{self.length:.1f}\1с").send(self.owner.index)
+
+    def close(self) -> None:
+        super().close()
+
+        # Unregistering from player_hurt
+        event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
+class Vampire_damage_percent(BaseSkill):
+    __slots__ = ('vampire_percent', )
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(lvl, userid, settings)
+
+        # Percent. How many to heal
+        self.vampire_percent = self.lvl / 10000 + 0.1
+
+        # Register for player_hurt
+        event_manager.register_for_event('player_hurt', self.player_hurt)
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            SayText2(f"\4[WCS]\1 Вы исцеляете \5{self.vampire_percent*100:.1f}\1%"
+                     f" здоровья от урона по врагу").send(self.owner.index)
+
+    def player_hurt(self, ev):
+        if ev['attacker'] != self.owner.userid:
+            return
+
+        amount_to_heal = ev['dmg_health'] * self.vampire_percent
+        print(ev['dmg_health'], amount_to_heal)
+
+        self.owner.heal(amount_to_heal)
+
+        # Notifying owner
+        if self.settings['hit notify']:
+            SayText2(f"\4[WCS]\1 Вы исцелились на \5{amount_to_heal:.1f}"
+                     '\1').send(self.owner.index)
+
+    def close(self) -> None:
+        super().close()
+
+        # Unregister from player_hurt
+        event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
+class Drop_weapon_chance(BaseSkill):
+
+    __slots__ = ('chance', )
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(lvl, userid, settings)
+
+        # Setting chance of skill
+        self.chance = self.lvl / 100 + 1
+
+        # Register for hit
+        event_manager.register_for_event('player_hurt', self.player_hurt)
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            SayText2("\4[WCS]\1 Вы выбросите оружие противника с шансом"
+                     f"{self.chance:.1f}").send(self.owner.index)
+
+    def player_hurt(self, ev):
+
+        # Attacker == Owner check
+        if ev['attacker'] != self.owner.userid: return
+
+        # Chance check
+        if not chance(self.chance, 100): return
+
+        # Getting victim
+        try: victim = WCS_Players(ev['userid'])
+        except KeyError: return
+
+        # Using weapon_drop function
+        active_weapon_drop(victim, Immune_types.Default)
+
+    def close(self) -> None:
+        super().close()
+
+        # Unregister from hit
+        event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
+class Screen_rotate_attack(DelaySkill):
+
+    __slots__ = ('distortion', )
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(lvl, userid, settings)
+
+        self.distortion = self.lvl / 60
+
+        self.cd_length = 2
+
+        # Register for hit
+        event_manager.register_for_event('player_hurt', self.player_hurt)
+
+    def player_hurt(self, ev):
+
+        # Attacker == Owner check
+        if ev['attacker'] != self.owner.userid: return
+
+        if self.cd.running is True: return
+
+        # Getting victim
+        try: victim = WCS_Players[ev['userid']]
+        except KeyError: return
+
+        # Using distortion function
+        result = screen_angle_distortion(victim=victim,
+                                         form=Immune_types.Default,
+                                         amount=self.distortion)
+
+        # Starting delay
+        self.cd = Delay(self.cd_length, self.cd_passed)
+
+        # Notifying owner
+        if self.settings['hit notify']:
+            if result:
+                SayText2(f"\4[WCS]\1 Вы развернули экран "
+                         f"\5{victim.name:.10}\1").send(self.owner.index)
+            else:
+                SayText2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
+                     f"защита от поворота экрана").send(self.owner.index)
+
+
+    def close(self) -> None:
+        super().close()
+
+        # Unregister from hit
+        event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
+# class
+#
+#     __slots__ = ('', )
+#
+#     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+#         super().__init__(lvl, userid, settings)
