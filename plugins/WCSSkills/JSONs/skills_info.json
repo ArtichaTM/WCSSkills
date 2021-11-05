@@ -562,7 +562,7 @@
         }
     },
 
-    "Immune_paralyze": {
+    "Immune.paralyze": {
         "name": "Паралич",
         "group": "Иммунитеты",
         "description": [
@@ -576,7 +576,7 @@
             "каждый вид защиты. Выбирайте лишь нужное вам!"
         ],
         "max_lvl": 1000,
-        "min_player_lvl": 4000,
+        "min_player_lvl": 0,
         "settings_type": {
             "Default": "bool",
             "Mirror": "bool",
@@ -597,7 +597,7 @@
         }
     },
 
-    "Immune_screen_rotate": {
+    "Immune.screen_rotate": {
         "name": "Разворот экрана",
         "group": "Иммунитеты",
         "description": [
@@ -606,7 +606,7 @@
             "каждый вид защиты. Выбирайте лишь нужное вам!"
         ],
         "max_lvl": 1000,
-        "min_player_lvl": 4000,
+        "min_player_lvl": 0,
         "settings_type": {
             "Default": "bool",
             "Mirror": "bool",
@@ -627,7 +627,7 @@
         }
     },
 
-    "Immune_active_weapon_drop": {
+    "Immune.active_weapon_drop": {
         "name": "Паралич",
         "group": "Иммунитеты",
         "description": [
@@ -637,7 +637,7 @@
             "каждый вид защиты. Выбирайте лишь нужное вам!"
         ],
         "max_lvl": 1000,
-        "min_player_lvl": 4000,
+        "min_player_lvl": 0,
         "settings_type": {
             "Default": "bool",
             "Mirror": "bool",
@@ -654,6 +654,36 @@
             "Default": 0,
             "Mirror": 0,
             "Aura": 0,
+            "Ultimate": 0
+        }
+    },
+
+    "Immune.aimbot": {
+        "name": "Аим",
+        "group": "Иммунитеты",
+        "description": [
+            "Вы с опытом научились понижать температуру",
+            "вашего тела. Теперь вас не обнаружат",
+            "даже самые изысканные системы наводки",
+            " ",
+            "Каждая настройка разделяет шанс пополам на",
+            "каждый вид защиты. Выбирайте лишь нужное вам!"
+        ],
+        "max_lvl": 750,
+        "min_player_lvl": 0,
+        "settings_type": {
+            "Default": "bool",
+            "Mirror": "bool",
+            "Ultimate": "bool"
+        },
+        "settings_name": {
+            "Default": "Обычные",
+            "Mirror": "Зеркальные",
+            "Ultimate": "Активные"
+        },
+        "settings_cost": {
+            "Default": 0,
+            "Mirror": 0,
             "Ultimate": 0
         }
     }

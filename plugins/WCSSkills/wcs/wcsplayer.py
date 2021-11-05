@@ -31,6 +31,7 @@ from WCSSkills.db.admin import DC_history
 from WCSSkills.commands.buttons import Buttons
 # Skills
 from WCSSkills.skills.skills import *
+from WCSSkills.skills import immunities as Immune
 # Typing types
 from WCSSkills.python.types import *
 # DefaultDict
@@ -49,13 +50,13 @@ from WCSSkills.other_functions.functions import skill_timings_calculate
 # =============================================================================
 # >> Events on loading/unloading player
 # =============================================================================
-
 @Event('player_activate')
 def WCS_Player_load(ev) -> None:
     """ When player connects (usually), initialize WCS_Player and load his data """
 
     # Check if new player is a bot
     if Player(index_from_userid(ev['userid'])).steamid == 'BOT':
+
         # Then canceling function
         return
 
@@ -321,9 +322,7 @@ class WCS_Player(Player): # Short: WCSP
                 if self.skills_selected_lvl[num] is None:
 
                     # Not selected, calling with maximum lvl
-                    self.skills_active.add(eval(f"{skill}({self.userid},"
-                                                f"{self.skills_selected_lvls[num]},"
-                                                f"{self.skills_selected_settings[num]})"))
+                    self.skills_active.add(eval(f"{skill}({self.userid},{self.skills_selected_lvls[num]},{self.skills_selected_settings[num]})"))
                 else:
 
                     # Selected custom lvl, calling with selected lvl
@@ -537,6 +536,7 @@ if server.is_active():
 
     # If running, adding every player to WCS_Players set
     for player in PlayerIter():
+
         # Calling load function
         WCS_Player_load({'userid': player.userid})
 

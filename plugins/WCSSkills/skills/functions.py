@@ -24,6 +24,7 @@ from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
 # =============================================================================
 
 __all__ = (
+    'chance',
     'paralyze',
     'on_take_physical_damage',
     'on_take_magic_damage',
@@ -42,6 +43,10 @@ on_take_magic_damage = set()
 # =============================================================================
 # >> Functions
 # =============================================================================
+
+
+# Chance function to check if skill worked or not
+chance = lambda value1, value2 : value1 >= random.randint(0, value2)
 
 @EntityPreHook(EntityCondition.is_player, 'on_take_damage')
 def skills_on_take_damage(args) -> Union[None, bool]:

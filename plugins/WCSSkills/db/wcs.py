@@ -353,12 +353,12 @@ class _Player_settings:
         with open(path_to_settings, encoding="utf-8") as file:
             self.json = loads(file.read())
 
-    def get_default_value(self, setting: str) -> str:
+    def get_default_value(self, setting: str, form: str = 'wcs') -> str:
         """Returns default value of selected setting"""
 
-        return self.json[setting]['default_value']
+        return self.json[form][setting]['default_value']
 
-    def get_name(self, setting: str = None) -> Union[list, str]:
+    def get_name(self, setting: str = None, form: str = 'wcs') -> Union[list, str]:
         """
         Get name of setting, if needed
         Else get list of all names
@@ -366,14 +366,14 @@ class _Player_settings:
 
         if setting is None:
             names = []
-            for setting in self.json.values():
+            for setting in self.json[form].values():
                 names.append(setting['name'])
             return names
         else:
-            return self.json[setting]['name']
+            return self.json[form][setting]['name']
 
-    def get_values(self) -> list:
-        return self.json.keys()
+    def get_values(self, form: str = 'wcs') -> list:
+        return self.json[form].keys()
 
 # Creating singletons
 DB_users         =   _DB_users         (PATH_FILE_DATABASE_USERS)

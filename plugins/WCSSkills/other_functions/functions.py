@@ -49,11 +49,11 @@ from paths import LOG_PATH
 from WCSSkills.python.types import *
 # Constants
 from WCSSkills.other_functions.constants import PATH_TO_LOG
+# from WCSSkills.wcs.wcsplayer import WCS_Players
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
-__all__ = ('chance',
-           'player_indexes',
+__all__ = ('player_indexes',
            'open_players',
            'force_buttons',
            'repeat_functions',
@@ -65,9 +65,6 @@ __all__ = ('chance',
 # >> Functions
 # =============================================================================
 
-# Chance function to check if skill worked or not
-chance = lambda value1, value2 : value1 >= random.randint(0, value2)
-
 # Return all players indexes
 player_indexes = lambda : [player.index for player in PlayerIter()]
 
@@ -77,11 +74,15 @@ player_indexes = lambda : [player.index for player in PlayerIter()]
 #     pass
 
 
-def open_players(player: Player_entity, only_one=False, same_team = False) -> Entity_entity:
-    """ This function checks for other players, that can be hitted by player """
+def open_players(player: Player_entity,
+                 form,
+                 only_one: bool = False,
+                 same_team: bool = False,
+                 ignore_immune: bool = False) -> Entity_entity:
+    """ This function checks for other players, that can be hit by player """
 
     # Creating list
-    hitted = []
+    can_hit_players = []
 
     # Iterating over all alive players
     for user in PlayerIter('alive'):
@@ -93,6 +94,14 @@ def open_players(player: Player_entity, only_one=False, same_team = False) -> En
         # Checking for team equality
         elif user.team == player.team and not same_team:
             continue
+
+        # # Abort, if player is not WCS_Player
+        # try: wcs_user = WCS_Players[user.userid]
+        # except KeyError: continue
+
+        # # Checking for immune
+        # if form in wcs_user.immunes['aimbot'] and not ignore_immune:
+        #     continue
 
         # Get the entity's origin
         origin: Vector = player.eye_location
@@ -107,17 +116,17 @@ def open_players(player: Player_entity, only_one=False, same_team = False) -> En
         engine_trace.clip_ray_to_entity(
             ray, ContentMasks.ALL, BaseEntity(WORLD_ENTITY_INDEX), trace)
 
-        # Hitted something?
+        # Hit something?
         if not trace.did_hit():
 
-            # Not hitted! Player can be shot
-            hitted.append(user)
+            # Not hit! Player can be shot
+            can_hit_players.append(user)
 
             if only_one:
                 break
 
     # Returns list
-    return hitted
+    return can_hit_players
 
 def force_buttons(player: Player_entity, buttons: int, once: bool = True, time: float = 0) -> Union[None, int]:
     """Forces the given buttons on the given player for the given time."""

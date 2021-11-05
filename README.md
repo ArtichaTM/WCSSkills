@@ -41,7 +41,7 @@ class skill_unique(BaseSkill):
     __slots__ = (...,)
   
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
     
     def close(self) -> None:
         super().close()

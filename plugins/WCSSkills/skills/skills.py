@@ -12,12 +12,14 @@ from math import sqrt
 from entities.entity import Entity
 from filters.entities import EntityIter
 # Player
-from players.helpers import index_from_userid, userid_from_index
+from players.helpers import userid_from_index
+from players.helpers import index_from_userid
 from players.entity import Player
 # Weapon
 from weapons.engines.csgo import Weapon
 # Listeners
-from listeners.tick import Repeat, Delay
+from listeners.tick import Delay
+from listeners.tick import Repeat
 # Events
 from events.manager import event_manager
 from events.hooks import pre_event_manager
@@ -32,7 +34,6 @@ from players.constants import PlayerButtons
 from entities.constants import RenderMode
 from entities.constants import EntityEffects
 from entities.constants import MoveType
-from entities.constants import DamageTypes
 
 # Plugin Imports
 # Functions
@@ -48,6 +49,7 @@ from WCSSkills.other_functions.functions import *
 # Constants
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import WCS_FOLDER
+from WCSSkills.other_functions.constants import DamageTypes
 # Enumeratings
 from WCSSkills.other_functions.constants import Immune_types
 
@@ -77,86 +79,12 @@ __all__ = (
 'Paralyze', # Paralyze player on hit (with cd)
 'Smoke_on_wall_hit', # Instantly smoke when touch something
 'Damage_delay_defend', # Delays all physical damage
-'Toss', # Toss player in the air
-'Mirror_paralyze', # Paralyze
+'Toss', # Toss player in the air (with constants cd)
+'Mirror_paralyze', # Paralyze when being hit
 'Vampire_damage_percent', # Gives owner hp as percent of damage dealt
 'Drop_weapon_chance', # Drops enemy weapon with such chance
 'Screen_rotate_attack', # Rotates enemy screen with a chance
-
-# Immunities
-'Immune_paralyze',
-'Immune_screen_rotate',
-'Immune_active_weapon_drop',
 )
-
-# =============================================================================
-# >> Immunes
-# =============================================================================
-
-class ImmuneSkill:
-    __slots__ = ('',)
-
-    form = None
-    text = ''
-
-    def __init__(self, lvl: int, userid: int, settings: dict):
-
-        # form and text check
-        if self.form is None:
-            raise NotImplemented("When inherit ImmuneSkill, "
-                                 "change 'form' constant'")
-        if self.text == '':
-            raise NotImplemented("When inherit ImmuneSkill, "
-                                 "change 'text' constant'")
-
-        owner = WCS_Players[userid]
-        max_lvl = Skills_info.get_max_lvl(type(self).__name__)
-
-        # Lvl above maximum -> Change lvl to max
-        lvl = max_lvl if lvl > max_lvl else lvl
-
-        forms = []
-        # Iterating over all settings
-        for key, value in settings:
-
-            # Getting value
-            if value is True:
-
-                # Adding 1 to counter
-                forms.append(key)
-
-        # Division chance by all types of immune
-        trigger_chance = lvl / len(forms)
-
-        for form in self.form:
-
-            # Applying to owner.immunes with chance
-            for key in forms:
-
-                # Chance check
-                if chance(trigger_chance, 1000):
-
-                    # Applying Immune_type to owner.immunes
-                    owner.immunes[form] = eval(f"Immune_types.{key}")
-
-        # Notifying player
-        SayText2(f"[\4[WCS]\1 Вы получите защиту от {self.text}"
-             f" c шансом \5{trigger_chance:.1f}\1%").send(owner.index)
-
-    def close(self):
-        pass
-
-class Immune_paralyze(ImmuneSkill):
-    form = ('paralyze', )
-    text = 'паралича'
-
-class Immune_screen_rotate(ImmuneSkill):
-    form = ('screen_rotate', )
-    text = 'разворота экрана'
-
-class Immune_active_weapon_drop(ImmuneSkill):
-    form = ('active_weapon_drop', )
-    text = 'выброса оружия'
 
 # =============================================================================
 # >> Skills
@@ -165,7 +93,7 @@ class Immune_active_weapon_drop(ImmuneSkill):
 class BaseSkill:
     __slots__ = ('owner', 'lvl', 'settings')
 
-    def __init__(self, lvl: int, userid: int, settings: dict):
+    def __init__(self, userid: int, lvl: int, settings: dict):
         self.owner = WCS_Players[userid]
         max_lvl = Skills_info.get_max_lvl(type(self).__name__)
 
@@ -260,7 +188,7 @@ class PeriodicSkill(BaseSkill, repeat_functions):
     __slots__ = ('infect_dict',)
 
     def __init__(self, lvl: int, userid: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Dictionary that stores infected players
         self.infect_dict = dict()
@@ -330,8 +258,8 @@ class PeriodicSkill(BaseSkill, repeat_functions):
 class DelaySkill(BaseSkill):
     __slots__ = ('cd', 'cd_length')
 
-    def __init__(self, lvl: int, userid: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+    def __init__(self, userid: int, lvl: int, settings: dict):
+        super().__init__(userid, lvl, settings)
 
         # length of cd
         self.cd_length = 0
@@ -352,7 +280,7 @@ class Health(BaseSkill):
     """
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Adding health
         self.owner.heal(self.lvl, ignore = True)
@@ -373,7 +301,7 @@ class Start_add_speed(BaseSkill):
     __slots__ = ('speed',)
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Saving basic information into instance
         self.speed: int = self.lvl//5
@@ -395,7 +323,7 @@ class Regenerate(BaseSkill, repeat_functions):
     __slots__ = ('interval', 'hp')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         if self.lvl > 10:
             self.interval = 7
@@ -430,7 +358,7 @@ class Heal_per_step(BaseSkill):
     __slots__ = ('hp', 'interval', 'counter')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Skill constants
         self.hp = 5
@@ -485,7 +413,7 @@ class Start_set_gravity(BaseSkill):
     __slots__ = ('grav',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         if self.lvl < 1000:
             self.grav = self.lvl / 1000
@@ -522,7 +450,7 @@ class Long_jump(BaseSkill):
     __slots__ = ('power',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Saving basic information into instance
         if self.lvl == 0:
@@ -571,7 +499,7 @@ class Slow_fall(BaseSkill, repeat_functions):
     fall_speed_list = ([i*5 for i in range(101,0,-1)])
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Saving information about owner and arg
         self.limit: int = self.fall_speed_list[self.lvl]
@@ -643,7 +571,7 @@ class Nearly_Aim(BaseSkill):
     __slots__ = ('back_to_aim', 'target_loc', 'angle')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         self.back_to_aim = False
         self.target_loc = None
@@ -715,7 +643,7 @@ class Trigger(ActiveSkill):
     __slots__ = ('cd', 'length', 'is_pressed', 'repeat')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         self.cd = 50 - (self.lvl/25)
         self.length = 2
@@ -756,7 +684,7 @@ class Trigger(ActiveSkill):
 class Start_add_max_hp(BaseSkill):
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         self.owner.max_health += self.lvl//2
 
@@ -769,7 +697,7 @@ class Teleport(ActiveSkill):
     __slots__ = ('position', 'origin', 'cd', 'allowed_distance', 'is_pressed')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
         self.position = None
         self.origin = None
         # self.cd = 30 - (self.lvl/100)
@@ -824,7 +752,7 @@ class Aim(BaseSkill):
     __slots__ = ('back_to_aim', 'target_loc')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         self.back_to_aim = False
         self.target_loc = None
@@ -853,7 +781,9 @@ class Aim(BaseSkill):
             return
 
         # Looking for player
-        target = open_players(self.owner, only_one=True)
+        target = open_players(player=self.owner,
+                              form = Immune_types.Default,
+                              only_one = True)
 
         # If found, and chance worked
         if target:
@@ -897,7 +827,7 @@ class WalkOnAir(ActiveSkill):
     __slots__ = ('model', 'is_active', 'cd', 'repeat', 'entity')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings),
+        super().__init__(userid, lvl, settings),
         self.model = Model('models/props/cs_italy/orange.mdl')
         Model('models/props/cs_italy/orangegib1.mdl')
         Model('models/props/cs_italy/orangegib2.mdl')
@@ -974,7 +904,7 @@ class Poison(PeriodicSkill):
     __slots__ = ('chance', 'dmg', 'length')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
         self.chance = self.lvl/30
         self.length = 1 + self.lvl // 100
         self.dmg = self.length//2
@@ -1045,7 +975,7 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
     __slots__ = ('chance', 'amount', 'ammo_added')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
         self.chance = self.lvl
         self.amount = self.lvl//100
         self.ammo_added = dict()
@@ -1122,7 +1052,7 @@ class Additional_percent_dmg(BaseSkill):
     __slots__ = ('percent',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Amount of additional dmg
         self.percent: float = (self.lvl//10)/100
@@ -1172,7 +1102,7 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
     __slots__ = ('hops', 'current_hops')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         self.hops = self.lvl // 10
         self.current_hops = 0
@@ -1224,7 +1154,7 @@ class Paralyze(DelaySkill):
     __slots__ = ('length',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         if self.lvl == 0:
             self.lvl = 1
@@ -1288,7 +1218,7 @@ class Paralyze(DelaySkill):
 class Smoke_on_wall_hit(BaseSkill):
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
         if self.lvl != 0:
 
             # Registering for bounce event
@@ -1317,7 +1247,7 @@ class Damage_delay_defend(BaseSkill):
     __slots__ = ('damage_list', 'delay_length')
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # List with damages. How it looks like:
         # [(damage, type, attacker_index, weapon_index), ...]
@@ -1394,7 +1324,7 @@ class Toss(DelaySkill):
     __slots__ = ('chance', 'power')
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Calculating chance
         self.chance = sqrt(self.lvl)
@@ -1460,7 +1390,7 @@ class Mirror_paralyze(BaseSkill):
     __slots__ = ('chance', 'length')
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Setting chance of skill
         self.chance = self.lvl / 100 + 1
@@ -1517,7 +1447,7 @@ class Vampire_damage_percent(BaseSkill):
     __slots__ = ('vampire_percent', )
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Percent. How many to heal
         self.vampire_percent = self.lvl / 10000 + 0.1
@@ -1555,7 +1485,7 @@ class Drop_weapon_chance(BaseSkill):
     __slots__ = ('chance', )
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         # Setting chance of skill
         self.chance = self.lvl / 100 + 1
@@ -1594,7 +1524,7 @@ class Screen_rotate_attack(DelaySkill):
     __slots__ = ('distortion', )
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-        super().__init__(lvl, userid, settings)
+        super().__init__(userid, lvl, settings)
 
         self.distortion = self.lvl / 60
 
@@ -1643,4 +1573,4 @@ class Screen_rotate_attack(DelaySkill):
 #     __slots__ = ('', )
 #
 #     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-#         super().__init__(lvl, userid, settings)
+#         super().__init__(userid, lvl, settings)

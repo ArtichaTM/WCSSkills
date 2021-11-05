@@ -8,7 +8,7 @@ from enum import IntFlag
 
 # Source.Python Imports
 # DamageTypes
-from entities.constants import DamageTypes
+from entities.constants import DamageTypes as DamTyp
 # Plugin path
 from paths import PLUGIN_DATA_PATH
 from paths import EVENT_PATH
@@ -18,6 +18,102 @@ from paths import SOUND_PATH
 # Plugin Imports
 # Folder name
 from WCSSkills.WCSSkills import WCS_FOLDER
+
+# =============================================================================
+# >> Enumeratings
+# =============================================================================
+
+class Immune_types(IntFlag):
+    """ Types of immune to skills
+
+    You must be cautious with Ultimate_deflect, bcz Ultimate_deflect
+    should be used ONLY for parts of ultimate. Example:
+
+    skill with damage and paralyze. Check for skill immune should
+    be in damage, and paralyze -> If victim has
+    •Immune_types.Nothing paralyze
+    •Immune_types.Ultimate_deflect for damage
+    Victim should deflect damage, and be paralyzed.
+
+    Always check resistance partly in this situation!
+    """
+
+    # None immune
+    Nothing = 0
+
+    # Immune to default skills (attack)
+    Default = 1
+    Default_deflect = 2
+
+    # Mirror skills
+    Mirror = 4
+    Mirror_deflect = 8
+
+    # Ultimate
+    Ultimate = 16
+    Ultimate_deflect = 32
+
+    # Aura immune
+    Aura = 64
+    Aura_deflect = 128
+
+    def __contains__(self, item):
+
+        # Items is enum
+        if isinstance(item, IntFlag):
+
+            # If with adding new value nothing changed -> value
+            # already contains in enum
+            if self.value | item.value == self.value: return True
+
+            # Changed -> value didn't contains in enum
+            else: return False
+
+
+        # Item is int
+        elif isinstance(item, int):
+
+            # If with adding new value nothing changed -> value
+            # already contains in enum
+            if self.value | item == self.value: return True
+
+            # Changed -> value didn't contains in enum
+            else:  return False
+
+        # No? Then we can't compare item with enum
+        else:
+            raise TypeError(f"Can't compare '{type(item)}' and 'IntFlag'")
+
+DamTyp.__contains__ = Immune_types.__contains__
+DamageTypes = DamTyp
+# class DamageTypes(DamTyp):
+#
+#     def __contains__(self, item):
+#
+#         # Items is enum
+#         if isinstance(item, IntFlag):
+#
+#             # If with adding new value nothing changed -> value
+#             # already contains in enum
+#             if self.value | item.value == self.value: return True
+#
+#             # Changed -> value didn't contains in enum
+#             else: return False
+#
+#
+#         # Item is int
+#         elif isinstance(item, int):
+#
+#             # If with adding new value nothing changed -> value
+#             # already contains in enum
+#             if self.value | item == self.value: return True
+#
+#             # Changed -> value didn't contains in enum
+#             else:  return False
+#
+#         # No? Then we can't compare item with enum
+#         else:
+#             raise TypeError(f"Can't compare '{type(item)}' and 'IntFlag'")
 
 # =============================================================================
 # >> Constants
@@ -90,68 +186,3 @@ else:
 # =============================================================================
 
 VOLUME_MENU = 0.2
-
-# =============================================================================
-# >> Enumeratings
-# =============================================================================
-
-class Immune_types(IntFlag):
-    """ Types of immune to skills
-
-    You must be cautious with Ultimate_deflect, bcz Ultimate_deflect
-    should be used ONLY for parts of ultimate. Example:
-
-    skill with damage and paralyze. Check for skill immune should
-    be in damage, and paralyze -> If victim has
-    •Immune_types.Nothing paralyze
-    •Immune_types.Ultimate_deflect for damage
-    Victim should deflect damage, and be paralyzed.
-
-    Always check resistance partly in this situation!
-    """
-
-    # None immune
-    Nothing = 0
-
-    # Immune to default skills (attack)
-    Default = 1
-    Default_deflect = 2
-
-    # Mirror skills
-    Mirror = 4
-    Mirror_deflect = 8
-
-    # Ultimate
-    Ultimate = 16
-    Ultimate_deflect = 32
-
-    # Aura immune
-    Aura = 64
-    Aura_deflect = 128
-
-    def __contains__(self, item):
-
-        # Items is enum
-        if isinstance(item, IntFlag):
-
-            # If with adding new value nothing changed -> value
-            # already contains in enum
-            if self.value | item.value == self.value: return True
-
-            # Changed -> value didn't contains in enum
-            else: return False
-
-
-        # Item is int
-        elif isinstance(item, int):
-
-            # If with adding new value nothing changed -> value
-            # already contains in enum
-            if self.value | item == self.value: return True
-
-            # Changed -> value didn't contains in enum
-            else:  return False
-
-        # No? Then we can't compare item with enum
-        else:
-            raise TypeError(f"Can't compare '{type(item)}' and 'enum'")
