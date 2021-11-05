@@ -165,12 +165,14 @@ class _DB_skills:
     • Maximum level to upgrade
     • Min player lvl to achieve
     """
-    __slots__ = ('json', 'groups')
+    __slots__ = ('json', 'groups', 'path')
 
     def __init__(self, path_to_skills) -> None:
         """
         :param path_to_skills: Absolute path to JSON file
         """
+
+        self.path = path_to_skills
 
         if not isfile(path_to_skills):
             with open(path_to_skills, 'w', encoding="utf-8") as f:
@@ -197,6 +199,8 @@ class _DB_skills:
             else:
                 self.groups[skill['group']] = [name,]
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(path={self.path})"
 
     def get_skill(self, skill_name: str) -> dict:
         """
@@ -334,9 +338,12 @@ class _Player_settings:
     • Name
     • Default value
     """
-    __slots__ = ('json',)
+    __slots__ = ('json', 'path')
 
     def __init__(self, path_to_settings: str):
+
+        # Saving path
+        self.path = path_to_settings
 
         # Checking if file exist
         if not isfile(path_to_settings):
@@ -352,6 +359,9 @@ class _Player_settings:
         # Reading JSON
         with open(path_to_settings, encoding="utf-8") as file:
             self.json = loads(file.read())
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(path={self.path})"
 
     def get_default_value(self, setting: str, form: str = 'wcs') -> str:
         """Returns default value of selected setting"""

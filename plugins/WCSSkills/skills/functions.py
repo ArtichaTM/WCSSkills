@@ -9,15 +9,20 @@ from WCSSkills.python.types import wcs_player_entity
 from random import uniform
 
 # Source.Python Imports
+# Delay
 from listeners.tick import Delay
+# Entities
 from entities import TakeDamageInfo
 from entities.entity import Entity
 from entities.helpers import index_from_pointer
-# Hooks
 from entities.hooks import EntityPreHook, EntityCondition
+# SayText2
+from messages import SayText2
 # WCS_damage id:
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
+from WCSSkills.other_functions.constants import ImmuneTypes
+from WCSSkills.other_functions.constants import ImmuneReactionTypes
 
 # =============================================================================
 # >> All
@@ -25,9 +30,10 @@ from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
 
 __all__ = (
     'chance',
-    'paralyze',
     'on_take_physical_damage',
     'on_take_magic_damage',
+    'victim_message',
+    'paralyze',
     'active_weapon_drop',
     'screen_angle_distortion'
 )
@@ -103,16 +109,42 @@ def skills_on_take_damage(args) -> Union[None, bool]:
                 # Then canceling hit
                 return False
 
+def paralyze(
+        owner: wcs_player_entity,
+        victim: wcs_player_entity,
+        length: float,
+        form) -> ImmuneReactionTypes:
+    """ Stops player camera rotate and movement
 
-def paralyze(victim: wcs_player_entity,
-             length: float,
-             form) -> bool:
+    :param owner: Initiator of paralyze
+    :param victim: Target of paralyze
+    :param length: Amount of time to freeze player
+        movement and camera rotate
+    :param form: Type of paralyze (Aura/Default/...) (ImmuneTypes)
+    :return: ImmuneReactionTypes type.
+        1 - worked
+        2 - immune
+        3 - deflect
+
+    """
+
+    # # Immune check
+    # If type of attack in immunes
+    if form in victim.immunes['paralyze']: return ImmuneReactionTypes.Immune
+    # Or victim has counter to all types
+    elif ImmuneTypes.Any in victim.immunes['paralyze']: return ImmuneReactionTypes.Immune
+    # Else if victim deflect attack
+    elif form << 1 in victim.immunes['paralyze']:
+        paralyze(
+            owner = victim,
+            victim = owner,
+            length = length,
+            form = ImmuneTypes.Any)
+        return ImmuneReactionTypes.Deflect
+
     try: victim.paralyze_length
     except AttributeError:
         setattr(victim, 'frozen_length', Delay(0, lambda: None))
-
-    # Immune check
-    if form in victim.immunes['paralyze']: return False
 
     # Paralyzed?
     if victim.get_frozen() is False:
@@ -129,23 +161,51 @@ def paralyze(victim: wcs_player_entity,
         # Adding time to paralyze
         victim.paralyze_length.exec_time += length
 
-    return True
+    return ImmuneReactionTypes.Passed
 
-def active_weapon_drop(victim: wcs_player_entity, form):
+def active_weapon_drop(
+        owner: wcs_player_entity,
+        victim: wcs_player_entity,
+        form
+        ):
 
-    # Immune check
-    if form in victim.immunes['active_weapon_drop']: return False
+    # # Immune check
+    # If type of attack in immunes
+    if form in victim.immunes['active_weapon_drop']: return ImmuneReactionTypes.Immune
+    # Or victim has counter to all types
+    elif ImmuneTypes.Any in victim.immunes['active_weapon_drop']: return ImmuneReactionTypes.Immune
+    # Else if victim deflect attack
+    elif form << 1 in victim.immunes['active_weapon_drop']:
+        active_weapon_drop(
+            owner = victim,
+            victim = owner,
+            form = ImmuneTypes.Any)
+        return ImmuneReactionTypes.Deflect
 
     # Dropping weapon
     victim.drop_weapon(victim.active_weapon)
 
     # Success return
-    return True
+    return ImmuneReactionTypes.Passed
 
-def screen_angle_distortion(victim: wcs_player_entity, form, amount):
+def screen_angle_distortion(
+        owner: wcs_player_entity,
+        victim: wcs_player_entity,
+        amount: float,
+        form):
 
-    # Immune check
-    if form in victim.immunes['screen_rotate']: return False
+    # If type of attack in immunes
+    if form in victim.immunes['screen_rotate']: return ImmuneReactionTypes.Immune
+    # Or victim has counter to all types
+    elif ImmuneTypes.Any in victim.immunes['screen_rotate']: return ImmuneReactionTypes.Immune
+    # Else if victim deflect attack
+    elif form << 1 in victim.immunes['screen_rotate']:
+        screen_angle_distortion(
+            owner = victim,
+            victim = owner,
+            amount = amount,
+            form = ImmuneTypes.Any)
+        return ImmuneReactionTypes.Deflect
 
     # Normalize amount
     amount = 180 if amount > 180 else abs(int(amount))
@@ -166,4 +226,4 @@ def screen_angle_distortion(victim: wcs_player_entity, form, amount):
     victim.view_angle = angle
 
     # Success return
-    return True
+    return ImmuneReactionTypes.Passed

@@ -39,7 +39,7 @@ from WCSSkills.python.dictionaries import DefaultDict
 # Constants
 from WCSSkills.other_functions.constants import WCS_FOLDER
 from WCSSkills.other_functions.constants import SKILL_SETTING_DEFAULT_BOOL
-from WCSSkills.other_functions.constants import Immune_types
+from WCSSkills.other_functions.constants import ImmuneTypes
 # Logger
 from WCSSkills.other_functions.functions import wcs_logger
 # Xp calculator
@@ -207,7 +207,7 @@ class WCS_Player(Player): # Short: WCSP
         # Immune to various skills of WCS_Player
         self.immunes = DefaultDict()
         self.immunes.add_ignored(0)
-        self.immunes.set_default(Immune_types.Nothing)
+        self.immunes.set_default(ImmuneTypes.Nothing)
 
         # Loading player settings
         for setting in Player_settings.get_values():
@@ -223,6 +223,14 @@ class WCS_Player(Player): # Short: WCSP
 
         # Logging initialization
         wcs_logger("player state", f"{self.name}: WCS_Player initialized")
+
+    def __repr__(self):
+        return (f"{self.__class__.__name__}(name={self.name},"
+               f"index={self.index}, userid={self.userid})")
+
+    def __eq__(self, other):
+        if self.__class__ is other.__class__: self.index = other.index
+        else: raise NotImplemented
 
     def skills_activate(self, _=None) -> None:
         """

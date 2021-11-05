@@ -8,7 +8,7 @@ from messages import SayText2
 
 # Plugin Imports
 # Immune types
-from WCSSkills.other_functions.constants import Immune_types
+from WCSSkills.other_functions.constants import ImmuneTypes
 # Skills information
 from WCSSkills.db.wcs import Skills_info
 # WCS_Player
@@ -78,12 +78,15 @@ class ImmuneSkill:
                 if chance(trigger_chance, 100):
 
                     # Applying Immune_type to owner.immunes
-                    owner.immunes[form] = eval(f"Immune_types.{key}")
+                    owner.immunes[form] = eval(f"ImmuneTypes.{key}")
 
         # Notifying player
         SayText2(f"\4[WCS]\1 Вы получите защиту от {self.text} c шансом \5"
              f"{trigger_chance/2.5 if trigger_chance < 100 else 100:.1f}"
              f"\1%").send(owner.index)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(form={self.form}, text={self.text})"
 
     def close(self):
         pass

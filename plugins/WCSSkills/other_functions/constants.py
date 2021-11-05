@@ -5,6 +5,7 @@
 # Python Imports
 from datetime import datetime
 from enum import IntFlag
+from enum import IntEnum
 
 # Source.Python Imports
 # DamageTypes
@@ -23,7 +24,7 @@ from WCSSkills.WCSSkills import WCS_FOLDER
 # >> Enumeratings
 # =============================================================================
 
-class Immune_types(IntFlag):
+class ImmuneTypes(IntFlag):
     """ Types of immune to skills
 
     You must be cautious with Ultimate_deflect, bcz Ultimate_deflect
@@ -31,8 +32,8 @@ class Immune_types(IntFlag):
 
     skill with damage and paralyze. Check for skill immune should
     be in damage, and paralyze -> If victim has
-    •Immune_types.Nothing paralyze
-    •Immune_types.Ultimate_deflect for damage
+    •ImmuneTypes.Nothing paralyze
+    •ImmuneTypes.Ultimate_deflect for damage
     Victim should deflect damage, and be paralyzed.
 
     Always check resistance partly in this situation!
@@ -41,21 +42,24 @@ class Immune_types(IntFlag):
     # None immune
     Nothing = 0
 
+    # Immune to all
+    Any = 1
+
     # Immune to default skills (attack)
-    Default = 1
-    Default_deflect = 2
+    Default = 2
+    Default_deflect = 4
 
     # Mirror skills
-    Mirror = 4
-    Mirror_deflect = 8
+    Mirror = 8
+    Mirror_deflect = 16
 
     # Ultimate
-    Ultimate = 16
-    Ultimate_deflect = 32
+    Ultimate = 32
+    Ultimate_deflect = 64
 
     # Aura immune
-    Aura = 64
-    Aura_deflect = 128
+    Aura = 128
+    Aura_deflect = 256
 
     def __contains__(self, item):
 
@@ -84,7 +88,12 @@ class Immune_types(IntFlag):
         else:
             raise TypeError(f"Can't compare '{type(item)}' and 'IntFlag'")
 
-DamTyp.__contains__ = Immune_types.__contains__
+class ImmuneReactionTypes(IntEnum):
+    Passed = 0
+    Immune = 1
+    Deflect = 2
+
+DamTyp.__contains__ = ImmuneTypes.__contains__
 DamageTypes = DamTyp
 # class DamageTypes(DamTyp):
 #

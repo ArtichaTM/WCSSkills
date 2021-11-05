@@ -43,13 +43,16 @@ class _DB_admin:
     """
     Class saves all punished players
     """
-    __slots__ = ('db', 'repeat')
+    __slots__ = ('path_to_db', 'db', 'repeat')
 
     def __init__(self, path_to_db):
         """
         :param path_to_db str
             Where must be located db. Absolute path
         """
+
+        # Saving path_do_db to class
+        self.path_to_db = path_to_db
 
         # Connecting db
         self.db = sqlite3.connect(path_to_db)
@@ -139,6 +142,9 @@ class _DB_admin:
         # Repeat to look after expired punishments
         self.repeat = Repeat(self._update_active)
         self.repeat.start(30, execute_on_start = True)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(path={self.path_to_db})"
 
     def add_entry(self,
                 ptype: int,
@@ -345,11 +351,11 @@ class _Disconnected_players:
 
     def __init__(self, path: str):
         """
-
         :param str path:
             Determines where db is located. Absolute path
         """
 
+        # Saving path to settings
         self.path_to_settings = path
 
         # Checking if file exist
@@ -376,6 +382,9 @@ class _Disconnected_players:
         except IndexError: raise StopIteration
         self.position += 1
         return x
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(path={self.path_to_settings})"
 
     def add_entry(self, name, steamid, ip):
         """

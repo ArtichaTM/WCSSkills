@@ -24,7 +24,7 @@ from listeners.tick import Repeat
 from events.manager import event_manager
 from events.hooks import pre_event_manager
 # Messages
-from messages.base import SayText2
+from messages.base import SayText2 as ST2
 # Models
 from engines.precache import Model
 # Colors
@@ -51,7 +51,8 @@ from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import WCS_FOLDER
 from WCSSkills.other_functions.constants import DamageTypes
 # Enumeratings
-from WCSSkills.other_functions.constants import Immune_types
+from WCSSkills.other_functions.constants import ImmuneTypes
+from WCSSkills.other_functions.constants import ImmuneReactionTypes
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -133,6 +134,10 @@ class BaseSkill:
 
             self.lvl = lvl
 
+    def __repr__(self):
+        return (f"{self.__class__.__name__}(lvl={self.lvl}, "
+               f"settings={self.settings}, owner = {self.owner.__repr__()})")
+
     def close(self) -> None:
         pass
 
@@ -159,7 +164,7 @@ class ActiveSkill(BaseSkill):
         """
 
         if self.delay.running:
-            SayText2("\4[WCS]\1 Ещё не готово! Осталось "
+            ST2("\4[WCS]\1 Ещё не готово! Осталось "
             f"\5{self.delay.time_remaining:.1f}\1").send(self.owner.index)
             return False
         else:
@@ -173,7 +178,7 @@ class ActiveSkill(BaseSkill):
         """
 
         if self.delay.running:
-            SayText2("\4[WCS]\1 Ещё не готово! Осталось "
+            ST2("\4[WCS]\1 Ещё не готово! Осталось "
             f"\5{self.delay.time_remaining:.1f}\1").send(self.owner.index)
             return False
         else:
@@ -287,7 +292,7 @@ class Health(BaseSkill):
 
         if self.owner.data_info['skills_activate_notify']:
             # Notifying player
-            SayText2(f"\4[WCS]\1 Вы получили \5{self.lvl}\1 к хп").send(self.owner.index)
+            ST2(f"\4[WCS]\1 Вы получили \5{self.lvl}\1 к хп").send(self.owner.index)
 
 class Start_add_speed(BaseSkill):
     """
@@ -308,7 +313,7 @@ class Start_add_speed(BaseSkill):
 
         if self.owner.data_info['skills_activate_notify']:
             # Notifies player about perk activation
-            SayText2("\4[WCS]\1 Ваша скорость увеличена на "
+            ST2("\4[WCS]\1 Ваша скорость увеличена на "
             f"\5{self.speed}\1%").send(self.owner.index)
 
         # Adding speed
@@ -338,13 +343,13 @@ class Regenerate(BaseSkill, repeat_functions):
 
         if self.owner.data_info['skills_activate_notify']:
             # Notifies player about perk activation
-            SayText2("\4[WCS]\1 Регенерация "
+            ST2("\4[WCS]\1 Регенерация "
             f"\5{self.hp}\1хп/\5{self.interval}\1с").send(self.owner.index)
 
     def heal(self) -> None:
         healed: int = self.owner.heal(self.hp)
         if self.settings['notify'] and healed > 0:
-            SayText2(f"\4[WCS]\1 Вы исцелились на \5{healed}\1 "
+            ST2(f"\4[WCS]\1 Вы исцелились на \5{healed}\1 "
                       "(регенерация)").send(self.owner.index)
 
     def close(self) -> None:
@@ -372,7 +377,7 @@ class Heal_per_step(BaseSkill):
 
         if self.owner.data_info['skills_activate_notify']:
             # Notifies player about perk activation
-            SayText2(f"\4[WCS]\1 Вы исцеляетесь на \5{self.hp}\1хп "
+            ST2(f"\4[WCS]\1 Вы исцеляетесь на \5{self.hp}\1хп "
             f"каждые \5{self.interval}\1 шагов").send(self.owner.index)
 
         # Register for footstep event
@@ -397,7 +402,7 @@ class Heal_per_step(BaseSkill):
 
                 # Notify, if player activated this in settings
                 if self.settings['notify'] and healed > 0:
-                    SayText2("\4[WCS]\1 Вы исцелились на "
+                    ST2("\4[WCS]\1 Вы исцелились на "
                     f"\5{healed}\1 за шаг").send(self.owner.index)
 
     def close(self) -> None:
@@ -423,12 +428,12 @@ class Start_set_gravity(BaseSkill):
 
             if self.owner.data_info['skills_activate_notify']:
                 # Notifies player about perk activation
-                SayText2("\4[WCS]\1 Ваша гравитация уменьшена на "
+                ST2("\4[WCS]\1 Ваша гравитация уменьшена на "
                 f"\5{self.grav*100}\1%").send(self.owner.index)
         else:
             self.owner.move_type = MoveType.FLY
             if self.owner.data_info['skills_activate_notify']:
-                SayText2(f"\4[WCS]\1 Ваша гравитация уменьшена на"
+                ST2(f"\4[WCS]\1 Ваша гравитация уменьшена на"
                 "\5 100\1%").send(self.owner.index)
 
     def close(self) -> None:
@@ -461,10 +466,10 @@ class Long_jump(BaseSkill):
         if self.owner.data_info['skills_activate_notify']:
             # Notifies player about perk activation
             if self.power == int(self.power):
-                SayText2("\4[WCS]\1 Длина вашего прыжка увеличена в "
+                ST2("\4[WCS]\1 Длина вашего прыжка увеличена в "
                 f"\5{int(self.power)}\1 раз").send(self.owner.index)
             else:
-                SayText2("\4[WCS]\1 Длина вашего прыжка увеличена в "
+                ST2("\4[WCS]\1 Длина вашего прыжка увеличена в "
                 f"\5{self.power}\1 раз").send(self.owner.index)
 
         # Registration for player jump
@@ -510,19 +515,19 @@ class Slow_fall(BaseSkill, repeat_functions):
         # Notifies player about perk activation
         if self.owner.data_info['skills_activate_notify']:
             if self.limit == 5:
-                SayText2("\4[WCS]\1 Вы \5чрезвычайно\1 медленно "
+                ST2("\4[WCS]\1 Вы \5чрезвычайно\1 медленно "
                          "падаете").send(self.owner.index)
             elif self.limit <= 105:
-                SayText2("\4[WCS]\1 Вы \5значительно\1 медленнее "
+                ST2("\4[WCS]\1 Вы \5значительно\1 медленнее "
                          "падаете").send(self.owner.index)
             elif self.limit <= 255:
-                SayText2("\4[WCS]\1 Вы \5умеренно\1 медленнее "
+                ST2("\4[WCS]\1 Вы \5умеренно\1 медленнее "
                          "падаете").send(self.owner.index)
             elif self.limit <= 405:
-                SayText2("\4[WCS]\1 Вы \5незначительно\1 медленнее "
+                ST2("\4[WCS]\1 Вы \5незначительно\1 медленнее "
                          "падаете").send(self.owner.index)
             else:
-                SayText2("\4[WCS]\1 Вы \5слегка\1 медленнее "
+                ST2("\4[WCS]\1 Вы \5слегка\1 медленнее "
                          "падаете").send(self.owner.index)
 
         # Registration for jump
@@ -585,12 +590,12 @@ class Nearly_Aim(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Ваше оружие модифицировано \5доводкой\1").send(self.owner.index)
+            ST2(f"\4[WCS]\1 Ваше оружие модифицировано \5доводкой\1").send(self.owner.index)
 
             if self.settings['headshot']:
-                SayText2(f"\4[WCS]\1 Шанс попасть в голову: \5{self.lvl/10}%\1").send(self.owner.index)
+                ST2(f"\4[WCS]\1 Шанс попасть в голову: \5{self.lvl/10}%\1").send(self.owner.index)
             if self.settings['back_to_aim']:
-                SayText2("\4[WCS]\1 Вернуть прицел после выстрела: "
+                ST2("\4[WCS]\1 Вернуть прицел после выстрела: "
                 f"\5{'вкл' if self.back_to_aim == True else 'выкл'}\1").send(self.owner.index)
 
         # Register for firing
@@ -654,7 +659,7 @@ class Trigger(ActiveSkill):
 
     def bind_pressed(self) -> None:
         if self.delay.running:
-            SayText2("\4[WCS]\1 Ещё не готово! Осталось "
+            ST2("\4[WCS]\1 Ещё не готово! Осталось "
             f"\5{self.delay.time_remaining:.1f}\1").send(self.owner.index)
 
         # noinspection PyAttributeOutsideInit
@@ -663,7 +668,7 @@ class Trigger(ActiveSkill):
         self.is_pressed = True
         Delay(self.length, self.bind_released)
         if self.settings['activate_notify']:
-            SayText2(f"\4[WCS]\1 Триггер \2активирован\1")
+            ST2(f"\4[WCS]\1 Триггер \2активирован\1")
 
     def bind_released(self) -> None:
         if self.is_pressed:
@@ -671,7 +676,7 @@ class Trigger(ActiveSkill):
             self.delay = Delay(self.cd, self.cd_passed)
             self.is_pressed = False
             if self.settings['activate_notify']:
-                SayText2(f"\4[WCS]\1 Триггер \7деактивирован\1")
+                ST2(f"\4[WCS]\1 Триггер \7деактивирован\1")
 
     def tick(self) -> None:
         target = self.owner.view_player
@@ -679,7 +684,7 @@ class Trigger(ActiveSkill):
             force_buttons(self.owner, PlayerButtons.ATTACK)
 
     def cd_passed(self) -> None:
-        SayText2(f"\5[WCS]\1 Триггер \5готов\1").send(self.owner.index)
+        ST2(f"\5[WCS]\1 Триггер \5готов\1").send(self.owner.index)
 
 class Start_add_max_hp(BaseSkill):
 
@@ -690,7 +695,7 @@ class Start_add_max_hp(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2("\4[WCS]\1 Ваше максимальное здоровье увеличено"
+            ST2("\4[WCS]\1 Ваше максимальное здоровье увеличено"
             f" на \4{self.lvl//2}\1").send(self.owner.index)
 
 class Teleport(ActiveSkill):
@@ -708,7 +713,7 @@ class Teleport(ActiveSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Телепорт радиусом "
+            ST2(f"\4[WCS]\1 Телепорт радиусом "
             f"\5{self.allowed_distance}\1 юнитов активирован").send(self.owner.index)
 
     def bind_pressed(self) -> None:
@@ -731,7 +736,7 @@ class Teleport(ActiveSkill):
             self.position = None
             if self.owner.is_in_solid():
                 self.owner.teleport(self.origin)
-                SayText2(f"\4[WCS]\1 \7Неверная позиция!\1").send(self.owner.index)
+                ST2(f"\4[WCS]\1 \7Неверная позиция!\1").send(self.owner.index)
                 self.delay = Delay(self.cd/10, self.cd_passed)
                 return
             self.owner.emit_sound(f'{WCS_FOLDER}/skills/Teleport/success.mp3',
@@ -739,7 +744,7 @@ class Teleport(ActiveSkill):
             self.delay = Delay(self.cd//2, self.cd_passed)
 
     def cd_passed(self) -> None:
-        SayText2(f"\4[WCS]\1 Телепорт \5готов\1").send(self.owner.index)
+        ST2(f"\4[WCS]\1 Телепорт \5готов\1").send(self.owner.index)
         if self.is_pressed is True and self.settings['after_cd_instantly']:
             self.bind_released()
 
@@ -759,14 +764,14 @@ class Aim(BaseSkill):
         if self.lvl >= 1000 and self.settings['back_to_aim']:
             self.back_to_aim = True
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Ваше оружие модифицировано \5наводкой\1").send(self.owner.index)
-            SayText2(f"\4[WCS]\1 Шанс наводки: \5{self.lvl/15:.0f}%\1").send(self.owner.index)
+            ST2(f"\4[WCS]\1 Ваше оружие модифицировано \5наводкой\1").send(self.owner.index)
+            ST2(f"\4[WCS]\1 Шанс наводки: \5{self.lvl/15:.0f}%\1").send(self.owner.index)
 
             if self.settings['headshot']:
-                SayText2(f"\4[WCS]\1 Шанс попасть в голову: \5{self.lvl/100:.0f}%\1").send(self.owner.index)
+                ST2(f"\4[WCS]\1 Шанс попасть в голову: \5{self.lvl/100:.0f}%\1").send(self.owner.index)
 
             if self.settings['back_to_aim'] and lvl >= 1000:
-                SayText2("\4[WCS]\1 Вернуть прицел после выстрела: "
+                ST2("\4[WCS]\1 Вернуть прицел после выстрела: "
                 f"\5{'вкл' if self.back_to_aim == True else 'выкл'}\1").send(self.owner.index)
 
         pre_event_manager.register_for_event('weapon_fire', self.fire)
@@ -782,7 +787,7 @@ class Aim(BaseSkill):
 
         # Looking for player
         target = open_players(player=self.owner,
-                              form = Immune_types.Default,
+                              form = ImmuneTypes.Default,
                               only_one = True)
 
         # If found, and chance worked
@@ -844,7 +849,7 @@ class WalkOnAir(ActiveSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Вы можете \5ходить по воздуху\1").send(self.owner.index)
+            ST2(f"\4[WCS]\1 Вы можете \5ходить по воздуху\1").send(self.owner.index)
 
 
     def _create_prop(self) -> None:
@@ -915,7 +920,7 @@ class Poison(PeriodicSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Шанс \5{self.chance:.0f}%\1 отравить "
+            ST2(f"\4[WCS]\1 Шанс \5{self.chance:.0f}%\1 отравить "
             f"противника на \5{self.length}\1 секунд "
             f"с \5{self.dmg}\1 уроном в секунду").send(self.owner.index)
 
@@ -943,7 +948,7 @@ class Poison(PeriodicSkill):
             attacker = Player(index_from_userid(userid))
 
             # Notifying owner about infect
-            SayText2(f"[\4[WCS]\1 Вы заразили {attacker.name}").send(self.owner.index)
+            ST2(f"[\4[WCS]\1 Вы заразили {attacker.name}").send(self.owner.index)
 
 
     def tick(self) -> None:
@@ -988,10 +993,10 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             if self.lvl >= 100:
-                SayText2(f"\4[WCS]\1 При попадание восполняется \5{self.amount}\1 "
+                ST2(f"\4[WCS]\1 При попадание восполняется \5{self.amount}\1 "
                 "патрон").send(self.owner.index)
             else:
-                SayText2(f"\4[WCS]\1 При попадание восполняется \5{self.amount}\1 "
+                ST2(f"\4[WCS]\1 При попадание восполняется \5{self.amount}\1 "
                     f"патрон с шансом \5{self.chance}%\1").send(self.owner.index)
 
     def add_ammo(self, weapon) -> None:
@@ -1062,7 +1067,7 @@ class Additional_percent_dmg(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Вы наносите на \5{self.percent*100:.0f}%\1"
+            ST2(f"\4[WCS]\1 Вы наносите на \5{self.percent*100:.0f}%\1"
             " больше урона").send(self.owner.index)
 
     def player_hurt(self, entity, info) -> bool:
@@ -1089,7 +1094,7 @@ class Additional_percent_dmg(BaseSkill):
 
         # Notifying player about damage
         if self.settings['damage_notify']:
-            SayText2(f"\4[WCS]\1 Вы нанесли \5{add_damage:.0f}\1 доп "
+            ST2(f"\4[WCS]\1 Вы нанесли \5{add_damage:.0f}\1 доп "
             f"урона игроку \5{player.name:.10}\1").send(self.owner.index)
 
         return True
@@ -1113,7 +1118,7 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Распрыжка на \5{self.hops}\1 прыжков").send(self.owner.index)
+            ST2(f"\4[WCS]\1 Распрыжка на \5{self.hops}\1 прыжков").send(self.owner.index)
 
 
     def jumped(self, ev):
@@ -1166,7 +1171,7 @@ class Paralyze(DelaySkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Паралич на \5{self.length:.1f}\1с "
+            ST2(f"\4[WCS]\1 Паралич на \5{self.length:.1f}\1с "
             f"откатом в \5{self.cd_length:.1f}\1с").send(self.owner.index)
 
     def player_hurt(self, ev):
@@ -1183,9 +1188,10 @@ class Paralyze(DelaySkill):
             return
 
         paralyze(
+            owner = self.owner,
             victim = victim,
             length = self.length,
-            form = Immune_types.Default.value
+            form = ImmuneTypes.Default.value
             )
 
         self.cd = Delay(self.cd_length, self.cd_passed)
@@ -1204,12 +1210,12 @@ class Paralyze(DelaySkill):
             a=150)
 
         if self.settings['hit notify']:
-            SayText2(f"\4[WCS]\1 Вы парализовали игрока \5{victim.name:.10}\1 на"
+            ST2(f"\4[WCS]\1 Вы парализовали игрока \5{victim.name:.10}\1 на"
                  f" \5{self.length:.1f}\1с").send(self.owner.index)
 
     def cd_passed(self):
         if self.settings['cooldown_pass notify']:
-            SayText2(f"\4[WCS]\1 Паралич \5готов\1").send(self.owner.index)
+            ST2(f"\4[WCS]\1 Паралич \5готов\1").send(self.owner.index)
 
     def close(self) -> None:
         super().close()
@@ -1226,7 +1232,7 @@ class Smoke_on_wall_hit(BaseSkill):
 
             # Notifying player
             if self.owner.data_info['skills_activate_notify']:
-                SayText2("\4[WCS]\1 Ваш смок появится при первом соприкосновении "
+                ST2("\4[WCS]\1 Ваш смок появится при первом соприкосновении "
                          "со стенкой/полом/потолком").send(self.owner.index)
 
     def grenade_bounce(self, ev):
@@ -1261,7 +1267,7 @@ class Damage_delay_defend(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2("\4[WCS]\1 Урон по вам задержится на "
+            ST2("\4[WCS]\1 Урон по вам задержится на "
                      f"\5{self.delay_length:.1f}\1с").send(self.owner.index)
 
     def player_hurt(self, victim, info) -> bool:
@@ -1340,7 +1346,7 @@ class Toss(DelaySkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 С шансом \5{self.chance:.0f}\1% вы подкинете "
+            ST2(f"\4[WCS]\1 С шансом \5{self.chance:.0f}\1% вы подкинете "
                      f"противника с силой в \5{self.power:.0f}\1"
                      " юнитов").send(self.owner.index)
 
@@ -1403,7 +1409,7 @@ class Mirror_paralyze(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 С шансом \5{self.chance:.0f}\1% "
+            ST2(f"\4[WCS]\1 С шансом \5{self.chance:.0f}\1% "
                      "вы парализуете противника при защите на "
                      f"\5{self.length:.1f}\1c").send(self.owner.index)
 
@@ -1426,16 +1432,46 @@ class Mirror_paralyze(BaseSkill):
             # Then it's 100% bot. Abort. No mirror paralyze on bots :D
             return
 
-        paralyze(attacker, self.length, Immune_types.Default_deflect)
+        result = paralyze(
+            owner = self.owner,
+            victim = attacker,
+            length = self.length,
+            form = ImmuneTypes.Default
+            )
 
-        # Notifying victim
-        SayText2(f"\4[WCS]\1 Вас парализовали \5{self.owner.name:.10}\1 "
-                 f"на \5{self.length:.1f}\1с").send(attacker.index)
+        # Notifying
+        if result == ImmuneReactionTypes.Passed:
 
-        # Notifying owner
-        if self.settings['hit notify']:
-            SayText2(f"\4[WCS]\1 Вы парализовали \5{attacker.name:.10}\1 "
-                     f"на \5{self.length:.1f}\1с").send(self.owner.index)
+            # Victim
+            ST2(f"\4[WCS]\1 Вас парализовали \5{self.owner.name:.10}\1 "
+                     f"на \5{self.length:.1f}\1с").send(attacker.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Вы парализовали игрока \5"
+                    f"{attacker.name:.10}\1").send(self.owner.index)
+
+        elif result == ImmuneReactionTypes.Immune:
+
+            # Victim
+            ST2("\4[WCS]\1 Вы защитились от паралича игрока \5"
+                f"{self.owner.name:.10}\1").send(attacker.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 У игрока \5{attacker.name:.10}\1 "
+                    f"защита от паралича").send(self.owner.index)
+
+        elif result == ImmuneReactionTypes.Deflect:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вы отразили паралич игрока \5"
+                f"{self.owner.name:.10}\1").send(attacker.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Игрок \5{attacker.name:.10}\1"
+                    f" отразил паралич").send(self.owner.index)
 
     def close(self) -> None:
         super().close()
@@ -1457,7 +1493,7 @@ class Vampire_damage_percent(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2(f"\4[WCS]\1 Вы исцеляете \5{self.vampire_percent*100:.1f}\1%"
+            ST2(f"\4[WCS]\1 Вы исцеляете \5{self.vampire_percent*100:.1f}\1%"
                      f" здоровья от урона по врагу").send(self.owner.index)
 
     def player_hurt(self, ev):
@@ -1471,7 +1507,7 @@ class Vampire_damage_percent(BaseSkill):
 
         # Notifying owner
         if self.settings['hit notify']:
-            SayText2(f"\4[WCS]\1 Вы исцелились на \5{amount_to_heal:.1f}"
+            ST2(f"\4[WCS]\1 Вы исцелились на \5{amount_to_heal:.1f}"
                      '\1').send(self.owner.index)
 
     def close(self) -> None:
@@ -1495,7 +1531,7 @@ class Drop_weapon_chance(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            SayText2("\4[WCS]\1 Вы выбросите оружие противника с шансом"
+            ST2("\4[WCS]\1 Вы выбросите оружие противника с шансом"
                      f"{self.chance:.1f}").send(self.owner.index)
 
     def player_hurt(self, ev):
@@ -1511,7 +1547,44 @@ class Drop_weapon_chance(BaseSkill):
         except KeyError: return
 
         # Using weapon_drop function
-        active_weapon_drop(victim, Immune_types.Default)
+        result = active_weapon_drop(
+            owner = self.owner,
+            victim = victim,
+            form = ImmuneTypes.Default)
+
+        # Notifying
+        if result == ImmuneReactionTypes.Passed:
+
+            # Victim
+            ST2(f"\4[WCS]\1 \5{self.owner.name:.10}\1 "
+                 f"выбросил ваше оружие").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Вы выбросили оружие игрока "
+                         f"\5{victim.name:.10}\1").send(self.owner.index)
+
+        elif result == ImmuneReactionTypes.Immune:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вы защитились выброса оружия "
+                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
+                         f"защита от выброса оружие").send(self.owner.index)
+
+        elif result == ImmuneReactionTypes.Deflect:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вы отразили выброс оружия "
+                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1 "
+                         f"отразил выброс оружия").send(self.owner.index)
 
     def close(self) -> None:
         super().close()
@@ -1545,22 +1618,42 @@ class Screen_rotate_attack(DelaySkill):
         except KeyError: return
 
         # Using distortion function
-        result = screen_angle_distortion(victim=victim,
-                                         form=Immune_types.Default,
-                                         amount=self.distortion)
+        result = screen_angle_distortion(
+            owner = self.owner,
+            victim = victim,
+            form = ImmuneTypes.Default,
+            amount = self.distortion)
 
         # Starting delay
         self.cd = Delay(self.cd_length, self.cd_passed)
 
+        # Notifying victim
+        if result == ImmuneReactionTypes.Passed:
+            ST2("\4[WCS]\1 Ваш экран развернул игрок "
+                 f"\5{self.owner.name:.10}\1").send(victim.index)
+
+        elif result == ImmuneReactionTypes.Immune:
+            ST2(f"\4[WCS]\1 Вы защитились разворота экрана "
+                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
+
+        elif result == ImmuneReactionTypes.Deflect:
+            ST2(f"\4[WCS]\1 Вы отразили паралич "
+                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
+
         # Notifying owner
         if self.settings['hit notify']:
-            if result:
-                SayText2(f"\4[WCS]\1 Вы развернули экран "
+
+            if result == ImmuneReactionTypes.Passed:
+                ST2(f"\4[WCS]\1 Вы развернули экран "
                          f"\5{victim.name:.10}\1").send(self.owner.index)
-            else:
-                SayText2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
+
+            elif result == ImmuneReactionTypes.Immune:
+                ST2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
                      f"защита от поворота экрана").send(self.owner.index)
 
+            elif result == ImmuneReactionTypes.Deflect:
+                ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1 "
+                     f"отразил поворота экрана").send(self.owner.index)
 
     def close(self) -> None:
         super().close()
