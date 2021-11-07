@@ -4,7 +4,7 @@
 # =============================================================================
 # Python imports
 import random
-from typing import Union
+from typing import Union, Callable
 from WCSSkills.python.types import wcs_player_entity
 from random import uniform
 
@@ -107,18 +107,34 @@ def skills_on_take_damage(args) -> Union[None, bool]:
                 # Then canceling hit
                 return False
 
-def immunes_check(victim, form, immune_type, deflect_target, *args):
+def immunes_check(victim: wcs_player_entity,
+                  form: ImmuneTypes,
+                  immune_type: str,
+                  deflect_target: Callable,
+                  *args):
+    """ Decides, which immune (deflect/immune) is worked, if any
+
+    :param victim: victim's WCS_Player
+    :param form: ImmuneTypes form of attack
+    :param immune_type: Which immune to check (paralyze/toss/...)
+    :param deflect_target: function, the works on deflect
+    :param args: arguments passed to deflect function
+    :return: ImmuneReactionTypes
+
+    """
 
     # # Immune check
 
+    # If form is penetrate, return passed
+    if form is ImmuneTypes.Penetrate: return ImmuneReactionTypes.Passed
+
     # If type of attack in immunes
     if form in victim.immunes[immune_type]: return ImmuneReactionTypes.Immune
-
     # Or victim has counter to all types
-    elif ImmuneTypes.Any in victim.immunes[immune_type]: return ImmuneReactionTypes.Immune
+    if ImmuneTypes.Any in victim.immunes[immune_type]: return ImmuneReactionTypes.Immune
 
     # Else if victim deflect attack
-    elif form << 1 in victim.immunes[immune_type]:
+    if form << 1 in victim.immunes[immune_type]:
 
         # Passing to deflect function with args
         deflect_target(*args)
