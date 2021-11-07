@@ -18,6 +18,7 @@ from .functions import chance
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
+
 __all__ = (
 'paralyze',
 'screen_rotate',
@@ -69,9 +70,10 @@ class ImmuneSkill:
                      f"\5{self.text}\1").send(owner.index)
             return
 
+        # Going through all forms of immune
         for form in self.form:
 
-            # Applying to owner.immunes with chance
+            # Iterating over all selected forms of immune
             for key in forms:
 
                 # Chance check
@@ -106,3 +108,7 @@ class active_weapon_drop(ImmuneSkill):
 class aimbot(ImmuneSkill):
     form = ('aimbot',)
     text = 'аимбота'
+
+class toss(ImmuneSkill):
+    form = ('toss', )
+    text = 'подкидывания'

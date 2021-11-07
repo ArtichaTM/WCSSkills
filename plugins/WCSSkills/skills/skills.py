@@ -1174,7 +1174,7 @@ class Paralyze(DelaySkill):
             ST2(f"\4[WCS]\1 Паралич на \5{self.length:.1f}\1с "
             f"откатом в \5{self.cd_length:.1f}\1с").send(self.owner.index)
 
-    def player_hurt(self, ev):
+    def player_hurt(self, ev) -> None:
 
         try:
             attacker = WCS_Players[ev['attacker']]
@@ -1187,19 +1187,17 @@ class Paralyze(DelaySkill):
         if attacker != self.owner or self.cd.running is True:
             return
 
-        paralyze(
+        result = paralyze(
             owner = self.owner,
             victim = victim,
             length = self.length,
-            form = ImmuneTypes.Default.value
+            form = ImmuneTypes.Default
             )
-
-        self.cd = Delay(self.cd_length, self.cd_passed)
 
         # Beam effect
         effect.beam_laser(
             users=player_indexes(),
-            start=attacker.eye_location,
+            start=self.owner.eye_location,
             end=attacker.view_coordinates,
             lifetime=1.5,
             width=3,
@@ -1209,9 +1207,45 @@ class Paralyze(DelaySkill):
             blue=0,
             a=150)
 
-        if self.settings['hit notify']:
-            ST2(f"\4[WCS]\1 Вы парализовали игрока \5{victim.name:.10}\1 на"
-                 f" \5{self.length:.1f}\1с").send(self.owner.index)
+        # Notifying
+        if result == ImmuneReactionTypes.Passed:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вас парализовал \5{self.owner.name:.10}\1 "
+                     f"на \5{self.length:.1f}\1с").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Вы парализовали игрока \5"
+                    f"{victim.name:.10}\1").send(self.owner.index)
+
+        elif result == ImmuneReactionTypes.Immune:
+
+            # Victim
+            ST2("\4[WCS]\1 Вы защитились от паралича игрока \5"
+                f"{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
+                    f"защита от паралича").send(self.owner.index)
+
+            return
+
+        elif result == ImmuneReactionTypes.Deflect:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вы отразили паралич игрока \5"
+                f"{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1"
+                    f" отразил паралич").send(self.owner.index)
+
+            return
+
+        self.cd = Delay(self.cd_length, self.cd_passed)
 
     def cd_passed(self):
         if self.settings['cooldown_pass notify']:
@@ -1368,18 +1402,57 @@ class Toss(DelaySkill):
 
         # Chance check
         if not chance(self.chance, 100): return
+        
+        
+        # Getting victim
+        try: victim = WCS_Players[ev['attacker']]
 
-        # Getting entity
-        victim = Entity(index_from_userid(ev['userid']))
+        # No such WCS_Player?
+        except KeyError:
 
-        # Getting entity velocity
-        vel = victim.velocity
+            # Then it's 100% bot
+            return
 
-        # Applying toss
-        vel[2] += self.power
+        result = Throw_player_upwards(
+            owner = self.owner,
+            victim = victim,
+            power = self.power,
+            form = ImmuneTypes.Default
+            )
 
-        # Applying velocity to entity
-        victim.teleport(velocity=vel)
+        # Notifying
+        if result == ImmuneReactionTypes.Passed:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вас подбросил \5{self.owner.name:.10}\1"
+                     '').send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Вы подбросили игрока \5"
+                    f"{victim.name:.10}\1").send(self.owner.index)
+
+        elif result == ImmuneReactionTypes.Immune:
+
+            # Victim
+            ST2("\4[WCS]\1 Вы защитились от подбрасывания игрока "
+                f"\5{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
+                    f"защита от подбрасывания").send(self.owner.index)
+
+        elif result == ImmuneReactionTypes.Deflect:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вы отразили подбрасывание игрока \5"
+                f"{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1"
+                    f" отразил подбрасывание").send(self.owner.index)
 
         # Player disabled no_cd?
         if not self.settings['no_cd']:
@@ -1388,6 +1461,7 @@ class Toss(DelaySkill):
             self.cd = Delay(1, self.cd_passed)
 
     def close(self) -> None:
+        super().close()
 
         # Unregistering for hurt event
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
@@ -1424,7 +1498,7 @@ class Mirror_paralyze(BaseSkill):
             return
 
         # Getting attacker
-        try: attacker = WCS_Players[ev['attacker']]
+        try: victim = WCS_Players[ev['attacker']]
 
         # No such WCS_Player?
         except KeyError:
@@ -1434,7 +1508,7 @@ class Mirror_paralyze(BaseSkill):
 
         result = paralyze(
             owner = self.owner,
-            victim = attacker,
+            victim = victim,
             length = self.length,
             form = ImmuneTypes.Default
             )
@@ -1444,33 +1518,33 @@ class Mirror_paralyze(BaseSkill):
 
             # Victim
             ST2(f"\4[WCS]\1 Вас парализовали \5{self.owner.name:.10}\1 "
-                     f"на \5{self.length:.1f}\1с").send(attacker.index)
+                     f"на \5{self.length:.1f}\1с").send(victim.index)
 
             # Owner
             if self.settings['hit notify']:
                 ST2(f"\4[WCS]\1 Вы парализовали игрока \5"
-                    f"{attacker.name:.10}\1").send(self.owner.index)
+                    f"{victim.name:.10}\1").send(self.owner.index)
 
         elif result == ImmuneReactionTypes.Immune:
 
             # Victim
             ST2("\4[WCS]\1 Вы защитились от паралича игрока \5"
-                f"{self.owner.name:.10}\1").send(attacker.index)
+                f"{self.owner.name:.10}\1").send(victim.index)
 
             # Owner
             if self.settings['hit notify']:
-                ST2(f"\4[WCS]\1 У игрока \5{attacker.name:.10}\1 "
+                ST2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
                     f"защита от паралича").send(self.owner.index)
 
         elif result == ImmuneReactionTypes.Deflect:
 
             # Victim
             ST2(f"\4[WCS]\1 Вы отразили паралич игрока \5"
-                f"{self.owner.name:.10}\1").send(attacker.index)
+                f"{self.owner.name:.10}\1").send(victim.index)
 
             # Owner
             if self.settings['hit notify']:
-                ST2(f"\4[WCS]\1 Игрок \5{attacker.name:.10}\1"
+                ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1"
                     f" отразил паралич").send(self.owner.index)
 
     def close(self) -> None:
@@ -1497,17 +1571,20 @@ class Vampire_damage_percent(BaseSkill):
                      f" здоровья от урона по врагу").send(self.owner.index)
 
     def player_hurt(self, ev):
+
+        # Checking, if attack did by owner
         if ev['attacker'] != self.owner.userid:
             return
 
+        # Calculating amount to heal
         amount_to_heal = ev['dmg_health'] * self.vampire_percent
-        print(ev['dmg_health'], amount_to_heal)
 
-        self.owner.heal(amount_to_heal)
+        # Healing, and stores healed hp
+        healed = self.owner.heal(amount_to_heal)
 
         # Notifying owner
         if self.settings['hit notify']:
-            ST2(f"\4[WCS]\1 Вы исцелились на \5{amount_to_heal:.1f}"
+            ST2(f"\4[WCS]\1 Вы исцелились на \5{healed:.1f}"
                      '\1').send(self.owner.index)
 
     def close(self) -> None:
@@ -1627,31 +1704,38 @@ class Screen_rotate_attack(DelaySkill):
         # Starting delay
         self.cd = Delay(self.cd_length, self.cd_passed)
 
-        # Notifying victim
+
+        # Notifying
         if result == ImmuneReactionTypes.Passed:
-            ST2("\4[WCS]\1 Ваш экран развернул игрок "
+
+            # Victim
+            ST2("\4[WCS]\1 Ваш экран повернул игрок "
                  f"\5{self.owner.name:.10}\1").send(victim.index)
 
-        elif result == ImmuneReactionTypes.Immune:
-            ST2(f"\4[WCS]\1 Вы защитились разворота экрана "
-                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
-
-        elif result == ImmuneReactionTypes.Deflect:
-            ST2(f"\4[WCS]\1 Вы отразили паралич "
-                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
-
-        # Notifying owner
-        if self.settings['hit notify']:
-
-            if result == ImmuneReactionTypes.Passed:
-                ST2(f"\4[WCS]\1 Вы развернули экран "
+            # Owner
+            if self.settings['hit notify']:
+                ST2(f"\4[WCS]\1 Вы повернули экран "
                          f"\5{victim.name:.10}\1").send(self.owner.index)
 
-            elif result == ImmuneReactionTypes.Immune:
+        elif result == ImmuneReactionTypes.Immune:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вы защитились поворота экрана "
+                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
                 ST2(f"\4[WCS]\1 У игрока \5{victim.name:.10}\1 "
                      f"защита от поворота экрана").send(self.owner.index)
 
-            elif result == ImmuneReactionTypes.Deflect:
+        elif result == ImmuneReactionTypes.Deflect:
+
+            # Victim
+            ST2(f"\4[WCS]\1 Вы отразили поворот экрана "
+                 f"игрока \5{self.owner.name:.10}\1").send(victim.index)
+
+            # Owner
+            if self.settings['hit notify']:
                 ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1 "
                      f"отразил поворота экрана").send(self.owner.index)
 

@@ -6,6 +6,7 @@
 from datetime import datetime
 from enum import IntFlag
 from enum import IntEnum
+from enum import auto
 
 # Source.Python Imports
 # DamageTypes
@@ -40,26 +41,37 @@ class ImmuneTypes(IntFlag):
     """
 
     # None immune
-    Nothing = 0
+    Nothing = auto()
 
     # Immune to all
-    Any = 1
+    Any = auto()
+
+    # Penetrate all immunes
+    Penetrate = auto()
 
     # Immune to default skills (attack)
-    Default = 2
-    Default_deflect = 4
+    Default = auto()
+    Default_deflect = auto()
 
     # Mirror skills
-    Mirror = 8
-    Mirror_deflect = 16
+    Mirror = auto()
+    Mirror_deflect = auto()
 
     # Ultimate
-    Ultimate = 32
-    Ultimate_deflect = 64
+    Ultimate = auto()
+    Ultimate_deflect = auto()
 
     # Aura immune
-    Aura = 128
-    Aura_deflect = 256
+    Aura = auto()
+    Aura_deflect = auto()
+
+    # Light
+    Light = auto()
+    Light_deflect = auto()
+
+    # Dark
+    Dark = auto()
+    Dark_deflect = auto()
 
     def __contains__(self, item):
 

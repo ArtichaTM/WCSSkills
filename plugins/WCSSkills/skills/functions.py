@@ -16,9 +16,7 @@ from entities import TakeDamageInfo
 from entities.entity import Entity
 from entities.helpers import index_from_pointer
 from entities.hooks import EntityPreHook, EntityCondition
-# SayText2
-from messages import SayText2
-# WCS_damage id:
+# Constants
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
 from WCSSkills.other_functions.constants import ImmuneTypes
@@ -32,10 +30,10 @@ __all__ = (
     'chance',
     'on_take_physical_damage',
     'on_take_magic_damage',
-    'victim_message',
     'paralyze',
     'active_weapon_drop',
-    'screen_angle_distortion'
+    'screen_angle_distortion',
+    'Throw_player_upwards'
 )
 
 # =============================================================================
@@ -50,10 +48,10 @@ on_take_magic_damage = set()
 # >> Functions
 # =============================================================================
 
-
 # Chance function to check if skill worked or not
 chance = lambda value1, value2 : value1 >= random.randint(0, value2)
 
+# Take damage hook
 @EntityPreHook(EntityCondition.is_player, 'on_take_damage')
 def skills_on_take_damage(args) -> Union[None, bool]:
 
@@ -109,6 +107,28 @@ def skills_on_take_damage(args) -> Union[None, bool]:
                 # Then canceling hit
                 return False
 
+def immunes_check(victim, form, immune_type, deflect_target, *args):
+
+    # # Immune check
+
+    # If type of attack in immunes
+    if form in victim.immunes[immune_type]: return ImmuneReactionTypes.Immune
+
+    # Or victim has counter to all types
+    elif ImmuneTypes.Any in victim.immunes[immune_type]: return ImmuneReactionTypes.Immune
+
+    # Else if victim deflect attack
+    elif form << 1 in victim.immunes[immune_type]:
+
+        # Passing to deflect function with args
+        deflect_target(*args)
+
+        # Returning Deflect
+        return ImmuneReactionTypes.Deflect
+
+    # If no immunes triggered, return Passed
+    return ImmuneReactionTypes.Passed
+
 def paralyze(
         owner: wcs_player_entity,
         victim: wcs_player_entity,
@@ -128,19 +148,12 @@ def paralyze(
 
     """
 
-    # # Immune check
-    # If type of attack in immunes
-    if form in victim.immunes['paralyze']: return ImmuneReactionTypes.Immune
-    # Or victim has counter to all types
-    elif ImmuneTypes.Any in victim.immunes['paralyze']: return ImmuneReactionTypes.Immune
-    # Else if victim deflect attack
-    elif form << 1 in victim.immunes['paralyze']:
-        paralyze(
-            owner = victim,
-            victim = owner,
-            length = length,
-            form = ImmuneTypes.Any)
-        return ImmuneReactionTypes.Deflect
+    result = immunes_check(victim, form, 'paralyze',
+                   # Deflect func and args
+                   paralyze, victim, owner, length, ImmuneTypes.Any)
+
+    # Returning result, if skill is not passed
+    if result is not ImmuneReactionTypes.Passed: return result
 
     try: victim.paralyze_length
     except AttributeError:
@@ -169,18 +182,12 @@ def active_weapon_drop(
         form
         ):
 
-    # # Immune check
-    # If type of attack in immunes
-    if form in victim.immunes['active_weapon_drop']: return ImmuneReactionTypes.Immune
-    # Or victim has counter to all types
-    elif ImmuneTypes.Any in victim.immunes['active_weapon_drop']: return ImmuneReactionTypes.Immune
-    # Else if victim deflect attack
-    elif form << 1 in victim.immunes['active_weapon_drop']:
-        active_weapon_drop(
-            owner = victim,
-            victim = owner,
-            form = ImmuneTypes.Any)
-        return ImmuneReactionTypes.Deflect
+    result = immunes_check(victim, form, 'active_weapon_drop',
+                   # Deflect func and args
+                   active_weapon_drop, victim, owner, ImmuneTypes.Any)
+
+    # Returning result, if skill is not passed
+    if result is not ImmuneReactionTypes.Passed: return result
 
     # Dropping weapon
     victim.drop_weapon(victim.active_weapon)
@@ -194,18 +201,11 @@ def screen_angle_distortion(
         amount: float,
         form):
 
-    # If type of attack in immunes
-    if form in victim.immunes['screen_rotate']: return ImmuneReactionTypes.Immune
-    # Or victim has counter to all types
-    elif ImmuneTypes.Any in victim.immunes['screen_rotate']: return ImmuneReactionTypes.Immune
-    # Else if victim deflect attack
-    elif form << 1 in victim.immunes['screen_rotate']:
-        screen_angle_distortion(
-            owner = victim,
-            victim = owner,
-            amount = amount,
-            form = ImmuneTypes.Any)
-        return ImmuneReactionTypes.Deflect
+    result = immunes_check(victim, form, 'screen_rotate',
+                   # Deflect func and args
+                   screen_angle_distortion, victim, owner, amount, ImmuneTypes.Any)
+    # Returning result, if skill is not passed
+    if result is not ImmuneReactionTypes.Passed: return result
 
     # Normalize amount
     amount = 180 if amount > 180 else abs(int(amount))
@@ -224,6 +224,30 @@ def screen_angle_distortion(
 
     # Applying angle
     victim.view_angle = angle
+
+    # Success return
+    return ImmuneReactionTypes.Passed
+
+def Throw_player_upwards(
+        owner: wcs_player_entity,
+        victim: wcs_player_entity,
+        power: float,
+        form):
+
+    result = immunes_check(victim, form, 'toss_upwards',
+                   # Deflect func and args
+                   Throw_player_upwards, victim, owner, power, ImmuneTypes.Any)
+    # Returning result, if skill is not passed
+    if result is not ImmuneReactionTypes.Passed: return result
+
+    # Getting velocity
+    vel = victim.velocity
+
+    # Applying power to the upwards dimension
+    vel[2] += power
+
+    # Applying new velocity to player
+    victim.teleport(velocity=vel)
 
     # Success return
     return ImmuneReactionTypes.Passed
