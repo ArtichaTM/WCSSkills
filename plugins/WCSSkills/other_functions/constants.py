@@ -140,7 +140,7 @@ DamageTypes = DamTyp
 # >> Constants
 # =============================================================================
 
-WCSSKILLS_DEBUG = False
+WCSSKILLS_DEBUG = True
 
 # WCS_magic_damage ID
 WCS_DAMAGE_ID = DamageTypes.PHYSGUN

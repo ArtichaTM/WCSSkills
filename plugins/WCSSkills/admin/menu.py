@@ -1,6 +1,6 @@
-# ../WCSSkills/admin/menus.py
+# ../WCSSkills/admin/menu.py
 """
-This file is working with фвьшт radio menu
+This file is working with admin radio menu
 """
 # =============================================================================
 # >> Imports
@@ -14,8 +14,6 @@ from menus import Text
 from menus import SimpleMenu
 from menus import SimpleOption
 from menus import PagedOption
-# Converter from index to userid
-from players.helpers import userid_from_index
 # SayText2
 from messages.base import SayText2
 
@@ -31,7 +29,7 @@ from WCSSkills.admin.constants import Punishment_reasons
 from WCSSkills.admin.constants import Punishment_duration
 from WCSSkills.admin.constants import MoveTypes
 # WCS_Player
-from WCSSkills.wcs.wcsplayer import WCS_Players
+from WCSSkills.wcs.wcsplayer import WCS_Player, WCS_Players
 # Modified default PagedMenu
 from WCSSkills.menus.radio import PagedMenu
 
@@ -60,7 +58,7 @@ def AdminMain(player):
 
 def AdminMain_callback(*args):
     choice = args[2].value
-    choice_player = WCS_Players[userid_from_index(args[1])]
+    choice_player = WCS_Player.from_index(args[1])
     if choice == 'players':
         AdminPlayers(choice_player)
     if choice == 'left':
@@ -79,7 +77,7 @@ def AdminPlayers(player):
     menu.send(player.index)
 
 def AdminPlayers_callback(*args):
-    AdminPlayers_player(WCS_Players[userid_from_index(args[1])],
+    AdminPlayers_player(WCS_Player.from_index(args[1]),
                         args[2].value, AdminPlayers)
 
 # noinspection PyTypeChecker
@@ -137,7 +135,7 @@ def AdminPlayers_player(player, target, parent=None):
     menu.send(player.index)
 
 def AdminPlayers_player_callback(_, index, choice):
-    admin = WCS_Players[userid_from_index(index)]
+    admin = WCS_Player.from_index(index)
     target, command = choice.value
 
     Admin_reasons(admin, target, command)
@@ -158,7 +156,7 @@ def Admin_reasons(admin, target, command):
         menu.send(admin.index)
 
 def Admin_reasons_callback(_, index, choice):
-    admin = WCS_Players[userid_from_index(index)]
+    admin = WCS_Player.from_index(index)
     target, command, reason = choice.value
     Admin_time(admin, target, command, reason)
 
@@ -188,7 +186,7 @@ def Admin_time(admin, target, command, reason  = None):
     menu.send(admin.index)
 
 def Admin_time_callback(_, index, choice):
-    admin = WCS_Players[userid_from_index(index)]
+    admin = WCS_Player.from_index(index)
     target, command, reason, time = choice.value
 
     if command == 'ban':
@@ -219,7 +217,7 @@ def Admin_move_types(admin, target):
     menu.send(admin.index)
 
 def Admin_move_types_callback(_, index, choice):
-    admin = WCS_Players[userid_from_index(index)]
+    admin = WCS_Player.from_index(index)
     target, move_type = choice.value
     admin_move_type(admin, target, move_type)
 
@@ -239,7 +237,7 @@ def Admin_left_players(admin):
     menu.send(admin.index)
 
 def Admin_left_players_callback(*args):
-    admin = WCS_Players[userid_from_index(args[1])]
+    admin = WCS_Player.from_index(args[1])
     target_data = args[2].value
     target = Disconnected_user.create(target_data[1], target_data[2], target_data[3])
     if target.is_player:

@@ -11,8 +11,6 @@ from menus import Text
 from menus import SimpleMenu
 from menus import SimpleOption
 from menus import PagedOption
-# Converter from index to userid
-from players.helpers import userid_from_index
 # SayText2
 from messages.base import SayText2
 # Commands filters
@@ -25,14 +23,14 @@ from commands.say import unregister_say_filter
 from WCSSkills.db.wcs import Skills_info
 from WCSSkills.db.wcs import Player_settings
 # WCS_Player
-from WCSSkills.wcs.wcsplayer import WCS_Players
+from WCSSkills.wcs.wcsplayer import WCS_Player, WCS_Players
 # Modified default PagedMenu
 from .radio import *
-from WCSSkills.admin.menus import AdminPlayers_player
+from WCSSkills.admin.menu import AdminPlayers_player
 # Logging
 from WCSSkills.other_functions.functions import wcs_logger
 #
-from .functions import RSound
+from .functions import RMSound
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -93,8 +91,8 @@ def MainMenu(player):
     menu.send(player.index)
 
 def MainMenu_callback(*args):
-    player = WCS_Players[userid_from_index(args[1])]
-    RSound.next_menu(player)
+    player = WCS_Player.from_index(args[1])
+    RMSound.next_menu(player)
     if args[2].value == 'My skills':
         my_skills(player)
         return
@@ -138,14 +136,14 @@ def my_skills(player):
     menu.send(player.index)
 
 def my_skills_callback(*args):
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
     choice = args[2].value
     if choice == 'Back':
         MainMenu(player)
-        RSound.back(player)
+        RMSound.back(player)
         return
     else:
-        RSound.back(player)
+        RMSound.back(player)
         skill_parameters(player, choice)
 
 
@@ -172,13 +170,13 @@ def skill_parameters(player, choice):
     menu.send(player.index)
 
 def skill_parameters_callback(*args):
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
     choice = args[2].value
     if choice == 'Back':
-        RSound.back(player)
+        RMSound.back(player)
         my_skills(player)
     if choice[0] == 'skill_delete':
-        RSound.final(player)
+        RMSound.final(player)
 
         skill = player.skills_selected[choice[1]]
         player.skills_change[choice[1]] = 'Empty'
@@ -192,10 +190,10 @@ def skill_parameters_callback(*args):
             f"{player.skills_selected[choice[1]]} -> Empty")
 
     if choice[0] == 'skill_lvl_select':
-        RSound.next(player)
+        RMSound.next(player)
         skill_parameter_lvls(player, choice[1])
     if choice[0] == 'skill_settings':
-        RSound.next(player)
+        RMSound.next(player)
         skill_settings(player, choice)
 
 
@@ -218,7 +216,7 @@ def skill_parameter_lvls(player, choice):
     menu.send(player.index)
 
 def skill_parameter_lvls_callback(*args):
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
     if type(args[2]) == type(tuple()): choice = args[2]
     else: choice = args[2].value
     skill = Skills_info.get_name(player.skills_selected[choice[0]])
@@ -226,7 +224,7 @@ def skill_parameter_lvls_callback(*args):
     if choice[1] is None:
 
         # Sound
-        RSound.final(player)
+        RMSound.final(player)
 
         # Deleting info about selected lvl
         player.skills_selected_lvl[choice[0]] = None
@@ -239,7 +237,7 @@ def skill_parameter_lvls_callback(*args):
     elif choice[1] is 'Keyboard':
 
         # Sound
-        RSound.next(player)
+        RMSound.next(player)
 
         # Printing information
         SayText2("\2Напишите число в чат.\1").send(player.index)
@@ -256,7 +254,7 @@ def skill_parameter_lvls_callback(*args):
     else:
 
         # Sound
-        RSound.final(player)
+        RMSound.final(player)
 
         # Setting new lvl
         player.skills_selected_lvl[choice[0]] = choice[1]
@@ -267,7 +265,7 @@ def skill_parameter_lvls_callback(*args):
 
 
 def skill_parameter_lvls_keyboard(command, index, _):
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
 
     # Player not using kb enter now
     if player.enter_temp is None:
@@ -291,7 +289,7 @@ def skill_parameter_lvls_keyboard(command, index, _):
         if entered[:4] == 'STOP' or entered[:4] == 'stop':
 
             # Sound
-            RSound.next(player)
+            RMSound.next(player)
 
             # Unregister filter
             unregister_say_filter(skill_parameter_lvls_keyboard)
@@ -340,7 +338,7 @@ def skill_parameter_lvls_keyboard(command, index, _):
         player.enter_temp = None
 
         # Success sound!
-        RSound.final(player)
+        RMSound.final(player)
 
         return CommandReturn.BLOCK
 
@@ -370,7 +368,7 @@ def skill_settings(player, choice):
 def skill_settings_callback(_, index, choice):
 
     # Getting starter information
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
     skill_index = choice.value[0]
     name = choice.value[1]
     parameter_type = choice.value[2]
@@ -380,7 +378,7 @@ def skill_settings_callback(_, index, choice):
     if parameter_type == 'bool':
 
         # Sound
-        RSound.final(player)
+        RMSound.final(player)
 
         # Getting skill
         skill = player.skills_selected[skill_index]
@@ -414,10 +412,10 @@ def skill_change_groups(player):
 def skill_change_groups_callback(*args):
 
     # Getting player
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
 
     # Sound
-    RSound.next(player)
+    RMSound.next(player)
 
     # Sending him to skills menu
     skill_change_skills(player, args[2].value)
@@ -435,10 +433,10 @@ def skill_change_skills(player, group: str):
 def skill_change_skills_callback(*args):
 
     # Getting player
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
 
     # Sound
-    RSound.next(player)
+    RMSound.next(player)
 
     # Sending him to this skills list
     skill_change_skills_list(player, args[2].value)
@@ -466,14 +464,14 @@ def skill_change_skills_list(player, skill_name):
     menu.send(player.index)
 
 def skill_change_skills_list_callback(*args):
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
     choice = args[2].value
 
     # He wants back :'(
     if choice == 'Back':
 
         # Sound
-        RSound.back(player)
+        RMSound.back(player)
 
         # Sending to previous menu
         skill_change_groups(player)
@@ -512,7 +510,7 @@ def skill_change_skills_list_callback(*args):
                        f'{player.skills_selected[choice[0]]} -> {choice[1]}')
 
         # Sound
-        RSound.final(player)
+        RMSound.final(player)
 
         # Actually changing skill (prepare to change)
         player.skills_change[choice[0]] = choice[1]
@@ -532,11 +530,11 @@ def skills_info(player):
 def skills_info_callback(*args):
 
     # Getting player and other start info
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
     choice = args[2].value
 
     # Sound
-    RSound.next(player)
+    RMSound.next(player)
 
     # Sending to new menu
     skills_info_description(player, choice)
@@ -567,14 +565,14 @@ def skills_info_description(player, skill):
 def skills_info_description_callback(*args):
 
     # Getting starter info
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
     choice = args[2].value
 
     # Is he going back? (Can be quit btw)
     if choice == 'Back':
 
         # Sound
-        RSound.back(player)
+        RMSound.back(player)
 
         # Going to parent
         skills_info(player)
@@ -586,6 +584,7 @@ def players_list(player):
                      parent_menu = MainMenu,
                      parent_menu_args = (player,))
 
+
     for player_wcs in WCS_Players.values():
         menu.append(PagedOption(f"{player_wcs.name}", value = player_wcs))
 
@@ -594,10 +593,10 @@ def players_list(player):
 def players_list_callback(*args):
 
     # Getting player
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
 
     # Sound
-    RSound.next(player)
+    RMSound.next(player)
 
     # Sending player previous menu
     player_info(player,args[2].value)
@@ -624,13 +623,13 @@ def player_info_callback(*args):
 
     # Getting starter info
     choice = args[2].value
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
 
     # Is he going back?
     if choice == 'Back':
 
         # Sound
-        RSound.back(player)
+        RMSound.back(player)
 
         # Sending previous menu
         players_list(player)
@@ -639,7 +638,7 @@ def player_info_callback(*args):
     elif choice[0] == 'Opened skills':
 
         # Sound
-        RSound.next(player)
+        RMSound.next(player)
 
         # Sending menu
         player_info_opened(player, choice[1])
@@ -648,7 +647,7 @@ def player_info_callback(*args):
     elif choice[0] == 'Selected skills':
 
         # Sound
-        RSound.next(player)
+        RMSound.next(player)
 
         # Sending menu
         player_info_selected(player, choice[1])
@@ -657,7 +656,7 @@ def player_info_callback(*args):
     if choice[0] == 'admin':
 
         # Sound
-        RSound.next(player)
+        RMSound.next(player)
 
         # Sending admin player-control menu
         AdminPlayers_player(player, choice[1])
@@ -706,10 +705,10 @@ def player_info_selected(player, target):
 def player_info_selected_callback(*args):
 
     # Getting starter info
-    player = WCS_Players[userid_from_index(args[1])]
+    player = WCS_Player.from_index(args[1])
 
     # Sound
-    RSound.back(player)
+    RMSound.back(player)
 
     # Sending previous menu
     player_info(player, args[2].value)
@@ -731,7 +730,7 @@ def player_settings(player):
 
 def player_settings_callback(_, index, choice):
     # Getting starter info
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
     setting = choice.value
 
     # Previous setting value (with not)
@@ -745,7 +744,7 @@ def player_settings_callback(_, index, choice):
     f"изменена на \5{'вкл' if value == True else 'выкл'}\1'")
 
     # Playing sound
-    RSound.final(player)
+    RMSound.final(player)
 
     # Sending THIS menu
     player_settings(player)
@@ -773,14 +772,14 @@ def LK(player):
 def LK_callback(_, index, choice):
 
     # Getting starter info
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
 
     # Is he going to waster lvls for himself?
     if choice.value == "Waste":
         # Wow, such a selfish dud
 
         # Sound
-        RSound.next(player)
+        RMSound.next(player)
 
         # Sending waste menu
         LK_user_groups(player)
@@ -790,7 +789,7 @@ def LK_callback(_, index, choice):
         # Good man))
 
         # Sound
-        RSound.next(player)
+        RMSound.next(player)
 
         # Sending share menu
         LK_send(player)
@@ -810,7 +809,7 @@ def LK_user_groups(player):
 def LK_user_groups_callback(_, index, choice):
 
     # Getting player
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
 
     # Sending skills menu
     LK_user_skills(player, choice.value)
@@ -829,7 +828,7 @@ def LK_user_skills(player, group):
 def LK_user_skills_callback(_, index, choice):
 
     # Getting player
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
 
     # Saving kb info to enter_temp
     player.enter_temp = ('LK_user_keyboard', choice.value)
@@ -839,7 +838,7 @@ def LK_user_skills_callback(_, index, choice):
     SayText2("\2Введите STOP для отмены.\1").send(player.index)
 
     # Sound
-    RSound.next(player)
+    RMSound.next(player)
 
     # Try to register filter command (he can be registered before)
     try:
@@ -850,7 +849,7 @@ def LK_user_skills_callback(_, index, choice):
 def LK_user_keyboard(command, index, _):
 
     # Getting starter info
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
 
     # If enter_temp is None, player is not using kb functions
     if player.enter_temp is None:
@@ -987,7 +986,7 @@ def LK_user_keyboard(command, index, _):
     player.total_lvls += entered
 
     # Sound
-    RSound.final(player)
+    RMSound.final(player)
 
     player.enter_temp = None
     return CommandReturn.BLOCK
@@ -1009,7 +1008,7 @@ def LK_send_callback(_, index, choice):
 
     # Getting starter info
     target = choice.value
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
 
     # Saving enter_temp info
     player.enter_temp = ('LK_send_keyboard', target)
@@ -1024,7 +1023,7 @@ def LK_send_callback(_, index, choice):
 def LK_send_keyboard(command, index, _):
 
     # Getting starter info
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
 
     # If enter_temp is None, player is not using kb functions
     if player.enter_temp is None:
@@ -1096,7 +1095,7 @@ def LK_send_keyboard(command, index, _):
         return CommandReturn.BLOCK
 
     # Sound
-    RSound.final(player)
+    RMSound.final(player)
 
     # Unregister filter
     unregister_say_filter(LK_send_keyboard)

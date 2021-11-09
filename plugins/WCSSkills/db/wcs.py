@@ -122,7 +122,7 @@ class _DB_users:
     def _new_player(self, steamid: str) -> None:
     # Function to create new tables in db, if player doesn't exist
 
-        wcs_logger('db', f'New player tables with steamID {steamid} created')
+        wcs_logger('db', f'New player tables with steamID {steamid} created', console=True)
 
         with db_cursor(self.db) as cur:
 

@@ -3,7 +3,7 @@
 from WCSSkills.other_functions.constants import WCS_FOLDER
 from WCSSkills.other_functions.constants import VOLUME_MENU
 
-class _RSound:
+class _RMSound:
 
     @staticmethod
     def back(target):
@@ -21,4 +21,4 @@ class _RSound:
     def next_menu(target):
         target.emit_sound(f'{WCS_FOLDER}/menus/continue.mp3', attenuation=1.6, volume=VOLUME_MENU)
 
-RSound = _RSound
+RMSound = _RMSound

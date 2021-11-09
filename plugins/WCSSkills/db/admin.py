@@ -78,7 +78,7 @@ class _DB_admin:
                     )"""
                             )
                 wcs_logger('warning', f"No DB_admin 'permanent' found. "
-                              f"New DB file is created without any entry")
+                      f"New DB file is created without any entry", console=True)
 
             if 'active' not in tables:
                 cur.execute(f"""CREATE TABLE 'active'
@@ -95,7 +95,7 @@ class _DB_admin:
                     )"""
                             )
                 wcs_logger('warning', f"No DB_admin 'active' found. "
-                              f"New DB file is created without any entry")
+                      f"New DB file is created without any entry", console=True)
 
             if 'history' not in tables:
                 cur.execute(f"""CREATE TABLE 'history'
@@ -113,7 +113,7 @@ class _DB_admin:
                     )"""
                             )
                 wcs_logger('warning', f"No DB_admin 'history' found. "
-                              f"New DB file is created without any entry")
+                      f"New DB file is created without any entry", console=True)
 
             if 'once' not in tables:
                 cur.execute(f"""CREATE TABLE 'once'
@@ -129,7 +129,7 @@ class _DB_admin:
                     )"""
                             )
                 wcs_logger('warning', f"No DB_admin 'once' found. "
-                              f"New DB file is created without any entry")
+                      f"New DB file is created without any entry", console=True)
 
 
             # Setting Pragmas
@@ -370,7 +370,7 @@ class _Disconnected_players:
             try:
                 self.json = loads(file.read())
             except JSONDecodeError:
-                wcs_logger('EXCEPTION', 'JSONDecodeError in Disconnected_players')
+                wcs_logger('EXCEPTION', 'JSONDecodeError in Disconnected_players', console=True)
                 raise ValueError('JSONDecodeError in Disconnected_players')
 
     def __iter__(self):

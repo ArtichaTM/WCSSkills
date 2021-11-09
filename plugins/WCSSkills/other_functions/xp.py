@@ -1,4 +1,4 @@
-# ../WCSSkills/wcs/xp
+# ../WCSSkills/other_functions/xp
 """
 This file registers events, and gives XP for that
 using implemented method .add_xp(amount, reason) in WCS_Player class
@@ -15,7 +15,7 @@ from random import randint
 from events import Event
 
 # WCS_Players dictionary
-from WCSSkills.wcs.wcsplayer import WCS_Players
+from WCSSkills.wcs.wcsplayer import WCS_Player, WCS_Players
 
 # =============================================================================
 # >> All
@@ -26,17 +26,8 @@ __all__ = ('round_start',
            'player_death',
            'bomb_planted',
            'bomb_exploded',
-           'bomb_defused',
-           'required_xp',
-           'next_lvl_xp_calculate'
+           'bomb_defused'
            )
-
-# =============================================================================
-# >> Other functions
-# =============================================================================
-
-required_xp = lambda lvl: ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
-next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - randint(0, int(required_xp(lvl) // 2))
 
 # =============================================================================
 # >> Events to give XP
@@ -51,19 +42,19 @@ def round_start(_):
 def round_end(_):
     for player in WCS_Players.values():
         player.add_xp(10*player.xp_multiplier, 'конец раунда')
- 
+
 @Event('player_death')
 def player_death(ev):
 
     # Loading parameters, and checking if parameter is players (not bots)
-    try: killer = WCS_Players[ev['attacker']]
+    try: killer = WCS_Player.from_userid(ev['attacker'])
     except KeyError: return
 
     # try: victim = WCS_Players[ev['userid']]
     # except KeyError: victim = None
 
 
-    try: assister = WCS_Players[ev['assister']]
+    try: assister = WCS_Player.from_userid(ev['assister'])
     except KeyError: assister = None
 
     is_headshot = ev['headshot']

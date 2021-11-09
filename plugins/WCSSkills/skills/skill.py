@@ -39,7 +39,8 @@ from entities.constants import MoveType
 # Functions
 from .functions import *
 # WCS_Player
-from WCSSkills.wcs.wcsplayer import WCS_Players
+# from WCSSkills.wcs.wcsplayer import WCS_Players
+from WCSSkills.wcs.wcsplayer import WCS_Player
 # Effects
 from WCSSkills.other_functions.wcs_effects import effect
 # Skills information
@@ -95,14 +96,14 @@ class BaseSkill:
     __slots__ = ('owner', 'lvl', 'settings')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
-        self.owner = WCS_Players[userid]
-        max_lvl = Skills_info.get_max_lvl(type(self).__name__)
+        self.owner = WCS_Player.from_userid(userid)
+        max_lvl = Skills_info.get_max_lvl(f"skill.{type(self).__name__}")
 
         # Getting settings
         self.settings = settings
 
         # Loading price for settings
-        costs = Skills_info.get_settings_cost(type(self).__name__)
+        costs = Skills_info.get_settings_cost(f"skill.{type(self).__name__}")
 
         # Subtract lvl for each setting
         for setting, value in self.settings.items():
@@ -1014,7 +1015,7 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
     def player_hurt(self, owner, info) -> bool:
 
         # Looking for attacker
-        try: attacker = WCS_Players[userid_from_index(info.attacker)]
+        try: attacker = WCS_Player.from_index(info.attacker)
 
         # Attacker is not WCS_Player
         except KeyError: return True
@@ -1072,7 +1073,7 @@ class Additional_percent_dmg(BaseSkill):
 
     def player_hurt(self, entity, info) -> bool:
         # Enter data
-        try: attacker = WCS_Players[userid_from_index(info.attacker)]
+        try: attacker = WCS_Player.from_index(info.attacker)
         except KeyError: return True
         except ValueError: return True
 
@@ -1177,10 +1178,9 @@ class Paralyze(DelaySkill):
     def player_hurt(self, ev) -> None:
 
         try:
-            attacker = WCS_Players[ev['attacker']]
-            victim = WCS_Players[ev['userid']]
-        except KeyError:
-            return
+            attacker = WCS_Player.from_userid(ev['attacker'])
+            victim = WCS_Player.from_userid(ev['userid'])
+        except KeyError: return
 
         # Activating only if attacker was owner of this skill
         # and skill isn't on cooldown
@@ -1405,7 +1405,7 @@ class Toss(DelaySkill):
         
         
         # Getting victim
-        try: victim = WCS_Players[ev['attacker']]
+        try: victim = WCS_Player.from_userid(ev['attacker'])
 
         # No such WCS_Player?
         except KeyError:
@@ -1498,7 +1498,7 @@ class Mirror_paralyze(BaseSkill):
             return
 
         # Getting attacker
-        try: victim = WCS_Players[ev['attacker']]
+        try: victim = WCS_Player.from_userid(ev['attacker'])
 
         # No such WCS_Player?
         except KeyError:
@@ -1620,7 +1620,7 @@ class Drop_weapon_chance(BaseSkill):
         if not chance(self.chance, 100): return
 
         # Getting victim
-        try: victim = WCS_Players(ev['userid'])
+        try: victim = WCS_Player.from_userid(ev['userid'])
         except KeyError: return
 
         # Using weapon_drop function
@@ -1691,7 +1691,7 @@ class Screen_rotate_attack(DelaySkill):
         if self.cd.running is True: return
 
         # Getting victim
-        try: victim = WCS_Players[ev['userid']]
+        try: victim = WCS_Player.from_userid(ev['userid'])
         except KeyError: return
 
         # Using distortion function

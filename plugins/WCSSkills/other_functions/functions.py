@@ -68,6 +68,8 @@ __all__ = ('player_indexes',
 # Return all players indexes
 player_indexes = lambda : [player.index for player in PlayerIter()]
 
+required_xp = lambda lvl: ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
+next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(required_xp(lvl) // 2))
 #
 # @EntityPreHook(EntityCondition.is_player, 'emit_sound')
 # def xz(*args):

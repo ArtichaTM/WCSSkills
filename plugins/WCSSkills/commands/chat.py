@@ -11,8 +11,6 @@ from random import randint
 from commands import CommandReturn
 from commands.client import ClientCommand
 from commands.typed import TypedSayCommand
-# userid_from_index helper
-from players.helpers import userid_from_index
 # EntityIter
 from filters.entities import EntityIter
 # SayText2
@@ -20,10 +18,10 @@ from messages import SayText2
 
 # Plugin imports
 # Player
-from WCSSkills.wcs.wcsplayer import WCS_Players
+from WCSSkills.wcs.wcsplayer import WCS_Player
 # Main Radio Menu
 from WCSSkills.menus.wcs import MainMenu, LK
-from WCSSkills.admin.menus import AdminMain
+from WCSSkills.admin.menu import AdminMain
 # Logger
 from WCSSkills.other_functions.functions import wcs_logger
 
@@ -34,13 +32,13 @@ sc = increase()
 
 @ClientCommand('rtd')
 def test(_, index):
-    player = WCS_Players[userid_from_index(index)]
+    player = WCS_Player.from_index(index)
     wcs_logger(prefix='info', msg=f'rtd called by {player.name}')
     return CommandReturn.BLOCK
 
 @TypedSayCommand('t')
 def wcs(comm):
-    player = WCS_Players[userid_from_index(comm.index)]
+    player = WCS_Player.from_index(comm.index)
     wcs_logger(prefix='info', msg=f't called by {player.name}')
     return CommandReturn.BLOCK
 
@@ -50,42 +48,42 @@ def wcs(comm):
 
 @TypedSayCommand('wcs')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('цсы')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('цс')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('wc')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('!wcs')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
 
 @TypedSayCommand('/wcs')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('/цсы')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('/цс')
 def wcs(comm):
-    MainMenu(WCS_Players[userid_from_index(comm.index)])
+    MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 # =============================================================================
@@ -94,17 +92,17 @@ def wcs(comm):
 
 @TypedSayCommand('lk')
 def lk(comm):
-    LK(WCS_Players[userid_from_index(comm.index)])
+    LK(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('/lk')
 def lk(comm):
-    LK(WCS_Players[userid_from_index(comm.index)])
+    LK(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('!lk')
 def lk(comm):
-    LK(WCS_Players[userid_from_index(comm.index)])
+    LK(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 # =============================================================================
@@ -113,32 +111,32 @@ def lk(comm):
 
 @TypedSayCommand('admin', 'wcs_admin_base')
 def admin(comm):
-    AdminMain(WCS_Players[userid_from_index(comm.index)])
+    AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('админ', 'wcs_admin_base')
 def admin(comm):
-    AdminMain(WCS_Players[userid_from_index(comm.index)])
+    AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('!админ', 'wcs_admin_base')
 def admin(comm):
-    AdminMain(WCS_Players[userid_from_index(comm.index)])
+    AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
 
 @TypedSayCommand('!admin', 'wcs_admin_base')
 def admin(comm):
-    AdminMain(WCS_Players[userid_from_index(comm.index)])
+    AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
 
 @TypedSayCommand('/admin', 'wcs_admin_base')
 def admin(comm):
-    AdminMain(WCS_Players[userid_from_index(comm.index)])
+    AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 @TypedSayCommand('/админ', 'wcs_admin_base*')
 def admin(comm):
-    AdminMain(WCS_Players[userid_from_index(comm.index)])
+    AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
 # =============================================================================
@@ -153,7 +151,7 @@ from WCSSkills.other_functions.constants import WCSSKILLS_DEBUG
 if WCSSKILLS_DEBUG:
     @ClientCommand('tp')
     def self_tp(_, index):
-        player = WCS_Players[userid_from_index(index)]
+        player = WCS_Player.from_index(index)
         origin = player.origin
         origin[0] = 308
         origin[1] = 2318
@@ -163,7 +161,7 @@ if WCSSKILLS_DEBUG:
 
     @ClientCommand('bot_tp')
     def bot_tp(_, index):
-        player = WCS_Players[userid_from_index(index)]
+        player = WCS_Player.from_index(index)
         for entity in EntityIter():
             if entity.class_name == 'player' and entity.index != player.index:
                 origin = player.view_coordinates
@@ -176,19 +174,19 @@ if WCSSKILLS_DEBUG:
 
     @TypedSayCommand('cash')
     def cash(comm):
-        player = WCS_Players[userid_from_index(comm.index)]
+        player = WCS_Player.from_index(comm.index)
         player.cash += 5000
         return CommandReturn.BLOCK
 
     @ClientCommand('dmg')
     def dmg(_, index):
-        player = WCS_Players[userid_from_index(index)]
+        player = WCS_Player.from_index(index)
         player.take_damage(20)
         return CommandReturn.BLOCK
 
     @TypedSayCommand('wcsplists')
     def wcsp_lists(comm):
-        player = WCS_Players[userid_from_index(comm.index)]
+        player = WCS_Player.from_index(comm.index)
 
         print(f"lvls: {player.skills_selected_lvls}")
         print(f"lvl:  {player.skills_selected_lvl}")

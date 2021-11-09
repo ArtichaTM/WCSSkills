@@ -12,9 +12,10 @@ from WCSSkills.other_functions.constants import ImmuneTypes
 # Skills information
 from WCSSkills.db.wcs import Skills_info
 # WCS_Player
-from WCSSkills.wcs.wcsplayer import WCS_Players
+from WCSSkills.wcs.wcsplayer import WCS_Player
 # chance
 from .functions import chance
+
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
@@ -44,8 +45,8 @@ class ImmuneSkill:
             raise NotImplemented("When inherit ImmuneSkill, "
                                  "change 'text' constant'")
 
-        owner = WCS_Players[userid]
-        max_lvl = Skills_info.get_max_lvl(f"Immune.{type(self).__name__}")
+        owner = WCS_Player.from_userid(userid)
+        max_lvl = Skills_info.get_max_lvl(f"immune.{type(self).__name__}")
 
         # Lvl above maximum -> Change lvl to max
         lvl = max_lvl if lvl > max_lvl else lvl
@@ -70,17 +71,44 @@ class ImmuneSkill:
                      f"\5{self.text}\1").send(owner.index)
             return
 
-        # Going through all forms of immune
-        for form in self.form:
+        # If level < 1000, then we apply only immune
+        if lvl < 1000:
 
-            # Iterating over all selected forms of immune
-            for key in forms:
+            # Going through all forms of immune
+            for form in self.form:
 
-                # Chance check
-                if chance(trigger_chance, 100):
+                # Iterating over all selected forms of immune
+                for key in forms:
 
-                    # Applying Immune_type to owner.immunes
-                    owner.immunes[form] = eval(f"ImmuneTypes.{key}")
+                    # Chance check
+                    if chance(trigger_chance, 100):
+
+                        # Applying Immune_type to owner.immunes
+                        owner.immunes[form] = eval(f"ImmuneTypes.{key}")
+
+        # But if lvl over 1000, then we can apply deflect 2
+        else:
+
+            # Going through all forms of immune
+            for form in self.form:
+
+                # Applying starter ImmuneType
+                owner.immunes[form] = ImmuneTypes.Nothing
+
+                # Iterating over all selected forms of immune
+                for key in forms:
+
+                    # Chance check
+                    if chance(trigger_chance, 1000):
+
+                        # Applying deflect to owner.immunes
+                        owner.immunes[form] |= eval(f"ImmuneTypes.{key} << 1")
+
+                    # Not worked. Applying simple immune
+                    else:
+
+                        # Applying deflect to owner.immunes
+                        owner.immunes[form] |= eval(f"ImmuneTypes.{key}")
 
         # Notifying player
         SayText2(f"\4[WCS]\1 Вы получите защиту от {self.text} c шансом \5"
