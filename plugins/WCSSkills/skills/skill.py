@@ -12,8 +12,6 @@ from math import sqrt
 from entities.entity import Entity
 from filters.entities import EntityIter
 # Player
-from players.helpers import userid_from_index
-from players.helpers import index_from_userid
 from players.entity import Player
 # Weapon
 from weapons.engines.csgo import Weapon
@@ -34,6 +32,8 @@ from players.constants import PlayerButtons
 from entities.constants import RenderMode
 from entities.constants import EntityEffects
 from entities.constants import MoveType
+# Server
+from engines.server import server
 
 # Plugin Imports
 # Functions
@@ -952,7 +952,7 @@ class Poison(PeriodicSkill):
             self._repeat_start()
 
             # Getting attacker Player class
-            attacker = Player(index_from_userid(userid))
+            attacker = WCS_Player.from_userid(userid)
 
             # Notifying owner about infect
             ST2(f"[\4[WCS]\1 Вы заразили {attacker.name}").send(self.owner.index)
@@ -962,7 +962,7 @@ class Poison(PeriodicSkill):
         super().tick()
 
         for iterations, userid in enumerate(self.infect_dict.copy()):
-            victim = Player(index_from_userid(userid))
+            victim = WCS_Player.from_userid(userid)
             victim.take_damage(
                 damage = self.dmg,
                 damage_type = WCS_DAMAGE_ID|DamageTypes.ACID,
@@ -1750,6 +1750,68 @@ class Screen_rotate_attack(DelaySkill):
 
         # Unregister from hit
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
+
+class HE_Bloodhound(BaseSkill):
+    # TODO: Apply detonate on next offsets fix
+
+    __slots__ = ('power', )
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(userid, lvl, settings)
+
+        # Calculating velocity multiplier
+        self.power = sqrt(self.lvl)
+
+        # Registering for bounce event
+        event_manager.register_for_event('grenade_bounce', self.check)
+
+    def check(self, ev):
+
+        # Delay to make grenade move from wall
+        # This made for make rays didn't hit wall, that
+        # grenade bouncing from
+        Delay(0.1, self._check)
+
+    def _check(self):
+        for entity in EntityIter(class_names=('hegrenade_projectile',)):
+
+            # Getting thrower index
+            thrower_index = entity.get_property_short('m_hThrower')
+
+            # Checking if it matches owner index
+            if thrower_index != self.owner.index: continue
+
+            # Looking for players
+            victim = open_players(entity, ImmuneTypes.Penetrate, True, False)
+
+            # Getting victim
+            if len(victim) == 0: return
+            else: victim = victim[0]
+
+            # Applying velocity to this player
+            velocity = victim.eye_location - entity.origin
+            velocity *= self.power
+
+            if velocity.length < 150:
+
+                # Detonate
+                entity.set_property_int('m_nNextThinkTick', server.tick+1)
+
+                # Abort function
+                return
+
+
+            entity.teleport(velocity=velocity)
+
+            # Adding -1 to ThinkTick, to delay his detonate
+            entity.set_property_int('m_nNextThinkTick', -1)
+
+    def close(self) -> None:
+        super().close()
+
+        # Unregistering from bounce event
+        event_manager.unregister_for_event('grenade_bounce', self.check)
 
 # class
 #
