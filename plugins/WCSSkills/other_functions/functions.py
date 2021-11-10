@@ -19,7 +19,7 @@ File with various useful functions.
 # Random
 import random
 from datetime import datetime
-from typing import Union, Any
+from typing import Union, Any, List
 
 # Source.Python imports
 from hooks.exceptions import ExceptHook
@@ -76,12 +76,18 @@ next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(req
 #     pass
 
 
-def open_players(player: Player_entity,
+def open_players(entity: Player_entity,
                  form,
                  only_one: bool = False,
-                 same_team: bool = False,
-                 ignore_immune: bool = False) -> Entity_entity:
-    """ This function checks for other players, that can be hit by player """
+                 same_team: bool = False) -> List[Entity_entity]:
+    """ This function checks for other players, that can be hit by entity
+
+    :param entity: Origin enitity, from whom are going rays
+    :param form: ImmuneType
+    :param only_one: List all entity's or return on gathering one
+    :param same_team: List only entitys in seperate teams
+    :return: List with Entity's
+    """
 
     # Creating list
     can_hit_players = []
@@ -89,12 +95,12 @@ def open_players(player: Player_entity,
     # Iterating over all alive players
     for user in PlayerIter('alive'):
 
-        # Checking, if selected player isn't our player
-        if user.index == player.index:
+        # Checking, if selected entity isn't our player
+        if user.index == entity.index:
             continue
 
         # Checking for team equality
-        elif user.team == player.team and not same_team:
+        elif user.team_index == entity.team_index and not same_team:
             continue
 
         # # Abort, if player is not WCS_Player
@@ -106,7 +112,8 @@ def open_players(player: Player_entity,
         #     continue
 
         # Get the entity's origin
-        origin: Vector = player.eye_location
+        try: origin: Vector = entity.eye_location
+        except AttributeError: origin: Vector = entity.origin
 
         # Get a Ray object of the entity physic box
         ray = Ray(origin, user.origin)
