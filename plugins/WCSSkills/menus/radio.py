@@ -150,7 +150,7 @@ def player_skills(player, group, select_selected: bool = False):
             menu.append(PagedOption(f"{name} [{min_lvl}ур]",
                                     selectable = False, highlight = False))
         elif player_lvl is None:
-            menu.append(PagedOption(f"{name} [0/{max_lvl}]", value = skill))
+            menu.append(PagedOption(f"{name} [0/{max_lvl if max_lvl != -1 else '∞'}]", value = skill))
         elif max_lvl == -1:
             menu.append(PagedOption(f"{name} [{player_lvl}/∞]", value = skill))
         elif player_lvl > max_lvl:

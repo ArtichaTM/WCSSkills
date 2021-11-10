@@ -557,7 +557,3 @@ if server.is_active():
 
         # Calling load function
         WCS_Player_load({'userid': player.userid})
-
-# =============================================================================
-# >> Imports that use WCS_Player
-# =============================================================================

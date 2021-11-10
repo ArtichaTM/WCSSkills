@@ -322,6 +322,7 @@ class Start_add_speed(BaseSkill):
 
     def close(self) -> None:
         super().close()
+
         # Removing added speed
         self.owner.speed -= self.speed/100
 
@@ -534,8 +535,13 @@ class Slow_fall(BaseSkill, repeat_functions):
         # Registration for jump
         event_manager.register_for_event('player_jump', self.activate_tick)
 
+        # Check for conflict with other perks
+
+
     def activate_tick(self, _) -> None:
-        self._repeat_start()
+
+        # Launching only if speed is normal
+        if self.owner.speed <= 1: self._repeat_start()
 
     def tick(self) -> None:
         try:

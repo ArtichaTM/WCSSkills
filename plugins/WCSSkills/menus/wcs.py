@@ -968,16 +968,16 @@ def LK_user_keyboard(command, index, _):
             data = [0, 0, None, {}]
 
         # Remember previous amount
-        before = data[1]
+        before = data[0]
 
         # Increasing lvls
-        data[1] += entered
+        data[0] += entered
 
         # Replace with new value
         player.data_skills[skill] = data
         SayText2("\4[WCS]\1 Вы усилили навык "
                  f"\5{Skills_info.get_name(skill)}\1 "
-                 f"до \5{str(before+entered)}\1 уровня").send(index)
+                 f"(\5{before}\1 -> \5{str(before+entered)}\1)").send(index)
 
     # Decreasing lk lvls
     player.lk_lvls -= entered

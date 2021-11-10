@@ -47,27 +47,25 @@ def round_end(_):
 def player_death(ev):
 
     # Loading parameters, and checking if parameter is players (not bots)
-    try: killer = WCS_Player.from_userid(ev['attacker'])
-    except KeyError: return
+    killer = WCS_Player.from_userid(ev['attacker'])
 
     # try: victim = WCS_Players[ev['userid']]
     # except KeyError: victim = None
 
-
-    try: assister = WCS_Player.from_userid(ev['assister'])
-    except KeyError: assister = None
+    assister = WCS_Player.from_userid(ev['assister'])
 
     is_headshot = ev['headshot']
-    multiplier = killer.xp_multiplier
-    if is_headshot:
-        multiplier += 1
-        head = ' в голову'
-    else:
-        head = ''
 
     if killer is not None:
+
+        multiplier = killer.xp_multiplier
+        if is_headshot:
+            multiplier += 1
+            head = ' в голову'
+        else: head = ''
+
         if ev['weapon'] == 'elite':
-            killer.add_xp(40*multiplier, f'убийство берретами{head}')
+            killer.add_xp(40*multiplier, f'убийство беретами{head}')
         elif ev['weapon'] == 'hkp2000':
             killer.add_xp(50*multiplier, f'убийство с P2000{head}')
         elif ev['weapon'] == 'glock':
