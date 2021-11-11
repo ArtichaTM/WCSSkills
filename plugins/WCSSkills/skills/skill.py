@@ -93,17 +93,23 @@ __all__ = (
 # =============================================================================
 
 class BaseSkill:
-    __slots__ = ('owner', 'lvl', 'settings')
+    __slots__ = ('owner', 'lvl', 'settings', 'name')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
+
+        # Saving owner
         self.owner = WCS_Player.from_userid(userid)
-        max_lvl = Skills_info.get_max_lvl(f"skill.{type(self).__name__}")
+
+        # Setting name of skill
+        self.name = f"skill.{type(self).__name__}"
+
+        max_lvl = Skills_info.get_max_lvl(self.name)
 
         # Getting settings
         self.settings = settings
 
         # Loading price for settings
-        costs = Skills_info.get_settings_cost(f"skill.{type(self).__name__}")
+        costs = Skills_info.get_settings_cost(self.name)
 
         # Subtract lvl for each setting
         for setting, value in self.settings.items():
@@ -136,7 +142,7 @@ class BaseSkill:
             self.lvl = lvl
 
     def __repr__(self):
-        return (f"{self.__class__.__name__}(lvl={self.lvl}, "
+        return (f"{self.name}(lvl={self.lvl}, "
                f"settings={self.settings}, owner = {self.owner.__repr__()})")
 
     def close(self) -> None:

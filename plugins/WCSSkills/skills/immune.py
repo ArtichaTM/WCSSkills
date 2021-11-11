@@ -45,8 +45,14 @@ class ImmuneSkill:
             raise NotImplemented("When inherit ImmuneSkill, "
                                  "change 'text' constant'")
 
+        # Setting name of skill
+        self.name = f"immune.{type(self).__name__}"
+
+        # Saving owner
         owner = WCS_Player.from_userid(userid)
-        max_lvl = Skills_info.get_max_lvl(f"immune.{type(self).__name__}")
+
+        # Getting maximum lvl
+        max_lvl = Skills_info.get_max_lvl(self.name)
 
         # Lvl above maximum -> Change lvl to max
         lvl = max_lvl if lvl > max_lvl else lvl
@@ -116,7 +122,7 @@ class ImmuneSkill:
              f"\1%").send(owner.index)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(form={self.form}, text={self.text})"
+        return f"{self.name}(form={self.form}, text={self.text})"
 
     def close(self):
         pass

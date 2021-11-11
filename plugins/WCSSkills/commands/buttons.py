@@ -88,7 +88,7 @@ class Buttons:
             return
 
         # Getting skill name
-        name = Skills_info.get_name(type(self.buttons[0]).__name__)
+        name = Skills_info.get_name(self.buttons[0].name)
 
         # Starting hud update. Here u can change how fast
         self.active_skills = 1
@@ -110,7 +110,7 @@ class Buttons:
         if len(self.buttons) == 2:
 
             # Getting skill name
-            name = Skills_info.get_name(type(self.buttons[1]).__name__)
+            name = Skills_info.get_name(self.buttons[1].name)
 
             # Registering for commands
             client_command_manager.register_commands('+ability', self.abi_pressed)
@@ -223,7 +223,7 @@ class Buttons:
                 self.button_names = [f"{name:.10}" for name in self.button_names]
             else:
                 for num, button in enumerate(self.buttons):
-                    self.button_names[num] = Skills_info.get_name(type(button).__name__)
+                    self.button_names[num] = Skills_info.get_name(button.name)
 
     def unload(self):
         if self.active_skills != 0:
