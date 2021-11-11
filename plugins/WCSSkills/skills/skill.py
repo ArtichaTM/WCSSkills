@@ -34,6 +34,12 @@ from entities.constants import EntityEffects
 from entities.constants import MoveType
 # Server
 from engines.server import server
+# Trace
+from engines.trace import engine_trace
+from engines.trace import ContentMasks
+from engines.trace import GameTrace
+from engines.trace import Ray
+from engines.trace import TraceFilterSimple
 
 # Plugin Imports
 # Functions
@@ -712,12 +718,13 @@ class Start_add_max_hp(BaseSkill):
             f" на \4{self.lvl//2}\1").send(self.owner.index)
 
 class Teleport(ActiveSkill):
-    __slots__ = ('position', 'origin', 'cd', 'allowed_distance', 'is_pressed')
+    __slots__ = ('position', 'cd', 'allowed_distance', 'is_pressed')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(userid, lvl, settings)
+
+        # Position, where player will be teleported after button release
         self.position = None
-        self.origin = None
         # self.cd = 30 - (self.lvl/100)
         self.cd = 2
         self.allowed_distance = 100 + lvl
@@ -730,30 +737,54 @@ class Teleport(ActiveSkill):
             f"\5{self.allowed_distance}\1 юнитов активирован").send(self.owner.index)
 
     def bind_pressed(self) -> None:
-        self.position = self.owner.view_coordinates
-        self.position[2] += 6
+
+        # Get destination coordinates
+        self.position = self.owner.eye_location + self.owner.view_vector * self.allowed_distance
+
+        # Player on ground?
+        if self.owner.ground_entity == -1:
+            # Then destination calculates from eyes
+
+            # Setting ray from player toes to destination
+            ray = Ray(self.owner.origin, self.position, self.owner.mins, self.owner.maxs)
+
+        else:
+            # Then destination calculates from origin
+
+            # Setting ray from player eyes to destination
+            ray = Ray(self.owner.eye_location, self.position, self.owner.mins, self.owner.maxs)
+
+        # Setting trace instance
+        trace = GameTrace()
+
+        # Tracing to destination
+        engine_trace.trace_ray(ray, ContentMasks.ALL, TraceFilterSimple((self.owner,)), trace)
+
+        # If hit something, set pre-hit position as destination
+        if trace.did_hit():  self.position = trace.end_position
+
+        # Marking press
         self.is_pressed = True
 
     def bind_released(self) -> None:
-        self.is_pressed = False
-        if super().bind_released():
-            distance = self.owner.origin.get_distance(self.owner.view_coordinates)
-            self.origin = self.owner.origin
-            if distance > self.allowed_distance:
-                difference = self.origin - self.position
-                coefficient = self.allowed_distance / distance
-                for dimension in range(0,3):
-                    self.position[dimension] = self.origin[dimension] - difference[dimension]*coefficient
 
+        # Marking release
+        self.is_pressed = False
+
+        # Cooldown passed?
+        if super().bind_released():
+
+            # Teleporting player
             self.owner.teleport(self.position)
+
+            # Clearing position
             self.position = None
-            if self.owner.is_in_solid():
-                self.owner.teleport(self.origin)
-                ST2(f"\4[WCS]\1 \7Неверная позиция!\1").send(self.owner.index)
-                self.delay = Delay(self.cd/10, self.cd_passed)
-                return
+
+            # Emit sound
             self.owner.emit_sound(f'{WCS_FOLDER}/skills/Teleport/success.mp3',
                                   attenuation = 0.8)
+
+            # Starting cooldown
             self.delay = Delay(self.cd//2, self.cd_passed)
 
     def cd_passed(self) -> None:
