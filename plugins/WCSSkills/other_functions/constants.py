@@ -4,6 +4,7 @@
 # =============================================================================
 # Python Imports
 from datetime import datetime
+from enum import Enum
 from enum import IntFlag
 from enum import IntEnum
 from enum import auto
@@ -161,6 +162,74 @@ orb_sprites = (
     'sprites/glow04_noz'
     'sprites/glow06'
     'sprites/glow07')
+
+# =============================================================================
+# >> Dictionaries
+# =============================================================================
+# Translate weapons to russian
+weapon_translations = {
+'weapon_nova': 'Нова',
+'weapon_xm1014': 'XM1014',
+'weapon_sawedoff': 'Sawed-off',
+'weapon_mag7': 'Mag7',
+'weapon_m249': 'M249',
+'weapon_negev': 'Негев',
+'weapon_mac10': 'Mac10',
+'weapon_mp5sd': 'MP5SD',
+'weapon_mp7': 'MP7',
+'weapon_mp9': 'MP9',
+'weapon_ump45': 'Юмп',
+'weapon_p90': 'Петух',
+'weapon_bizon': 'Бизон',
+'weapon_galilar': 'Галина',
+'weapon_famas': 'Фамас',
+'weapon_ak47': 'Калаш',
+'weapon_m4a1': 'Мка',
+'weapon_m4a1_silencer': 'Мка с глушителем',
+'weapon_aug': 'Ауг',
+'weapon_sg556': 'СГ',
+'weapon_ssg08': 'Муха',
+'weapon_awp': 'АВП',
+'weapon_g3sg1': 'Плётка Т',
+'weapon_scar20': 'Плётка КТ',
+'weapon_glock': 'Глок',
+'weapon_usp_silencer': 'Юсп',
+'weapon_hkp2000': 'P2000',
+'weapon_fiveseven': 'Five seven',
+'weapon_elite': 'Двойные берреты',
+'weapon_p250': 'P250',
+'weapon_tec9': 'Tec 9',
+'weapon_cz75a': 'Чешка',
+'weapon_deagle': 'Дигл',
+'weapon_revolver': 'Револьвер',
+'weapon_knife': 'Нож',
+'weapon_fists': 'Кулаки',
+'weapon_hammer': 'Молоток',
+'weapon_spanner': 'Гаечный ключ',
+'weapon_axe': 'Топор',
+'weapon_taser': 'Шокер',
+'weapon_molotov': 'Молик',
+'weapon_incgrenade': 'Поджигательная граната',
+'weapon_decoy': 'Декой',
+'weapon_flashbang': 'Флешка',
+'weapon_hegrenade': 'Хаешка',
+'weapon_smokegrenade': 'Смок',
+'weapon_tagrenade': 'ВХ граната',
+'weapon_frag_grenade': 'weapon_frag_grenade',
+'weapon_diversion': 'weapon_diversion',
+'weapon_firebomb': 'weapon_firebomb',
+'weapon_snowball': 'Снежок',
+'weapon_breachcharge': 'Пробивной заряд',
+'weapon_c4': 'Бомба',
+'weapon_tablet': 'Планшет',
+'weapon_healthshot': 'Хилка',
+'item_cutters': 'Дефуза',
+'item_assaultsuit': 'item_assaultsuit',
+'item_heavyassaultsuit': 'Тяжёлая броня',
+'item_cash': 'Деньги',
+'item_drone': 'Дрон',
+'item_dronegun': 'Оружие дрона'
+}
 
 # =============================================================================
 # >> Paths
