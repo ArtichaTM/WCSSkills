@@ -1,11 +1,12 @@
-# ../WCSSkills/wcs/wcsplayer.py
+# ../WCSSkills/wcs/_base.py
 # =============================================================================
 # >> IMPORTS
 # =============================================================================
 # Python Imports
+# Typing
+from typing import List, Union
 # Random
 from random import uniform as randfloat
-from typing import Union
 
 # Source.Python Imports
 # Players
@@ -18,7 +19,7 @@ from events import event_manager
 from listeners.tick import Delay
 # Server status
 from engines.server import server
-# PlayerIter
+# Iterators
 from filters.players import PlayerIter
 # SayText2
 from messages.base import SayText2
@@ -38,7 +39,6 @@ from WCSSkills.python.dictionaries import DefaultDict
 # Other_functions module
 import WCSSkills.other_functions as other_functions
 # XP
-
 
 # =============================================================================
 # >> Events on loading/unloading player
@@ -191,8 +191,12 @@ class WCS_Player(Player): # Short: WCSP
         # Holds information for functions, that uses keyboard enter
         self.enter_temp = None
 
-        # XP multiplier (not used right now). Multiply happens after all functions
+        # XP multiplier (not used right now (doesn't change I mean)).
+        # Multiply happens after all functions
         self.xp_multiplier = 1
+
+        # Healing multiply
+        self.heal_multiplier = 1
 
         # lvls, that player has in Level Bank (LK)
         self.lk_lvls = 100000
@@ -226,7 +230,6 @@ class WCS_Player(Player): # Short: WCSP
         else: raise NotImplemented
 
 
-
     @staticmethod
     def from_userid(userid, caching=None, **kwargs):
         try: return WCS_Players[userid]
@@ -236,6 +239,50 @@ class WCS_Player(Player): # Short: WCSP
     def from_index(index):
         try: return WCS_Players[userid_from_index(index)]
         except KeyError: return None
+
+    def view_entity_offset(self, max_offset, player_only=True) -> Union[List, None]:
+        """ Returns the most close entity to the crosshair
+        :param max_offset: More value, more allowed angle. -1 <= offset <= 1
+        :param player_only: Select entity with classname 'player'
+        :return: Entity that player looking at
+        """
+
+        # Input argument check
+        if not (-1 <= max_offset <= 1): raise ValueError('Wrong offset. Offset should be -1 <= offset <= 1')
+
+        # Looking for entities or only players?
+        if player_only:
+            entities = other_functions.functions.open_players(entity=self,
+                form = other_functions.constants.ImmuneTypes.Penetrate,
+                type_of_check='',
+                same_team=True)
+        else:
+            entities = other_functions.functions.open_entities(owner=self)
+
+        if not entities: return None
+
+        offsets = []
+
+        for entity in entities:
+            try: destination = entity.eye_location
+            except AttributeError: destination = entity.origin
+            else: destination[2] -= 18
+
+            awaited_ray = (destination - self.eye_location).normalized()
+
+            distance = self.view_vector.get_distance(awaited_ray)/2
+
+            if max_offset < 0: distance = 1-distance
+
+            offsets.append(distance)
+
+        minimum = min(offsets)
+        print(minimum)
+
+        if minimum > abs(max_offset): return None
+
+        return entities[offsets.index(minimum)]
+
 
     def skills_activate(self, _=None) -> None:
         """
@@ -252,6 +299,9 @@ class WCS_Player(Player): # Short: WCSP
 
             # They're active! Turn them off, then run active
             self.skills_deactivate()
+
+        # Setting heal multiply to one
+        self.heal_multiplier = 1
 
         # Check if new skills exist
         owned_skills = set([skill_name for skill_name in self.data_skills])
@@ -383,6 +433,9 @@ class WCS_Player(Player): # Short: WCSP
         # Clearing immunes
         self.immunes.clear()
 
+        # Setting heal multiply to one
+        self.heal_multiplier = 1
+
     def skills_deactivate(self, ev=None) -> None:
 
         # Checking for custom deactivate
@@ -427,11 +480,11 @@ class WCS_Player(Player): # Short: WCSP
         self.data_info['skills_selected']: str = f"{self.skills_selected}"
         self.data_info["LK_lvls"]: int = self.lk_lvls
 
-    def heal(self, hp, ignore=False) -> int:
-        hp = int(hp)
+    def heal(self, hp: int, ignore_max=False) -> int:
+        hp = int(hp) * self.heal_multiplier
 
         # If ignoring max_hp, add all hp
-        if ignore:
+        if ignore_max:
             self.health += hp
             return hp
 
