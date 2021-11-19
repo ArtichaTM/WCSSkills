@@ -14,6 +14,7 @@ from os.path import isfile
 from typing import Union
 
 # Plugin Imports
+# Database cursor context manager
 from .functions import db_cursor
 # Paths
 from WCSSkills.other_functions.constants import PATH_FILE_DATABASE_USERS
@@ -62,7 +63,7 @@ class _DB_users:
             # Check if table exists
             cur.execute(f"SELECT name FROM sqlite_master WHERE type = 'table' AND name = '{steamid}.info'")
 
-            if len(cur.fetchall())==0:
+            if not len(cur.fetchall()):
                 self._new_player(steamid=steamid)
 
             # Extracting data
@@ -178,9 +179,9 @@ class _DB_skills:
             with open(path_to_skills, 'w', encoding="utf-8") as f:
                 dump({"Health": {
                         "name": "Здоровье",
+                        "group": "Start",
                         "description": ["Крепкое тело!",
                             "Вы станете более выносливым."],
-                        "group": "Start",
                         "max_lvl": 1000,
                         "min_player_lvl": 0,
                         "settings_type": {},

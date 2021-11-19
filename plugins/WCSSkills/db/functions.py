@@ -1,13 +1,11 @@
-# ../WCSSkills/db/functions.py
-"""
-This file stores functions for databases
-"""
+# ../db/functions.py
+""" This file stores functions for databases """
 # =============================================================================
 # >> Imports
 # =============================================================================
+# Source.Python Imports
 from players.helpers import index_from_steamid
 from players.entity import Player
-
 
 # =============================================================================
 # >> Functions/Classes
@@ -36,13 +34,10 @@ class Disconnected_user:
 
     @classmethod
     def create(cls, name, steamid, ip):
-        try:
-            index = index_from_steamid(steamid)
+        try: index = index_from_steamid(steamid)
         except ValueError:
             instance = cls(name, steamid, ip)
             return instance
-        else:
-            return Player(index)
+        else: return Player(index)
 
-    def kick(self, reason):
-        pass
+    def kick(self, reason): pass
