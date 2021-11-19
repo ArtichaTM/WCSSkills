@@ -5,17 +5,28 @@
 # Python imports
 import random
 from typing import Union, Callable
-from WCSSkills.python.types import wcs_player_entity
 from random import uniform
 
 # Source.Python Imports
+# MathLib
+from mathlib import Vector
 # Delay
 from listeners.tick import Delay
 # Entities
 from entities import TakeDamageInfo
-from entities.entity import Entity
+from entities.entity import Entity, BaseEntity
 from entities.helpers import index_from_pointer
 from entities.hooks import EntityPreHook, EntityCondition
+from entities.constants import WORLD_ENTITY_INDEX
+# Engine trace
+from engines.trace import GameTrace
+from engines.trace import Ray
+from engines.trace import engine_trace
+from engines.trace import ContentMasks
+
+# Plugin Imports
+# Typing
+from WCSSkills.python.types import *
 # Constants
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
@@ -33,7 +44,8 @@ __all__ = (
     'paralyze',
     'active_weapon_drop',
     'screen_angle_distortion',
-    'Throw_player_upwards'
+    'Throw_player_upwards',
+    'will_be_stuck',
 )
 
 # =============================================================================
@@ -51,9 +63,9 @@ on_take_magic_damage = set()
 # Chance function to check if skill worked or not
 chance = lambda value1, value2 : value1 >= random.randint(0, value2)
 
-# Take damage hook
 @EntityPreHook(EntityCondition.is_player, 'on_take_damage')
 def skills_on_take_damage(args) -> Union[None, bool]:
+    """ Take damage hook """
 
     # Getting TameDamageInfo
     # info = make_object(TakeDamageInfo, args[1])
@@ -267,3 +279,28 @@ def Throw_player_upwards(
 
     # Success return
     return ImmuneReactionTypes.Passed
+
+
+def will_be_stuck(entity: Entity_entity, position: Vector) -> bool:
+    """ Checks, will be entity stuck if teleported to this position
+
+    :param entity: Entity that we check for solid in
+    :param position: Position where we check for stuck
+    :return: Bool, will entity be stuck in this position
+    """
+
+    # Get a dot ray object of the entity physic box
+    ray = Ray(position, position, entity.mins, entity.maxs)
+
+    # Get a new GameTrace instance
+    trace = GameTrace()
+
+    # Trace in point
+    engine_trace.clip_ray_to_entity(
+        ray, ContentMasks.ALL, BaseEntity(WORLD_ENTITY_INDEX), trace)
+
+    # Return False if hit something
+    if trace.did_hit(): return True
+
+    # Otherwise return True
+    else: return False
