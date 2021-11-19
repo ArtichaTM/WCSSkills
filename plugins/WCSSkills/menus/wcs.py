@@ -207,9 +207,13 @@ def skill_parameter_lvls(player, choice):
     skill_name = player.skills_selected[choice]
     skill_id = choice
     max_lvl = Skills_info.get_max_lvl(skill_name)
-    current_lvl = player.skills_selected_lvls[skill_id] if player.skills_selected_lvls[skill_id] < max_lvl else max_lvl
-    menu.append(PagedOption(f"Последний уровень", value = (skill_id, None)))
-    menu.append(PagedOption(f"Ввести с клавиатуры", value = (skill_id, 'Keyboard', current_lvl)))
+    player_current_lvl = player.skills_selected_lvls[skill_id]
+    current_lvl = player_current_lvl if player_current_lvl < max_lvl else max_lvl
+    menu.append(PagedOption(f"Последний уровень",
+                            value = (skill_id, None)))
+    menu.append(PagedOption(f"Ввести с клавиатуры",
+                            value = (skill_id, 'Keyboard', current_lvl, max_lvl)))
+
     for lvl in range(0,current_lvl+1):
         menu.append(PagedOption(lvl, value = (skill_id, lvl)))
 
@@ -240,16 +244,15 @@ def skill_parameter_lvls_callback(*args):
         RMSound.next(player)
 
         # Printing information
-        SayText2("\2Напишите число в чат.\1").send(player.index)
-        SayText2("\2Введите STOP для отмены.\1").send(player.index)
+        SayText2("\2[SYS]\1 Напишите число в чат").send(player.index)
+        SayText2("\2[SYS]\1 Введите \7STOP\1 для отмены").send(player.index)
 
         # Saving info to enter_temp
         player.enter_temp = ('skill_parameter_lvls_keyboard',
-                             choice[0], choice[2])
+                             choice[0], choice[2], choice[3])
 
         # Registering for chat
         register_say_filter(skill_parameter_lvls_keyboard)
-
 
     else:
 
@@ -261,7 +264,7 @@ def skill_parameter_lvls_callback(*args):
 
         # Notify player
         SayText2("\4[WCS]\1 Вы установили уровень навыка "
-        f"\4{skill}\1 на \4{choice[1]}\1").send(player.index)
+        f"\5{skill}\1 на \5{choice[1]}\1").send(player.index)
 
 
 def skill_parameter_lvls_keyboard(command, index, _):
@@ -300,31 +303,30 @@ def skill_parameter_lvls_keyboard(command, index, _):
             # Block command
             return CommandReturn.BLOCK
 
-        # He requested menu
-        elif entered == 'wcs':
+        # Allow menu
+        elif entered == 'wcs': return CommandReturn.CONTINUE
 
-            # Allow
-            return CommandReturn.CONTINUE
-
-        # Well, I think every exception passed
-        try:
-
-            # Is he truly entered an number?
-            entered = int(entered)
+        # Is he truly entered an number?
+        try: entered = int(entered)
 
         # No, say, that input is wrong
         except ValueError:
-            SayText2(f"\2Введено некорректное значение\1").send(index)
+            SayText2(f"\2[SYS]\1 {entered} не является числом").send(index)
             return CommandReturn.BLOCK
 
         # Level can't be negative
         if entered < 0:
-            SayText2(f"\2Уровень не может быть отрицательным\1").send(index)
+            entered = abs(entered)
+
+        # Selected lvl above maximum of this skill
+        if entered > player.enter_temp[3]:
+            SayText2(f"\2[SYS]\1 {entered} уровень выше максимума навыка "
+                     f"{player.enter_temp[3]}").send(index)
             return CommandReturn.BLOCK
 
         # Selected lvl is above his reached limit
         elif entered > player.enter_temp[2]:
-            SayText2(f"\2Такого уровня вы ещё не достигли\1").send(index)
+            SayText2(f"\2[SYS]\1 {entered} уровня вы ещё не достигли").send(index)
             return CommandReturn.BLOCK
 
         # Well, everything is fine
@@ -351,18 +353,19 @@ def skill_settings(player, choice):
 
     skill = player.skills_selected[choice[1]]
     parameters = Skills_info.get_settings_type(skill)
+    names = Skills_info.get_settings_name(skill)
+    costs = Skills_info.get_settings_cost(skill)
 
-    for name, parameter_type in parameters.items():
+    for code, parameter_type in parameters.items():
 
-        value = player.skills_selected_settings[choice[1]][name]
+        value = player.skills_selected_settings[choice[1]][code]
         if parameter_type == 'bool':
-            menu.append(PagedOption(""
-                f"{Skills_info.get_settings_name(skill, setting = name)}"
-            f": {'вкл' if value == True else 'выкл'}",
-                    value = (choice[1],name,parameter_type,value)))
+            menu.append(PagedOption(f"{names[code]}"
+            f": {'вкл' if value == True else 'выкл'} [{costs[code]}]",
+                    value = (choice[1],code,parameter_type,value)))
         else:
-            menu.append(PagedOption(f"{name} idk",
-                        value = (choice[1],name,parameter_type,value)))
+            menu.append(PagedOption(f"{code} idk",
+                        value = (choice[1],code,parameter_type,value)))
     menu.send(player.index)
 
 def skill_settings_callback(_, index, choice):
