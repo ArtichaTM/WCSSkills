@@ -34,6 +34,7 @@ from engines.trace import engine_trace
 from engines.trace import ContentMasks
 # Iters
 from filters.players import PlayerIter
+from filters.entities import EntityIter
 # Repeat
 from listeners.tick import RepeatStatus
 # CVars
@@ -49,12 +50,13 @@ from paths import LOG_PATH
 from WCSSkills.python.types import *
 # Constants
 from WCSSkills.other_functions.constants import PATH_TO_LOG
-# from WCSSkills.wcs.wcsplayer import WCS_Players
+
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
 __all__ = ('player_indexes',
            'open_players',
+           'open_entities',
            'force_buttons',
            'repeat_functions',
            'wcs_logger',
@@ -78,11 +80,12 @@ next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(req
 
 def open_players(entity: Player_entity,
                  form,
+                 type_of_check: str,
                  only_one: bool = False,
                  same_team: bool = False) -> List[Entity_entity]:
     """ This function checks for other players, that can be hit by entity
 
-    :param entity: Origin enitity, from whom are going rays
+    :param entity: Origin entity, from whom are going rays
     :param form: ImmuneType
     :param only_one: List all entity's or return on gathering one
     :param same_team: List only entitys in seperate teams
@@ -103,13 +106,12 @@ def open_players(entity: Player_entity,
         elif user.team_index == entity.team_index and not same_team:
             continue
 
-        # # Abort, if player is not WCS_Player
-        # try: wcs_user = WCS_Players[user.userid]
-        # except KeyError: continue
-
-        # # Checking for immune
-        # if form in wcs_user.immunes['aimbot'] and not ignore_immune:
-        #     continue
+        # # Abort for cycle, if player is not WCS_Player
+        # wcs_user = WCS_Player.from_userid(user.userid)
+        # if not wcs_user: continue
+        #
+        # # Abort for cycle, if player has immune
+        # if form in wcs_user.immunes[type_of_check]: continue
 
         # Get the entity's origin
         try: origin: Vector = entity.eye_location
@@ -136,6 +138,59 @@ def open_players(entity: Player_entity,
 
     # Returns list
     return can_hit_players
+
+def open_entities(owner: Player_entity,
+                 only_one = False):
+    """ This function checks for entitys, that can be hit by argument entity
+
+    :param owner: Origin entity, from whom are going rays
+    :param only_one: List all entity's or return or gathering one
+    :return: List with Entity's
+    """
+
+    # Creating list
+    can_hit_entity_list = []
+
+    # Iterating over all alive players
+    for entity in EntityIter():
+
+        # Checking, if selected entity isn't our player
+        if owner.index == entity.index:
+            continue
+
+        # # Abort, if player is not WCS_Player
+        # try: wcs_user = WCS_Players[user.userid]
+        # except KeyError: continue
+
+        # # Checking for immune
+        # if form in wcs_user.immunes['aimbot'] and not ignore_immune:
+        #     continue
+
+        # Get the entity's origin
+        try: origin: Vector = owner.eye_location
+        except AttributeError: origin: Vector = owner.origin
+
+        # Get a Ray object of the entity physic box
+        ray = Ray(origin, entity.origin)
+
+        # Get a new GameTrace instance
+        trace = GameTrace()
+
+        # Trace to player
+        engine_trace.clip_ray_to_entity(
+            ray, ContentMasks.ALL, BaseEntity(WORLD_ENTITY_INDEX), trace)
+
+        # Hit something?
+        if not trace.did_hit():
+
+            # Not hit! Player can be shot
+            can_hit_entity_list.append(entity)
+
+            if only_one:
+                break
+
+    # Returns list
+    return can_hit_entity_list
 
 def force_buttons(player: Player_entity, buttons: int, once: bool = True, time: float = 0) -> Union[None, int]:
     """Forces the given buttons on the given player for the given time."""
