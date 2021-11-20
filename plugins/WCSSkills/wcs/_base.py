@@ -240,11 +240,11 @@ class WCS_Player(Player): # Short: WCSP
         try: return WCS_Players[userid_from_index(index)]
         except KeyError: return None
 
-    def view_entity_offset(self, max_offset, player_only=True) -> Union[List, None]:
+    def view_entity_offset(self, max_offset, player_only=True) -> Union[Entity_entity, None]:
         """ Returns the most close entity to the crosshair
         :param max_offset: More value, more allowed angle. -1 <= offset <= 1
         :param player_only: Select entity with classname 'player'
-        :return: Entity that player looking at
+        :return: Entity that player looking at, or None, if nothing at crosshair
         """
 
         # Input argument check
@@ -281,8 +281,22 @@ class WCS_Player(Player): # Short: WCSP
 
         if minimum > abs(max_offset): return None
 
-        return entities[offsets.index(minimum)]
+        return Entity_entity
 
+    def players_around(self, radius: float) -> wcs_player_entity:
+        """ Returns WCS_Player's that within owner in some radius
+        :param radius: radius to check in units
+        :return: WCS_Player
+        """
+
+        # Iterating over all alive players
+        for WCSP in WCS_Players.values():
+
+            # Player inside radius?
+            if self.origin.get_distance(WCSP.origin) <= radius:
+
+                # Return this player
+                yield WCSP
 
     def skills_activate(self, _=None) -> None:
         """
