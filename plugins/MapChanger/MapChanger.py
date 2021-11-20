@@ -110,7 +110,7 @@ class _Counter:
     Even if this class is created to use in class HUD, he can live
     separately from it
     """
-    __slots__ = ('timestamp', 'mp_timelimit', 'force_update_seconds')
+    __slots__ = ('timestamp', 'mp_timelimit', 'force_update_seconds', 'updating')
 
     def __init__(self):
 
@@ -119,6 +119,9 @@ class _Counter:
 
         # Limit for match
         self.mp_timelimit = 0
+
+        # Check, if force_update launched
+        self.updating = False
 
     def force_set_time(self, minutes, seconds) -> None:
         """ Forces Counter to change start values
@@ -157,18 +160,26 @@ class _Counter:
 
     def force_update(self):
 
-        # Register for console output
-        output_listener.register_listener(self._console_output)
+        if not self.updating:
 
-        # Starting spam 'timeleft' for 'Time Remaining sec:min'
-        repeat = Repeat(e_s_c, args=('timeleft',))
-        repeat.start(0.1, 12, True)
+            # Register for console output
+            output_listener.register_listener(self._console_output)
 
-        # Setting repeat variable to None, to mark it not setted
-        self.force_update_seconds = None
+            # Starting spam 'timeleft' for 'Time Remaining sec:min'
+            repeat = Repeat(e_s_c, args=('timeleft',))
+            repeat.start(0.1, 12, True)
 
-        # Unregister console output reader with delay
-        Delay(1.3, output_listener.unregister_listener, args=(self._console_output,))
+            # Setting repeat variable to None, to mark it not setted
+            self.force_update_seconds = None
+
+            # Unregister console output reader with delay
+            Delay(1.3, output_listener.unregister_listener, args=(self._console_output,))
+
+            # Checking updating to False
+            Delay(1.3, setattr, args=(self, 'updating', True))
+
+            # Checking updating
+            self.updating = True
 
     def _console_output(self, _, msg):
 
@@ -223,11 +234,16 @@ class _Counter:
             # This is the last round. Forcing time with argument (0,0)
             self.force_set_time(0, 0)
 
+        elif msg == '* No Time Limit *':
+            return OutputReturn.BLOCK
+
+
         # Not our conditions. Pass
         else: return
 
         # Out condition completed, block command to make less spam
         return OutputReturn.BLOCK
+
 
 # Singletons
 time_counter = _Counter()
