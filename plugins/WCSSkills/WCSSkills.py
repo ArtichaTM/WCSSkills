@@ -22,7 +22,7 @@ def load():
     from .skills import immune, skill
 
     # Logging plugin load
-    from .other_functions.functions import wcs_logger
+    from WCSSkills.WCS_Logger import wcs_logger
 
     # Downloadables
     from stringtables.downloads import Downloadables
@@ -47,7 +47,7 @@ def unload():
     DC_history.unload_instance()
 
     # Logging plugin unload
-    from WCSSkills.other_functions.functions import wcs_logger
+    from WCSSkills.WCS_Logger import wcs_logger
     wcs_logger('info','Plugin unloaded successfully')
 
     # Unloading wcs_logger

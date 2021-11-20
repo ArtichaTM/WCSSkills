@@ -28,7 +28,7 @@ from WCSSkills.wcs.wcsplayer import WCS_Player, WCS_Players
 from .radio import *
 from WCSSkills.admin.menu import AdminPlayers_player
 # Logging
-from WCSSkills.other_functions.functions import wcs_logger
+from ..WCS_Logger import wcs_logger
 #
 from .functions import RMSound
 

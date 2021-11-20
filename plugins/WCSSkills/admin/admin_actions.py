@@ -22,7 +22,7 @@ from entities.constants import MoveType
 # DB
 from WCSSkills.db.admin import DB_admin
 # Logging
-from WCSSkills.other_functions.functions import wcs_logger
+from WCSSkills.WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> All

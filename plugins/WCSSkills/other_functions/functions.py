@@ -18,12 +18,11 @@ File with various useful functions.
 # Python Imports
 # Random
 import random
-from datetime import datetime
-from typing import Union, Any, List
+from typing import Union, List
 
 # Source.Python imports
+from WCSSkills.WCS_Logger import wcs_logger
 from hooks.exceptions import ExceptHook
-# Helpers
 # Entities
 from entities.entity import BaseEntity
 from entities.constants import WORLD_ENTITY_INDEX
@@ -44,12 +43,10 @@ from engines.server import server
 # Vector
 from mathlib import Vector
 # Paths
-from paths import LOG_PATH
 
 # WCS_Players
 from WCSSkills.python.types import *
 # Constants
-from WCSSkills.other_functions.constants import PATH_TO_LOG
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -59,7 +56,6 @@ __all__ = ('player_indexes',
            'open_entities',
            'force_buttons',
            'repeat_functions',
-           'wcs_logger',
            'skill_timings_calculate'
            )
 
@@ -69,14 +65,8 @@ __all__ = ('player_indexes',
 
 # Return all players indexes
 player_indexes = lambda : [player.index for player in PlayerIter()]
-
 required_xp = lambda lvl: ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
 next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(required_xp(lvl) // 2))
-#
-# @EntityPreHook(EntityCondition.is_player, 'emit_sound')
-# def xz(*args):
-#     pass
-
 
 def open_players(entity: Player_entity,
                  form,
@@ -257,52 +247,14 @@ def skill_timings_calculate() -> float:
         return restart_delay - random.uniform(0, delay)
 
 
-class WCS_Logger:
-    __slots__ = ('file',)
-
-    def __init__(self, path):
-        log_path = LOG_PATH / path
-
-        # Does the parent directory exist?
-        if not log_path.parent.isdir():
-
-            # Create the parent directory
-            log_path.parent.makedirs()
-
-        # Opening file
-        self.file = open(log_path, mode='a', encoding='utf-8')
-
-    def unload_instance(self):
-
-        # Closing logs on exit
-        self.file.close()
-
-    def __call__(self, prefix: str, msg: Any, console: bool = False):
-
-        msg = msg.replace('\n', '\n---> ')
-
-        # Writing to file with prefix-s
-        self.file.write(f"[{datetime.today().strftime('%H:%M:%S')}"
-                        f" {prefix.upper().rjust(12):.12}] {msg}\n")
-
-        # Quickly append
-        self.file.flush()
-
-        # Echo to console if needed
-        if console:
-            print(f'[WCSSkills {prefix.upper().rjust(7):.7}] {msg}')
-
-wcs_logger = WCS_Logger(PATH_TO_LOG)
-
-
 # Logging exceptions
 @ExceptHook
 def exception_log(exc_type, _, trace_back):
-    PtH = trace_back.tb_frame.f_code.co_filename
-    index = PtH.find('WCSSkills')
+    pth = trace_back.tb_frame.f_code.co_filename
+    index = pth.find('WCSSkills')
     if index != -1:
-        PtH = '..\\'+PtH[PtH.find('WCSSkills')+10:]
+        pth = '..\\'+pth[pth.find('WCSSkills')+10:]
 
     first_line = trace_back.tb_frame.f_code.co_firstlineno
-    try: wcs_logger('exception', f'{exc_type.__qualname__} in "{PtH}", line {first_line}')
+    try: wcs_logger('exception', f'{exc_type.__qualname__} in "{pth}", line {first_line}')
     except ValueError: return

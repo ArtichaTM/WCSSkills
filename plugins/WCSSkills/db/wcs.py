@@ -21,7 +21,7 @@ from WCSSkills.other_functions.constants import PATH_FILE_DATABASE_USERS
 from WCSSkills.other_functions.constants import PATH_FILE_JSON_SKILLS_INFO
 from WCSSkills.other_functions.constants import PATH_FILE_JSON_PLAYER_SETTINGS
 # Logger
-from WCSSkills.other_functions.functions import wcs_logger
+from ..WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> ALL DECLARATION

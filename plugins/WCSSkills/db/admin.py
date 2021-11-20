@@ -25,7 +25,7 @@ from WCSSkills.other_functions.constants import PATH_FILE_JSON_DISCONNECTED_PLAY
 from WCSSkills.admin.constants import Punishment_types
 from WCSSkills.admin.constants import amount_of_players_in_history as history_count
 # Logger
-from WCSSkills.other_functions.functions import wcs_logger
+from ..WCS_Logger import wcs_logger
 # Punishment expire event
 from WCSSkills.events.custom_events import Punishment_expired
 

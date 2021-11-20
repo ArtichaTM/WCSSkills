@@ -10,7 +10,7 @@ from messages import SayText2
 from WCSSkills.admin.constants import Punishment_types
 from WCSSkills.admin.constants import tell_admin_about_all_demutes as TAAAD
 # Logging
-from WCSSkills.other_functions.functions import wcs_logger
+from WCSSkills.WCS_Logger import wcs_logger
 
 
 @Event('Punishment_expired')

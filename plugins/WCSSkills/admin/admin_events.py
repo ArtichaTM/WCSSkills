@@ -20,7 +20,8 @@ from .constants import Punishment_reasons
 # Ban DB
 from WCSSkills.db.admin import DB_admin
 # Logging
-from WCSSkills.other_functions.functions import wcs_logger
+from ..WCS_Logger import wcs_logger
+
 
 @OnClientActive
 def on_client_connect(index):

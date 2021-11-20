@@ -10,6 +10,7 @@ from random import uniform as randfloat
 
 # Source.Python Imports
 # Players
+import WCSSkills.WCS_Logger
 from players.entity import Player
 from players.helpers import index_from_userid, userid_from_index
 # Events
@@ -83,7 +84,7 @@ def WCS_Player_unload(ev) -> None:
     except KeyError:
 
         # No. Logging warning and returning
-        other_functions.functions.wcs_logger('player state', 'User without '
+        WCSSkills.WCS_Logger.wcs_logger('player state', 'User without '
                                    'WCS_Player disconnected', console=True)
         return
     else:
@@ -219,7 +220,7 @@ class WCS_Player(Player): # Short: WCSP
         event_manager.register_for_event('round_end', self.skills_deactivate)
 
         # Logging initialization
-        other_functions.functions.wcs_logger("player state", f"{self.name}: WCS_Player initialized")
+        WCSSkills.WCS_Logger.wcs_logger("player state", f"{self.name}: WCS_Player initialized")
 
     def __repr__(self):
         return (f"{self.__class__.__name__}(name={self.name},"
@@ -325,7 +326,7 @@ class WCS_Player(Player): # Short: WCSP
         if change_skills is not None:
             for skill in change_skills.difference(owned_skills):
                 # Logging
-                other_functions.functions.wcs_logger('skill change', f"{self.name}: Selected new skill {skill}")
+                WCSSkills.WCS_Logger.wcs_logger('skill change', f"{self.name}: Selected new skill {skill}")
 
                 # Adding new entry
                 self.data_skills[skill] = (0, 0, None, {})
@@ -365,7 +366,7 @@ class WCS_Player(Player): # Short: WCSP
                         other_functions.functions.next_lvl_xp_calculate(skill_lvl)
 
                 # Logging skill change
-                other_functions.functions.wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")
+                WCSSkills.WCS_Logger.wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")
 
             self.skills_change[num] = None
 
@@ -426,7 +427,7 @@ class WCS_Player(Player): # Short: WCSP
         Delay(randfloat(1, 4), self._data_skills_update)
 
         # Logging
-        other_functions.functions.wcs_logger('skills', f"{self.name}: started round with "
+        WCSSkills.WCS_Logger.wcs_logger('skills', f"{self.name}: started round with "
                              f"{', '.join(self.skills_selected)}.")
 
     def _skills_deactivate(self):
@@ -609,7 +610,7 @@ class WCS_Player(Player): # Short: WCSP
         db.admin.DC_history.add_entry(self.name, self.steamid, self.address)
 
         # Logging
-        other_functions.functions.wcs_logger('player state', f"{self.name} WCS_Player unloaded")
+        WCSSkills.WCS_Logger.wcs_logger('player state', f"{self.name} WCS_Player unloaded")
 
 
 # =============================================================================
