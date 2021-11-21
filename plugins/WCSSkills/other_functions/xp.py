@@ -8,14 +8,13 @@ using implemented method .add_xp(amount, reason) in WCS_Player class
 # >> IMPORTS
 # =============================================================================
 # Python Imports
-from random import randint
 
 # Source.Python Imports
 # Event
 from events import Event
 
 # WCS_Players dictionary
-from WCSSkills.wcs.wcsplayer import WCS_Player, WCS_Players
+from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player, WCS_Players
 
 # =============================================================================
 # >> All

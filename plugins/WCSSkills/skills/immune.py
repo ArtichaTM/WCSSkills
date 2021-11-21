@@ -12,7 +12,7 @@ from WCSSkills.other_functions.constants import ImmuneTypes
 # Skills information
 from WCSSkills.db.wcs import Skills_info
 # WCS_Player
-from WCSSkills.wcs.wcsplayer import WCS_Player
+from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
 # chance
 from .functions import chance
 

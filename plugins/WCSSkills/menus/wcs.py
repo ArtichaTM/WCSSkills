@@ -23,7 +23,7 @@ from commands.say import unregister_say_filter
 from WCSSkills.db.wcs import Skills_info
 from WCSSkills.db.wcs import Player_settings
 # WCS_Player
-from WCSSkills.wcs.wcsplayer import WCS_Player, WCS_Players
+from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player, WCS_Players
 # Modified default PagedMenu
 from .radio import *
 from WCSSkills.admin.menu import AdminPlayers_player

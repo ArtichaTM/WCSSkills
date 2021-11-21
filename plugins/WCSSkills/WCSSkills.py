@@ -34,7 +34,7 @@ def load():
 def unload():
 
     # Unloading players
-    from WCSSkills.wcs.wcsplayer import WCS_Players as WCSP
+    from WCSSkills.wcs.WCSP.wcsplayer import WCS_Players as WCSP
     for player in WCSP.values():
         with suppress(AttributeError):
             player.unload_instance()

@@ -29,7 +29,7 @@ from WCSSkills.admin.constants import Punishment_reasons
 from WCSSkills.admin.constants import Punishment_duration
 from WCSSkills.admin.constants import MoveTypes
 # WCS_Player
-from WCSSkills.wcs.wcsplayer import WCS_Player, WCS_Players
+from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player, WCS_Players
 # Modified default PagedMenu
 from WCSSkills.menus.radio import PagedMenu
 

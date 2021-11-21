@@ -45,8 +45,7 @@ from engines.trace import TraceFilterSimple
 # Functions
 from .functions import *
 # WCS_Player
-# from WCSSkills.wcs.wcsplayer import WCS_Players
-from WCSSkills.wcs.wcsplayer import WCS_Player
+from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
 # Effects
 from WCSSkills.other_functions.wcs_effects import effect
 # Skills information
