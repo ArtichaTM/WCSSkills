@@ -17,12 +17,12 @@ def load():
     # Radio menu
     from .menus import wcs
     # XP
-    from .other_functions import xp
+    from .other_functions import xp, functions
     # Skills
     from .skills import immune, skill
 
     # Logging plugin load
-    from WCSSkills.WCS_Logger import wcs_logger
+    from .WCS_Logger import wcs_logger
 
     # Downloadables
     from stringtables.downloads import Downloadables
