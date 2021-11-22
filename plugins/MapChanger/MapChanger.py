@@ -72,25 +72,18 @@ class _HUD_Display:
 
         # Checking for server status
         # Server is loading
-        if server.is_loading() or server.paused: Delay(5, self.start, cancel_on_level_end=True)
+        if server.is_loading() or server.paused: return
 
         # Server is empty
-        elif server.num_clients == 0:            Delay(5, self.start, cancel_on_level_end=True)
+        elif server.num_clients == 0: return
 
         # Game is on
-        else:
 
-            # Is all ok with time_counter?
-            if time_counter.timestamp == 0:
+        # Hud repeat started?
+        if self.repeat.status != RepeatStatus.RUNNING:
 
-                # No, forcing time update
-                time_counter.force_update()
-
-            # Hud repeat started?
-            if self.repeat.status != RepeatStatus.RUNNING:
-
-                # No. Starting.
-                self.repeat.start(1, execute_on_start=True)
+            # No. Starting.
+            self.repeat.start(1, execute_on_start=True)
 
     def unload_instance(self):
 
