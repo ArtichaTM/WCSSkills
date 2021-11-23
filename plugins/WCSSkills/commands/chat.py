@@ -18,12 +18,13 @@ from messages import SayText2
 
 # Plugin imports
 # Player
-from WCSSkills.wcs.wcsplayer import WCS_Player
+from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
 # Main Radio Menu
 from WCSSkills.menus.wcs import MainMenu, LK
 from WCSSkills.admin.menu import AdminMain
 # Logger
-from WCSSkills.other_functions.functions import wcs_logger
+from WCSSkills.WCS_Logger import wcs_logger
+
 
 def increase():
     for x in range(0,10000):
