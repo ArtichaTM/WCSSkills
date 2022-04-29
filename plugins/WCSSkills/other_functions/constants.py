@@ -147,7 +147,9 @@ WCSSKILLS_DEBUG = True
 WCS_DAMAGE_ID = DamageTypes.PHYSGUN
 ADMIN_DAMAGE_ID = DamageTypes.DISSOLVE
 
-# Skills unload timings. Returns tuple, where [0] delay, [1] interval
+# Skills unload timings. Returns tuple, where [0] delay, [1] interval in seconds
+# Delay — time before then end of round to unload skills
+# Interval — time, that random.randint() spreads. Used to spread server load.
 SKILL_TIMINGS = (0, 0)
 
 # Default skill setting value
