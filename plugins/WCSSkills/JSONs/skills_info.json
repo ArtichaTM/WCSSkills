@@ -315,7 +315,7 @@
 
     "skill.Ammo_gain_on_hit": {
         "name": "Патроны при попадании",
-        "group": "Атакующие",
+        "group": "Оружие",
         "description": [
             "Пули жаждут крови, возвращаясь к вам",
             "Чем больше попаданий, тем больше патрон",
@@ -333,7 +333,7 @@
 
     "skill.Additional_percent_dmg": {
         "name": "Дополнительный урон (%)",
-        "group": "Атакующие",
+        "group": "Оружие",
         "description": [
             "Пули жаждут крови, возвращаясь к вам",
             "Чем больше попаданий, тем больше патрон",
@@ -549,7 +549,7 @@
             "воздействовать силой на игрока даже на",
             "большом расстоянии"
         ],
-        "max_lvl": 10800,
+        "max_lvl": 32400,
         "min_player_lvl": 4000,
         "settings_type": {
             "hit notify": "bool"
@@ -580,20 +580,199 @@
     },
 
 
+    "skill.Attack_dodge": {
+        "name": "Реальный уворот",
+        "group": "Защитные",
+        "description": [
+            "Ваши молниеносные рефлексы позволяют",
+            "предчувствовать пули, позволяя",
+            "моментально уворачиваться от них.",
+            "Чем выше культивация навыка, тем",
+            "выше шанс почувствовать злые намерения",
+            "противника. Обратите внимание, что не",
+            "всех противников можно почувствовать"
+        ],
+        "max_lvl": 10000,
+        "min_player_lvl": 4000,
+        "settings_type": {
+            "fail notify": "bool"
+        },
+        "settings_name": {
+            "fail notify": "Оповещать о провале уворота"
+        },
+        "settings_cost": {
+            "fail notify": 0
+        }
+    },
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+    "skill.Weapon_give_start": {
+        "name": "Призыв оружия",
+        "group": "Стартовые",
+        "description": [
+            "Ваша связь с потусторонним миром повышается.",
+            "Теперь вы можете призывать оружие, но лишь в",
+            "в начале битвы, так как вам нужно время на",
+            "концентрацию элемента призыва.",
+            "Даже при маленьком уровне",
+            "у вас удаётся призывать хоть какое-то оружие",
+            " ",
+            "Каждый уровень навыка даёт вам 1$, в сумме",
+            "которые можно потратить на оружие, гранаты, ...,",
+            "Если денег не хватает, оружие не выдаётся.",
+            "До 500 уровня выдаётся 500$"
+        ],
+        "max_lvl": -1,
+        "min_player_lvl": 800,
+        "settings_type": {
+            "weapon_famas": "bool",
+            "weapon_ak47": "bool",
+            "weapon_m4a1": "bool",
+            "weapon_m4a1_silencer": "bool",
+            "weapon_aug": "bool",
+            "weapon_sg556": "bool",
+            "weapon_ssg08": "bool",
+            "weapon_awp": "bool",
+            "weapon_g3sg1": "bool",
+            "weapon_scar20": "bool",
+            "weapon_nova": "bool",
+            "weapon_xm1014": "bool",
+            "weapon_sawedoff": "bool",
+            "weapon_mag7": "bool",
+            "weapon_m249": "bool",
+            "weapon_negev": "bool",
+            "weapon_mac10": "bool",
+            "weapon_mp5sd": "bool",
+            "weapon_mp7": "bool",
+            "weapon_mp9": "bool",
+            "weapon_ump45": "bool",
+            "weapon_p90": "bool",
+            "weapon_bizon": "bool",
+            "weapon_galilar": "bool",
+            "weapon_glock": "bool",
+            "weapon_usp_silencer": "bool",
+            "weapon_hkp2000": "bool",
+            "weapon_fiveseven": "bool",
+            "weapon_elite": "bool",
+            "weapon_p250": "bool",
+            "weapon_tec9": "bool",
+            "weapon_cz75a": "bool",
+            "weapon_deagle": "bool",
+            "weapon_revolver": "bool",
+            "weapon_molotov": "bool",
+            "weapon_incgrenade": "bool",
+            "weapon_decoy": "bool",
+            "weapon_flashbang": "bool",
+            "weapon_hegrenade": "bool",
+            "weapon_smokegrenade": "bool",
+            "weapon_tagrenade": "bool",
+            "weapon_taser": "bool",
+            "weapon_snowball": "bool",
+            "weapon_breachcharge": "bool",
+            "weapon_healthshot": "bool",
+            "item_cutters": "bool"
+        },
+        "settings_name": {
+            "weapon_nova": "Нова",
+            "weapon_xm1014": "XM1014",
+            "weapon_sawedoff": "Sawed-off",
+            "weapon_mag7": "Mag7",
+            "weapon_m249": "M249",
+            "weapon_negev": "Негев",
+            "weapon_mac10": "Mac10",
+            "weapon_mp5sd": "MP5SD",
+            "weapon_mp7": "MP7",
+            "weapon_mp9": "MP9",
+            "weapon_ump45": "Юмп",
+            "weapon_p90": "Петух",
+            "weapon_bizon": "Бизон",
+            "weapon_galilar": "Галина",
+            "weapon_famas": "Фамас",
+            "weapon_ak47": "Калаш",
+            "weapon_m4a1": "Мка",
+            "weapon_m4a1_silencer": "Мка с глушителем",
+            "weapon_aug": "Ауг",
+            "weapon_sg556": "СГ",
+            "weapon_ssg08": "Муха",
+            "weapon_awp": "АВП",
+            "weapon_g3sg1": "Плётка Т",
+            "weapon_scar20": "Плётка КТ",
+            "weapon_glock": "Глок",
+            "weapon_usp_silencer": "Юсп",
+            "weapon_hkp2000": "P2000",
+            "weapon_fiveseven": "Five seven",
+            "weapon_elite": "Двойные берреты",
+            "weapon_p250": "P250",
+            "weapon_tec9": "Tec 9",
+            "weapon_cz75a": "Чешка",
+            "weapon_deagle": "Дигл",
+            "weapon_revolver": "Револьвер",
+            "weapon_knife": "Нож",
+            "weapon_hammer": "Молоток",
+            "weapon_spanner": "Гаечный ключ",
+            "weapon_axe": "Топор",
+            "weapon_taser": "Шокер",
+            "weapon_molotov": "Молик",
+            "weapon_incgrenade": "Поджигательная граната",
+            "weapon_decoy": "Декой",
+            "weapon_flashbang": "Флешка",
+            "weapon_hegrenade": "Хаешка",
+            "weapon_smokegrenade": "Смок",
+            "weapon_tagrenade": "ВХ граната",
+            "weapon_snowball": "Снежок",
+            "weapon_breachcharge": "Пробивной заряд",
+            "weapon_healthshot": "Хилка",
+            "item_cutters": "Дефуза"
+        },
+        "settings_cost": {
+            "weapon_famas": 2050,
+            "weapon_ak47": 2700,
+            "weapon_m4a1": 3100,
+            "weapon_m4a1_silencer": 2900,
+            "weapon_aug": 3300,
+            "weapon_sg556": 3000,
+            "weapon_ssg08": 1700,
+            "weapon_awp": 4750,
+            "weapon_g3sg1": 5000,
+            "weapon_scar20": 5000,
+            "weapon_nova": 1050,
+            "weapon_xm1014": 2000,
+            "weapon_sawedoff": 1100,
+            "weapon_mag7": 1300,
+            "weapon_m249": 5200,
+            "weapon_negev": 1700,
+            "weapon_mac10": 1050,
+            "weapon_mp5sd": 1500,
+            "weapon_mp7": 1500,
+            "weapon_mp9": 1250,
+            "weapon_ump45": 1200,
+            "weapon_p90": 2350,
+            "weapon_bizon": 1400,
+            "weapon_galilar": 1800,
+            "weapon_glock": 200,
+            "weapon_usp_silencer": 200,
+            "weapon_hkp2000": 200,
+            "weapon_fiveseven": 500,
+            "weapon_elite": 400,
+            "weapon_p250": 300,
+            "weapon_tec9": 500,
+            "weapon_cz75a": 500,
+            "weapon_deagle": 700,
+            "weapon_revolver": 600,
+            "weapon_molotov": 400,
+            "weapon_incgrenade": 400,
+            "weapon_decoy": 50,
+            "weapon_flashbang": 200,
+            "weapon_hegrenade": 300,
+            "weapon_smokegrenade": 300,
+            "weapon_tagrenade": 1000,
+            "weapon_taser": 200,
+            "weapon_snowball": 50,
+            "weapon_breachcharge": 1500,
+            "weapon_healthshot": 300,
+            "item_cutters": 300
+        }
+    },
 
     "immune.paralyze": {
         "name": "Паралич",

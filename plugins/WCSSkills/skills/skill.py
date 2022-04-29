@@ -25,6 +25,8 @@ from events.hooks import pre_event_manager
 from messages.base import SayText2 as ST2
 # Models
 from engines.precache import Model
+# Vector
+from mathlib import Vector
 # Colors
 from colors import Color
 # Enumeratings
@@ -44,18 +46,18 @@ from engines.trace import TraceFilterSimple
 # Plugin Imports
 # Functions
 from .functions import *
+from WCSSkills.other_functions.functions import *
 # WCS_Player
 from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
 # Effects
 from WCSSkills.other_functions.wcs_effects import effect
 # Skills information
 from WCSSkills.db.wcs import Skills_info
-# Useful functions
-from WCSSkills.other_functions.functions import *
 # Constants
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import WCS_FOLDER
 from WCSSkills.other_functions.constants import DamageTypes
+from WCSSkills.other_functions.constants import weapon_translations
 # Enumeratings
 from WCSSkills.other_functions.constants import ImmuneTypes
 from WCSSkills.other_functions.constants import ImmuneReactionTypes
@@ -98,9 +100,18 @@ __all__ = (
 # =============================================================================
 
 class BaseSkill:
-    __slots__ = ('owner', 'lvl', 'settings', 'name')
+    """ Base abstract skill for all new skills """
+    __slots__ = ('owner', 'lvl', 'settings', 'name', 'costs')
 
-    def __init__(self, userid: int, lvl: int, settings: dict):
+    def __init__(self, userid: int, lvl: int, settings: dict, exclude_costs = True) -> None:
+        """
+        :param userid: Owner userid
+        :param lvl: Current skill lvl
+        :param settings: Current skill settings
+        :param exclude_costs:
+            True: Subtracts settings cost (where True) from self.lvl
+            False: creates self.costs with settings dict {setting: bool}
+        """
 
         # Saving owner
         self.owner = WCS_Player.from_userid(userid)
@@ -108,6 +119,7 @@ class BaseSkill:
         # Setting name of skill
         self.name = f"skill.{type(self).__name__}"
 
+        # Getting skill maximum lvl
         max_lvl = Skills_info.get_max_lvl(self.name)
 
         # Getting settings
@@ -116,35 +128,34 @@ class BaseSkill:
         # Loading price for settings
         costs = Skills_info.get_settings_cost(self.name)
 
-        # Subtract lvl for each setting
-        for setting, value in self.settings.items():
+        # Exclude costs from self.lvl?
+        if exclude_costs:
 
-            # If setting active
-            if value is True:
+            # Subtract lvl for each setting
+            for setting, value in self.settings.items():
 
-                # Subtracting it's cost
-                lvl -= costs[setting]
+                # If setting active
+                if value is True:
+
+                    # Subtracting it's cost
+                    lvl -= costs[setting]
+
+        # No, setting it to self.costs
+        else: self.costs = costs
 
         # # Lvl limits check
 
         # Lvl equals -1 -> no limit to lvl
-        if max_lvl == -1:
-
-            self.lvl = lvl
+        if max_lvl == -1: self.lvl = lvl
 
         # Lvl above maximum -> Change lvl to max
-        elif lvl > max_lvl:
-            self.lvl = max_lvl
+        elif lvl > max_lvl: self.lvl = max_lvl
 
         # Lvl below minimum -> Change lvl to 0
-        elif lvl < 0:
-
-            self.lvl = 0
+        elif lvl < 0: self.lvl = 0
 
         # All is ok, set lvl as in arguments
-        else:
-
-            self.lvl = lvl
+        else: self.lvl = lvl
 
     def __repr__(self):
         return (f"{self.name}(lvl={self.lvl}, "
@@ -154,9 +165,7 @@ class BaseSkill:
         pass
 
 class ActiveSkill(BaseSkill):
-    """
-    Inherit this class, if u need to create ultimate/ability
-    """
+    """ Inherit this class, if u need to create ultimate/ability """
     __slots__ = ('delay',)
 
     def __init__(self, userid: int, lvl: int, settings: dict):
@@ -202,6 +211,7 @@ class ActiveSkill(BaseSkill):
         Delay(0, self.owner.Buttons.hud_update)
 
 class PeriodicSkill(BaseSkill, repeat_functions):
+    """ Inherit this skill, if u need to create poison, fire, e.t.c. """
     __slots__ = ('infect_dict',)
 
     def __init__(self, lvl: int, userid: int, settings: dict):
@@ -273,6 +283,7 @@ class PeriodicSkill(BaseSkill, repeat_functions):
         self._repeat_stop()
 
 class DelaySkill(BaseSkill):
+    """ Inherit this skill, if u need to create skill with cooldown """
     __slots__ = ('cd', 'cd_length')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
@@ -283,6 +294,9 @@ class DelaySkill(BaseSkill):
 
         # Delay
         self.cd = Delay(0, self.cd_passed)
+
+        # Adding to buttons as delay skill
+        self.owner.Buttons.add_new_skill(self)
 
     def cd_passed(self):
         pass
@@ -815,7 +829,8 @@ class Aim(BaseSkill):
 
             if self.settings['back_to_aim'] and lvl >= 1000:
                 ST2("\4[WCS]\1 Вернуть прицел после выстрела: "
-                f"\5{'вкл' if self.back_to_aim == True else 'выкл'}\1").send(self.owner.index)
+                f"\5{'включено' if self.back_to_aim == True else 'выключено'}\1"
+                ).send(self.owner.index)
 
         pre_event_manager.register_for_event('weapon_fire', self.fire)
 
@@ -829,9 +844,10 @@ class Aim(BaseSkill):
             return
 
         # Looking for player
-        target = open_players(player=self.owner,
+        target = open_players(entity=self.owner,
                               form = ImmuneTypes.Default,
-                              only_one = True)
+                              only_one = True,
+                              type_of_check='aimbot')
 
         # If found, and chance worked
         if target:
@@ -887,9 +903,6 @@ class WalkOnAir(ActiveSkill):
         self.delay = Delay(self.cd, self.cd_passed)
         self.repeat = Repeat(self.tick)
 
-        self.owner.emit_sound(f'{WCS_FOLDER}/skills/WalkOnAir/'
-                              f'success.mp3', Atenuation=0.8)
-
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             ST2(f"\4[WCS]\1 Вы можете \5ходить по воздуху\1").send(self.owner.index)
@@ -911,6 +924,9 @@ class WalkOnAir(ActiveSkill):
         self.entity.health = 10000
         self.entity.set_datamap_property_int("m_MoveType", 0)
         self.entity.set_datamap_property_float('m_flModelScale', 0.01)
+
+        self.owner.emit_sound(f'{WCS_FOLDER}/skills/WalkOnAir/'
+                              f'success.mp3', attenuation=0.8)
 
     def bind_pressed(self) -> None:
         if super().bind_pressed():
@@ -1219,10 +1235,11 @@ class Paralyze(DelaySkill):
 
     def player_hurt(self, ev) -> None:
 
-        try:
-            attacker = WCS_Player.from_userid(ev['attacker'])
-            victim = WCS_Player.from_userid(ev['userid'])
-        except KeyError: return
+        attacker = WCS_Player.from_userid(ev['attacker'])
+        victim = WCS_Player.from_userid(ev['userid'])
+
+        # Abort, if attacker/victim is not WCS_Player
+        if attacker is None or victim is None: return
 
         # Activating only if attacker was owner of this skill
         # and skill isn't on cooldown
@@ -1651,7 +1668,7 @@ class Drop_weapon_chance(BaseSkill):
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             ST2("\4[WCS]\1 Вы выбросите оружие противника с шансом"
-                     f"{self.chance:.1f}").send(self.owner.index)
+                     f"\5{self.chance:.1f}%\1").send(self.owner.index)
 
     def player_hurt(self, ev):
 
@@ -1718,12 +1735,18 @@ class Screen_rotate_attack(DelaySkill):
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
         super().__init__(userid, lvl, settings)
 
-        self.distortion = self.lvl / 60
+        # Amount to distort
+        self.distortion = sqrt(self.lvl)
 
         self.cd_length = 2
 
         # Register for hit
         event_manager.register_for_event('player_hurt', self.player_hurt)
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            ST2("\4[WCS]\1 Вы разворачиваете экран противника на"
+                     f"\5{self.distortion:.0f}°\1").send(self.owner.index)
 
     def player_hurt(self, ev):
 
@@ -1789,7 +1812,6 @@ class Screen_rotate_attack(DelaySkill):
 
 
 class HE_Bloodhound(BaseSkill):
-    # TODO: Apply detonate on next offsets fix
 
     __slots__ = ('power', )
 
@@ -1802,7 +1824,12 @@ class HE_Bloodhound(BaseSkill):
         # Registering for bounce event
         event_manager.register_for_event('grenade_bounce', self.check)
 
-    def check(self, ev):
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            ST2("\4[WCS]\1 Ваши HE-гранаты отскакивают в противника"
+                f" с силой {self.power:.0f}°").send(self.owner.index)
+
+    def check(self, _):
 
         # Delay to make grenade move from wall
         # This made for make rays didn't hit wall, that
@@ -1810,44 +1837,177 @@ class HE_Bloodhound(BaseSkill):
         Delay(0.1, self._check)
 
     def _check(self):
-        for entity in EntityIter(class_names=('hegrenade_projectile',)):
+
+        for grenade in EntityIter(class_names=('hegrenade_projectile',)):
 
             # Getting thrower index
-            thrower_index = entity.get_property_short('m_hThrower')
+            thrower_index = grenade.get_property_short('m_hThrower')
 
             # Checking if it matches owner index
             if thrower_index != self.owner.index: continue
 
             # Looking for players
-            victim = open_players(entity, ImmuneTypes.Penetrate, True, False)
+            victim = open_players(
+                entity = grenade,
+                form = ImmuneTypes.Penetrate,
+                type_of_check = 'custom_aim',
+                only_one = True
+            )
 
             # Getting victim
             if len(victim) == 0: return
             else: victim = victim[0]
 
             # Applying velocity to this player
-            velocity = victim.eye_location - entity.origin
+            velocity = victim.eye_location - grenade.origin
             velocity *= self.power
+
+            # Add new velocity to old
+            velocity += grenade.velocity
 
             if velocity.length < 150:
 
                 # Detonate
-                entity.set_property_int('m_nNextThinkTick', server.tick+1)
+                grenade.set_property_int('m_nNextThinkTick', server.tick + 1)
 
                 # Abort function
                 return
 
-
-            entity.teleport(velocity=velocity)
+            # Applying velocity to the grenade
+            grenade.teleport(velocity=velocity)
 
             # Adding -1 to ThinkTick, to delay his detonate
-            entity.set_property_int('m_nNextThinkTick', -1)
+            grenade.set_property_int('m_nNextThinkTick', -1)
 
     def close(self) -> None:
         super().close()
 
         # Unregistering from bounce event
         event_manager.unregister_for_event('grenade_bounce', self.check)
+
+class Attack_dodge(BaseSkill):
+
+    __slots__ = ('chance', )
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(userid, lvl, settings)
+
+        # Saving chance
+        self.chance = sqrt(self.lvl)
+
+        # Registering for dmg
+        on_take_physical_damage.add(self.hurt)
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            ST2(f"\4[WCS]\1 \5{self.chance:.0f}%\1 шанс увернуться "
+                 "от атаки противника").send(self.owner.index)
+        
+    def hurt(self, victim, info) -> bool:
+
+        ST2(f"Начало").send()
+
+        # Abort if hurt not owner
+        if victim.index != self.owner.index:
+            ST2('Не наш игрок').send()
+            return True
+        
+        ST2(f"Дошёл1").send()
+
+        # Abort, if chance return False
+        if not chance(self.chance, 100):
+            ST2(f"Шанс не прокнул").send()
+            return True
+
+        ST2(f"Дошёл").send()
+
+        # Getting attacker view_vector
+        attacker_view = Player.from_userid(info.attacker).view_vector
+
+        # Making perpendicular vector
+        attacker_view[0], attacker_view[1] = attacker_view[1], attacker_view[2]
+
+        # No changes in vertical dimension
+        attacker_view[2] = 5
+
+        # Negates any dimension, depending what we want
+        for x_multiplier, y_multiplier in ((1, -1), (-1, 1)):
+
+            # Negates some dimension + adding distance
+            attacker_view[0] = attacker_view[0] * x_multiplier + 50
+            attacker_view[1] = attacker_view[1] * y_multiplier + 50
+
+            # Adding player origin
+            attacker_view += self.owner.origin
+
+            # If player stuck after teleport, continue iteration
+            if will_be_stuck(self.owner, attacker_view): continue
+
+            # Otherwise everything is OK
+            else:
+
+                # Teleport owner to a new position
+                self.owner.teleport(origin = attacker_view)
+
+                # And finalize function
+                return False
+
+        # If no 'break' called, notify owner about evade fail
+        else:
+            if self.settings['fail notify']: ST2('Уворот не удался').send()
+
+        # Always return bool
+        return True
+
+    def close(self) -> None:
+        super().close()
+
+        # Unregistering for dmg
+        on_take_physical_damage.remove(self.hurt)
+
+class Weapon_give_start(BaseSkill):
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(userid, lvl, settings, exclude_costs=False)
+
+        # How many money owner has?
+        money = self.lvl if self.lvl > 500 else 500
+
+        # Set, that store all provided weapons
+        weapons = set()
+
+        # Iterating over all weapons, and trying to buy them
+        for weapon, cost in self.costs.items():
+
+            if self.settings[weapon] is False: continue
+
+            # Go to the next cycle, if not enough money to buy
+            if cost > money: continue
+
+            # Buy, if enough
+            else:
+
+                # Give item to owner
+                self.owner.give_named_item(weapon)
+
+                # Add this weapon translation to provided set
+                weapons.add(weapon_translations[weapon].lower())
+
+                # Subtract cost from money
+                money -= cost
+
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            if not weapons:
+                ST2(f"\4[WCS]\1 Вы не выбрали оружия для выдачи, "
+                    f"всего денег: \5{money}$\1").send(self.owner.index)
+            elif len(weapons) == 1:
+                ST2(f"\4[WCS]\1 Вам выдали \5{next(iter(weapons))}\1, "
+                    f"у вас осталось \5{money}$\1").send(self.owner.index)
+            else:
+                ST2(f"\4[WCS]\1 Вам выдали \5{', '.join(weapons)}\1,"
+                    f" у вас осталось \5{money}$\1").send(self.owner.index)
+
 
 # class
 #
