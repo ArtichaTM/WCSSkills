@@ -3,9 +3,13 @@ from contextlib import suppress
 WCS_FOLDER = 'WCSSkills'
 
 def load():
+    from .WCS_Logger import wcs_logger
+    wcs_logger('info', 'Plugin is loading')
     # Main mod
     # Events
     from .events import custom_events
+    # other_functions
+    from . import other_functions
     # Admin
     from .admin import admin_events
     # WCS_Player
@@ -16,38 +20,35 @@ def load():
     from .commands import chat
     # Radio menu
     from .menus import wcs
-    # XP
-    from .other_functions import xp, functions
     # Skills
     from .skills import immune, skill
 
-    # Logging plugin load
-    from .WCS_Logger import wcs_logger
-
     # Downloadables
     from stringtables.downloads import Downloadables
-    # Sounds
-    Downloadables().add_directory(f'sound/{WCS_FOLDER}/')
+    downloadables = Downloadables() # Instance
+    downloadables.add_directory(f'sound/{WCS_FOLDER}/') # Adding sounds to download list
+    downloadables.add_directory(f'models/{WCS_FOLDER}/') # Adding models download list
 
     wcs_logger('info', 'Plugin loaded successfully')
 
 def unload():
+    from .WCS_Logger import wcs_logger
+    wcs_logger('info', 'Plugin is unloading')
 
     # Unloading players
-    from WCSSkills.wcs.WCSP.wcsplayer import WCS_Players as WCSP
+    from .wcs.WCSP.wcsplayer import WCS_Players as WCSP
     for player in WCSP.values():
         with suppress(AttributeError):
             player.unload_instance()
 
     # Unloading Databases and JSONs
-    from WCSSkills.db.wcs import DB_users
-    from WCSSkills.db.admin import DB_admin, DC_history
+    from .db.wcs import DB_users
+    from .db.admin import DB_admin, DC_history
     DB_users.unload_instance()
     DB_admin.unload_instance()
     DC_history.unload_instance()
 
     # Logging plugin unload
-    from WCSSkills.WCS_Logger import wcs_logger
     wcs_logger('info','Plugin unloaded successfully')
 
     # Unloading wcs_logger

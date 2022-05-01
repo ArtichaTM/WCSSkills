@@ -41,6 +41,13 @@ from WCSSkills.python.dictionaries import DefaultDict
 import WCSSkills.other_functions as other_functions
 # XP
 
+
+# =============================================================================
+# >> Functions
+# =============================================================================
+required_xp = lambda lvl: ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
+next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(required_xp(lvl) // 2))
+
 # =============================================================================
 # >> Events on loading/unloading player
 # =============================================================================
@@ -182,7 +189,7 @@ class WCS_Player(Player): # Short: WCSP
 
                     # Skill exist, calculating new_lvl value
                     self.skills_selected_next_lvl.append(
-                        other_functions.functions.next_lvl_xp_calculate(value))
+                        next_lvl_xp_calculate(value))
 
         # Skills, that is active right now
         # • Added at start of round
@@ -363,7 +370,7 @@ class WCS_Player(Player): # Short: WCSP
                     self.skills_selected_xp[num]: int = skill_xp
                     self.skills_selected_settings[num]: int = skill_settings
                     self.skills_selected_next_lvl[num]: int = \
-                        other_functions.functions.next_lvl_xp_calculate(skill_lvl)
+                        next_lvl_xp_calculate(skill_lvl)
 
                 # Logging skill change
                 WCSSkills.WCS_Logger.wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")
@@ -570,7 +577,7 @@ class WCS_Player(Player): # Short: WCSP
 
                 # Adding new max_xp
                 self.skills_selected_next_lvl[num] = \
-                    other_functions.functions.next_lvl_xp_calculate(self.skills_selected_lvls[num])
+                    next_lvl_xp_calculate(self.skills_selected_lvls[num])
 
                 # Notifying player
                 SayText2("\4[WCS]\1 Вы повысили уровень навыка "

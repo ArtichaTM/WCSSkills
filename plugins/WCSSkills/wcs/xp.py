@@ -1,4 +1,4 @@
-# ../WCSSkills/other_functions/xp
+# ../WCSSkills/wcs/xp.py
 """
 This file registers events, and gives XP for that
 using implemented method .add_xp(amount, reason) in WCS_Player class
@@ -14,7 +14,7 @@ using implemented method .add_xp(amount, reason) in WCS_Player class
 from events import Event
 
 # WCS_Players dictionary
-from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player, WCS_Players
+from .WCSP.wcsplayer import WCS_Player, WCS_Players
 
 # =============================================================================
 # >> All
