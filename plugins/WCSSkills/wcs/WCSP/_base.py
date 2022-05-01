@@ -4,9 +4,9 @@
 # =============================================================================
 # Python Imports
 # Typing
-from typing import List, Union
+from typing import Union
 # Random
-from random import uniform as randfloat
+import random
 
 # Source.Python Imports
 # Players
@@ -52,7 +52,7 @@ next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(req
 # >> Events on loading/unloading player
 # =============================================================================
 @Event('player_activate')
-def WCS_Player_load(ev) -> None:
+def player_load(ev) -> None:
     """ When player connects (usually), initialize WCS_Player and load his data """
 
     # Check if new player is a bot
@@ -72,7 +72,7 @@ def WCS_Player_load(ev) -> None:
 
 
 @Event('player_disconnect')
-def WCS_Player_unload(ev) -> None:
+def player_unload(ev) -> None:
     """ When player disconnects, save data to db and delete him from WCS_Players """
 
     # Check if event called on BOT
@@ -405,20 +405,28 @@ class WCS_Player(Player): # Short: WCSP
                                 self.skills_selected_settings[num][setting] = \
                                     other_functions.constants.SKILL_SETTING_DEFAULT_BOOL
 
+                # Getting needed skill
+
+                # First we're accessing file, that stores this skill (immune/skill/...)
+                skill_class = getattr(skills, skill[:skill.find('.')])
+
+                # Then we're trying to find this skill in this file
+                skill_class = getattr(skill_class, skill[skill.find('.')+1:])
+
                 # Checking for custom lvl selected
                 if self.skills_selected_lvl[num] is None:
 
                     # Not selected, calling with maximum lvl
-                    self.skills_active.add(eval(f"skills.{skill}({self.userid},"
-                                                f"{self.skills_selected_lvls[num]},"
-                                                f"{self.skills_selected_settings[num]})"))
+                    self.skills_active.add(skill_class(self.userid,
+                                           self.skills_selected_lvls[num],
+                                           self.skills_selected_settings[num]))
 
                 else:
 
                     # Selected custom lvl, calling with selected lvl
-                    self.skills_active.add(eval(f"skills.{skill}({self.userid},"
-                                                f"{self.skills_selected_lvl[num]},"
-                                                f"{self.skills_selected_settings[num]})"))
+                    self.skills_active.add(skill_class(self.userid,
+                                           self.skills_selected_lvl[num],
+                                           self.skills_selected_settings[num]))
 
                 # Adding to not-repeat list
                 loaded.add(skill)
@@ -431,7 +439,7 @@ class WCS_Player(Player): # Short: WCSP
             SayText2(f"\4[WCS]\1 У вас нет активных навыков").send(self.index)
 
         # Updating data_skills
-        Delay(randfloat(1, 4), self._data_skills_update)
+        Delay(random.uniform(1, 4), self._data_skills_update)
 
         # Logging
         WCSSkills.WCS_Logger.wcs_logger('skills', f"{self.name}: started round with "
@@ -588,9 +596,9 @@ class WCS_Player(Player): # Short: WCSP
 
                 # Playing sound
                 self.emit_sound(f'{other_functions.constants.WCS_FOLDER}/level_up.mp3',
-                                attenuation=1.1,
-                                volume = 0.5
-                                )
+                    attenuation=1.1,
+                    volume = 0.5
+                )
 
     def unload_instance(self) -> None:
         """ Func saves player data to db's and remove WCS_Player from WCS_Players """
@@ -631,4 +639,4 @@ if server.is_active():
     for player in PlayerIter():
 
         # Calling load function
-        WCS_Player_load({'userid': player.userid})
+        player_load({'userid': player.userid})
