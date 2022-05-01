@@ -25,8 +25,6 @@ from events.hooks import pre_event_manager
 from messages.base import SayText2 as ST2
 # Models
 from engines.precache import Model
-# Vector
-from mathlib import Vector
 # Colors
 from colors import Color
 # Enumeratings
@@ -2009,9 +2007,11 @@ class Weapon_give_start(BaseSkill):
                     f" у вас осталось \5{money}$\1").send(self.owner.index)
 
 
-# class
+# class (BaseSkill):
 #
 #     __slots__ = ('', )
 #
 #     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
 #         super().__init__(userid, lvl, settings)
+#     def close(self) -> None:
+#         super().close()

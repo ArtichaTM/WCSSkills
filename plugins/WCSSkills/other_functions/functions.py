@@ -51,13 +51,14 @@ from WCSSkills.python.types import *
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
-__all__ = ('player_indexes',
-           'open_players',
-           'open_entities',
-           'force_buttons',
-           'repeat_functions',
-           'skill_timings_calculate'
-           )
+__all__ = (
+    'player_indexes',
+    'open_players',
+    'open_entities',
+    'force_buttons',
+    'repeat_functions',
+    'skill_timings_calculate'
+)
 
 # =============================================================================
 # >> Functions
@@ -65,8 +66,6 @@ __all__ = ('player_indexes',
 
 # Return all players indexes
 player_indexes = lambda : [player.index for player in PlayerIter()]
-required_xp = lambda lvl: ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
-next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(required_xp(lvl) // 2))
 
 def open_players(entity: Player_entity,
                  form,

@@ -13,8 +13,6 @@ from commands.client import ClientCommand
 from commands.typed import TypedSayCommand
 # EntityIter
 from filters.entities import EntityIter
-# SayText2
-from messages import SayText2
 
 # Plugin imports
 # Player
