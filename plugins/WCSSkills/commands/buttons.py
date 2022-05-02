@@ -24,8 +24,6 @@ from listeners.tick import Repeat, Delay
 # Plugin imports
 # Info about skills
 from WCSSkills.db.wcs import Skills_info
-# Skill/Immune types
-from WCSSkills.other_functions.typing_types import Skill, Immune
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -298,38 +296,42 @@ class Buttons:
         # Returning result color
         return Color(255-value,value,0,255)
 
-    def ult_pressed(self, _, index: int):
+    def ult_pressed(self, _, index: int) -> CommandReturn:
         """Called when any user presses +ultimate"""
-        if index == self.owner.index:
-            self.buttons[0].bind_pressed()
-            return CommandReturn.BLOCK
+        if index != self.owner.index:
+            return CommandReturn.CONTINUE
+        self.buttons[0].bind_pressed()
+        return CommandReturn.BLOCK
 
-    def ult_released(self, _, index: int):
+    def ult_released(self, _, index: int) -> CommandReturn:
         """Called when any user presses -ultimate"""
-        if index == self.owner.index:
-            self.buttons[0].bind_released()
-            return CommandReturn.BLOCK
+        if index != self.owner.index:
+            return CommandReturn.CONTINUE
+        self.buttons[0].bind_released()
+        return CommandReturn.BLOCK
 
-    def abi_pressed(self, _, index: int):
+    def abi_pressed(self, _, index: int) -> CommandReturn:
         """Called when any user presses +ability"""
-        if index == self.owner.index:
-            self.buttons[1].bind_pressed()
-            return CommandReturn.BLOCK
+        if index != self.owner.index:
+            return CommandReturn.CONTINUE
+        self.buttons[1].bind_pressed()
+        return CommandReturn.BLOCK
 
-    def abi_released(self, _, index: int):
+    def abi_released(self, _, index: int) -> CommandReturn:
         """Called when any user presses -ability"""
-        if index == self.owner.index:
-            self.buttons[1].bind_released()
-            return CommandReturn.BLOCK
+        if index != self.owner.index:
+            return CommandReturn.CONTINUE
+        self.buttons[1].bind_released()
+        return CommandReturn.BLOCK
 
-    def add_new_button(self, button: Skill):
+    def add_new_button(self, button) -> None:
         """ Called by active skill. Add"""
         self.buttons.append(button)
 
-    def add_new_skill(self, skill: Skill):
+    def add_new_skill(self, skill) -> None:
         self.skills.append(skill)
 
-    def settings_changed(self, ev):
+    def settings_changed(self, ev) -> None:
         """Called when"""
         if ev['code'] == 'active_skill_name_length_restrict' and \
         len(self.button_names) > 0:
