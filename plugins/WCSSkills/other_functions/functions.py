@@ -206,9 +206,8 @@ class repeat_functions:
     Class that MUST be implemented.
     Creates repeat functions for class
     """
-
-    repeat_delay = 0
-    repeat = RepeatStatus
+    # "TypeError: multiple bases have instance lay-out conflict"
+    # __slots__ = ('repeat_delay', 'repeat')
 
     def _repeat_start(self) -> bool:
         if self.repeat.status != RepeatStatus.RUNNING:
