@@ -285,10 +285,7 @@ class WCS_Player(Player): # Short: WCSP
             offsets.append(distance)
 
         minimum = min(offsets)
-        print(minimum)
-
         if minimum > abs(max_offset): return None
-
         return Entity_entity
 
     def players_around(self, radius: float) -> wcs_player_entity:
