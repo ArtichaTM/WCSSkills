@@ -4,6 +4,7 @@
 # =============================================================================
 # Python Imports
 # Math
+import random
 from random import randint
 from math import sqrt
 
@@ -11,6 +12,7 @@ from math import sqrt
 # Entity
 from entities.entity import Entity
 from filters.entities import EntityIter
+from filters.players import PlayerIter
 # Player
 from players.entity import Player
 # Weapon
@@ -40,6 +42,8 @@ from engines.trace import ContentMasks
 from engines.trace import GameTrace
 from engines.trace import Ray
 from engines.trace import TraceFilterSimple
+# Mathlib's Vector
+from mathlib import Vector
 
 # Plugin Imports
 # Functions
@@ -59,6 +63,8 @@ from WCSSkills.other_functions.constants import weapon_translations
 # Enumeratings
 from WCSSkills.other_functions.constants import ImmuneTypes
 from WCSSkills.other_functions.constants import ImmuneReactionTypes
+# Logger
+from WCSSkills.WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -91,6 +97,8 @@ __all__ = (
 'Vampire_damage_percent', # Gives owner hp as percent of damage dealt
 'Drop_weapon_chance', # Drops enemy weapon with such chance
 'Screen_rotate_attack', # Rotates enemy screen with a chance
+'Mine_Place', # Places mine in the air
+'MiniMap', # Places minimap with player as orbs corresponding to their position
 )
 
 # =============================================================================
@@ -164,7 +172,7 @@ class BaseSkill:
 
 class ActiveSkill(BaseSkill):
     """ Inherit this class, if u need to create ultimate/ability """
-    __slots__ = ('delay',)
+    __slots__ = ('delay', 'cd')
 
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(userid, lvl, settings),
@@ -298,6 +306,44 @@ class DelaySkill(BaseSkill):
 
     def cd_passed(self):
         pass
+
+class RadiusActivate:
+    # TODO: fix formulas
+    # "TypeError: multiple bases have instance lay-out conflict"
+    # __slots__ = ('center_location', 'radius')
+
+    def __init__(self):
+        self.radius = 0
+        self.center_location = Vector()
+
+        # Error when no self.owner found
+        try: getattr(self, 'owner')
+        except AttributeError:
+            NotImplementedError('RadiusActivate should be inherited with BaseSkill')
+
+    def sphere_initialize(self):
+        """When player firstly activated skill. Calculating start values"""
+
+        # Getting center point
+        self.center_location: Vector = self.owner.eye_location
+
+        # Calculating sphere radius
+        self.radius: float = self.owner.eye_location.get_distance(self.owner.view_coordinates)
+
+    def find_point(self) -> Vector:
+        """When destination should be calculated. Pythagorean theorem"""
+
+        # Finding distance from center of sphere to player
+        player_distance: float = self.owner.eye_location.get_distance(self.center_location)
+
+        # Are we outside sphere, or inside?
+        # outside: player_distance > radius => player_distance - hypotenuse
+        # inside: player_distance < radius => radius - hypotenuse
+        multiplier: float = sqrt(abs(self.radius**2 - player_distance**2))
+
+        chord_multiplier = self.owner.view_vector.get_distance(
+            (self.center_location - self.owner.eye_location).normalized()
+        )/2
 
 class Health(BaseSkill):
     """
@@ -472,7 +518,7 @@ class Start_set_gravity(BaseSkill):
 
 class Long_jump(BaseSkill):
     """
-    Skill that speed ups player on jump
+    Skill that speeds up player on jump
 
     Maximum lvl: 999
     Maximum lvl skill: Power of jump multiplied 100 times
@@ -483,19 +529,15 @@ class Long_jump(BaseSkill):
         super().__init__(userid, lvl, settings)
 
         # Saving basic information into instance
-        if self.lvl == 0:
-            self.power = 1
-        else:
+        if self.lvl: # self.lvl != 0
             self.power = self.lvl / 100
+        else:
+            self.power = 1
 
         if self.owner.data_info['skills_activate_notify']:
             # Notifies player about perk activation
-            if self.power == int(self.power):
-                ST2("\4[WCS]\1 Длина вашего прыжка увеличена в "
-                f"\5{int(self.power)}\1 раз").send(self.owner.index)
-            else:
-                ST2("\4[WCS]\1 Длина вашего прыжка увеличена в "
-                f"\5{self.power}\1 раз").send(self.owner.index)
+            ST2("\4[WCS]\1 Длина вашего прыжка увеличена в "
+            f"\5{int(self.power)}\1 раз").send(self.owner.index)
 
         # Registration for player jump
         event_manager.register_for_event('player_jump', self.jump)
@@ -503,9 +545,9 @@ class Long_jump(BaseSkill):
     def jump(self, ev) -> None:
         # Check if event is fired by owner of this skill
         if ev['userid'] == self.owner.userid:
-            if self.owner.get_property_bool('m_bHasWalkMovedSinceLastJump'
-                '') or self.settings['allow_bhop']:
-                print(self.owner.get_property_bool('m_bHasWalkMovedSinceLastJump'))
+            # TODO: property is broken. Always False
+            # if self.owner.get_property_bool('m_bHasWalkMovedSinceLastJump'
+            #     '') or self.settings['allow_bhop']:
                 Delay(0, self.speed_up)
 
     def speed_up(self) -> None:
@@ -524,7 +566,6 @@ class Slow_fall(BaseSkill, repeat_functions):
     Works only if player jumped and begun falling.
     """
     __slots__ = ('limit',)
-
 
     fall_speed_list = ([i*5 for i in range(101,0,-1)])
 
@@ -736,8 +777,7 @@ class Teleport(ActiveSkill):
 
         # Position, where player will be teleported after button release
         self.position = None
-        # self.cd = 30 - (self.lvl/100)
-        self.cd = 2
+        self.cd = 30 - (self.lvl/100)
         self.allowed_distance = 100 + lvl
         self.delay = Delay(self.cd, self.cd_passed)
         self.is_pressed = False
@@ -1459,8 +1499,7 @@ class Toss(DelaySkill):
 
         # Chance check
         if not chance(self.chance, 100): return
-        
-        
+
         # Getting victim
         try: victim = WCS_Player.from_userid(ev['attacker'])
 
@@ -2006,6 +2045,164 @@ class Weapon_give_start(BaseSkill):
                 ST2(f"\4[WCS]\1 Вам выдали \5{', '.join(weapons)}\1,"
                     f" у вас осталось \5{money}$\1").send(self.owner.index)
 
+class Mine_Place(ActiveSkill, RadiusActivate, repeat_functions):
+    #__slots__ = ('position_repeat',)
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+
+        # Calling inherited classes inits
+        ActiveSkill.__init__(self, userid, lvl, settings)
+        RadiusActivate.__init__(self)
+
+        # repeat_functions initialize
+        self.repeat = Repeat(self.change_position)
+        self.repeat_delay = 0.2
+
+        # Active skill initialize
+        self.cd = 100 - (self.lvl/100)
+        self.delay = Delay(self.cd//2, self.cd_passed)
+
+    def bind_pressed(self) -> None:
+        if super().bind_pressed():
+
+            # Initializing sphere
+            self.sphere_initialize()
+
+            # Starting position update cycle
+            self._repeat_start()
+
+            # Adding delay
+            self.delay = Delay(self.cd, self.cd_passed)
+
+    def bind_released(self) -> None:
+
+        # Return if sphere is not initialized
+        if not self.radius: return
+
+        # Stop position update cycle
+        self._repeat_stop()
+
+        # Zeroing radius to mark, that sphere is uninitialized
+        self.radius = 0
+
+    def change_position(self):
+
+        # Spawning orb, that marks future spawn position
+        # position: Vector = self.find_point()
+        position: Vector = self.owner.view_coordinates
+
+
+    def close(self) -> None:
+        super().close()
+
+class MiniMap(ActiveSkill, repeat_functions):
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(userid, lvl, settings)
+
+        # repeat_functions initialize
+        self.repeat = Repeat(self.update_map)
+        self.repeat_delay = 0.5
+
+        self.center_position = None
+        self.entity_list = []
+
+        # Active skill initialize
+        self.cd = 1
+        self.delay = Delay(self.cd//2, self.cd_passed)
+
+        # Map turn-off delay
+        self.turn_off_delay = None
+
+    def bind_pressed(self) -> None:
+        if super().bind_pressed():
+            self.activate_map()
+
+    def bind_released(self) -> None:
+        ...
+
+    def calculate_orb_position(self, target: WCS_Player):
+        """Calculates vector player->enemy"""
+        return self.center_position + ((target.origin - self.owner.origin) * 0.04)
+
+    def activate_map(self):
+
+        # Is map already loaded?
+        if self.center_position:
+
+            # Turn of map first
+            self.deactivate_map()
+
+            # Rerun delay
+            self.turn_off_delay.cancel()
+
+        self.center_position = self.owner.view_coordinates
+        self.center_position[2] += 20
+
+        # Spawning center of map (not owner, view_coordinates + height)
+        self.entity_list.append([effect.orb(
+            users = (self.owner.index, ),
+            origin = self.center_position,
+            brightness = 255,
+            scale = 0.01,
+            sprite = 6,
+            persistent = True
+        ), self.owner])
+
+        for player in PlayerIter():
+
+            # Player is one team with owner
+            if player.team_index == self.owner.team_index: sprite_code = 1
+
+            # Player is enemy to owner
+            else: sprite_code = 0
+
+            # Spawning orb
+            self.entity_list.append([effect.orb(
+                users = (self.owner.index,),
+                origin = self.calculate_orb_position(player),
+                brightness = 255,
+                scale = 0.1,
+                sprite = sprite_code,
+                persistent = True
+            ), player])
+
+        # Starting update repeat
+        self._repeat_start()
+
+        # Delay map disable
+        self.turn_off_delay = Delay(5, self.deactivate_map)
+
+    def update_map(self):
+        for entity, player in self.entity_list:
+
+            # Calculating vector player->enemy
+            entity.teleport(origin=self.calculate_orb_position(player))
+
+    def deactivate_map(self):
+
+        # Map activated?
+        if not self.center_position:
+
+            # No, return
+            return
+
+        # Deleting entity's
+        for entity, player in self.entity_list: entity.remove()
+
+        # Clearing list
+        self.entity_list.clear()
+
+        # Clear center position (mark: map doesn't exist)
+        self.center_position = None
+
+        # Stop update repeat
+        self._repeat_stop()
+
+    def close(self) -> None:
+        super().close()
+
+        self.deactivate_map()
 
 # class (BaseSkill):
 #

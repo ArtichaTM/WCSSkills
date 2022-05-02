@@ -24,6 +24,9 @@ __all__ = (
 'paralyze',
 'screen_rotate',
 'active_weapon_drop',
+'toss',
+'aimbot',
+'teleport'
 )
 
 # =============================================================================
@@ -89,8 +92,8 @@ class ImmuneSkill:
                     # Chance check
                     if chance(trigger_chance, 100):
 
-                        # Applying Immune_type to owner.immunes
-                        owner.immunes[form] = eval(f"ImmuneTypes.{key}")
+                        # Applying Immune_type to owner immunes
+                        owner.immunes[form] = getattr(ImmuneTypes, key)
 
         # But if lvl over 1000, then we can apply deflect 2
         else:
@@ -107,14 +110,14 @@ class ImmuneSkill:
                     # Chance check
                     if chance(trigger_chance, 1000):
 
-                        # Applying deflect to owner.immunes
-                        owner.immunes[form] |= eval(f"ImmuneTypes.{key} << 1")
+                        # Applying deflecting to owner.immunes
+                        owner.immunes[form] |= (getattr(ImmuneSkill, key) << 1)
 
                     # Not worked. Applying simple immune
                     else:
 
-                        # Applying deflect to owner.immunes
-                        owner.immunes[form] |= eval(f"ImmuneTypes.{key}")
+                        # Applying deflecting to owner.immunes
+                        owner.immunes[form] |= (getattr(ImmuneSkill, key))
 
         # Notifying player
         SayText2(f"\4[WCS]\1 Вы получите защиту от {self.text} c шансом \5"
@@ -146,3 +149,7 @@ class aimbot(ImmuneSkill):
 class toss(ImmuneSkill):
     form = ('toss', )
     text = 'подкидывания'
+
+class teleport(ImmuneSkill):
+    form = ('position_swap',)
+    text = 'любого вида принудительной телепортации'
