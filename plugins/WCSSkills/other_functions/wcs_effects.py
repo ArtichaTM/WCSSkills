@@ -1,10 +1,9 @@
-# ../WCSSkills/other_functions/wcs_effect.py
+# ../WCSSkills/other_functions/wcs_effects.py
 # =============================================================================
 # >> Imports
 # =============================================================================
 # Python Imports
 # Type helpers
-from typing import Union
 from collections.abc import Iterable
 # Random
 from random import randint as ri
@@ -13,12 +12,13 @@ from random import randint as ri
 # RecipientFilter
 from filters.recipients import RecipientFilter
 # Model PreCache
-from engines.precache import engine_server
+from engines.precache import engine_server, Model
 # Effects entity
 from effects.base import TempEntity
 # Entity
 from entities.entity import Entity
-
+# Render modes constant
+from entities.constants import RenderMode
 # Vector
 from mathlib import Vector
 
@@ -163,26 +163,55 @@ class effect:
             life: float = 1,         # LifeTime in seconds
             brightness: float = 255, # Alpha (0-255)
             scale: float = 1,
-            sprite: int = 0          # Variant of sprite (0-6)
+            sprite: int = 0,         # Variant of sprite (0-13)
+            persistent: bool = False
             ) -> None:
 
-        with temporary_entity('GlowSprite', users) as tempEnt:
+        # Sprite model loading.
+        # String: custom path
+        # Int: number from list of sprites
+        if isinstance(sprite, int):     model_name = orb_sprites[sprite % len(orb_sprites)]
+        elif isinstance(sprite, str):   model_name = sprite
+        else:                           raise ValueError("sprite should be int or str")
 
-            # Sprite model
-            modelIndex = engine_server.precache_model(orb_sprites[sprite])
-            tempEnt.model_index = modelIndex
+        if persistent:
 
-            # Position to spawn
-            tempEnt.origin = origin
+            with persistent_entity('env_glow') as Ent:
 
-            # Length of life in seconds
-            tempEnt.life_time = life
+                # Setting model
+                Ent.model = Model(model_name)
 
-            # Alpha
-            tempEnt.brightness = brightness
+                # Position to spawn
+                Ent.origin = origin
 
-            # —
-            tempEnt.scale = scale
+                # —
+                Ent.scale = scale
+
+                # Making transparent and make entity differes glowing radius based on distance
+                Ent.render_mode = RenderMode.GLOW
+
+                # Returning entity
+                return Ent
+
+        else:
+
+            with temporary_entity('GlowSprite', users) as tempEnt:
+
+                # Sprite model
+                model_index = engine_server.precache_model(model_name)
+                tempEnt.model_index = model_index
+
+                # Position to spawn
+                tempEnt.origin = origin
+
+                # Length of life in seconds
+                tempEnt.life_time = life
+
+                # Alpha
+                tempEnt.brightness = brightness
+
+                # —
+                tempEnt.scale = scale
 
     @staticmethod
     def muzzle_flash(users: Iterable,
@@ -303,3 +332,15 @@ class effect:
             tempEnt.spread = tempEnt.inaccuracy = inaccuracy
             tempEnt.angles = angle
             tempEnt.item_defition_index = weapon_id
+
+    @staticmethod
+    def text(origin: Vector,
+             message: str,
+             show_radius: int = 100,
+             ):
+
+        with persistent_entity('point_message') as Ent:
+            Ent.message = message.replace('"', '_')
+            Ent.radius = show_radius
+            Ent.origin = origin
+            return Ent

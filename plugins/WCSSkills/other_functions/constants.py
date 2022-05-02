@@ -4,7 +4,6 @@
 # =============================================================================
 # Python Imports
 from datetime import datetime
-from enum import Enum
 from enum import IntFlag
 from enum import IntEnum
 from enum import auto
@@ -157,13 +156,22 @@ SKILL_SETTING_DEFAULT_BOOL = False
 
 # Sprites for wcs_effects
 orb_sprites = (
-    'sprites/glow'
-    'sprites/glow01'
-    'sprites/glow03'
-    'sprites/glow04'
-    'sprites/glow04_noz'
-    'sprites/glow06'
-    'sprites/glow07')
+    'materials/sprites/glow.vmt',
+    'materials/sprites/glow01.vmt',
+    'materials/sprites/glow03.vmt',
+    'materials/sprites/glow04.vmt',
+    'materials/sprites/glow04_noz.vmt',
+    'materials/sprites/glow06.vmt',
+    'materials/sprites/glow07.vmt',
+    'materials/sprites/light_glow02.vmt',
+    'light_glow02_add.vmt',
+    'light_glow02_add_noz.vmt',
+    'light_glow02_noz.vmt',
+    'light_glow03.vmt',
+    'light_glow03_nofog.vmt',
+    'light_glow04.vmt',
+    'light_glow04_add_noz.vmt',
+)
 
 # =============================================================================
 # >> Dictionaries
