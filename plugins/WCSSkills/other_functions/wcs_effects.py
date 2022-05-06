@@ -4,7 +4,7 @@
 # =============================================================================
 # Python Imports
 # Type helpers
-from collections.abc import Iterable
+from typing import Tuple, Iterable
 # Random
 from random import randint as ri
 
@@ -158,13 +158,50 @@ class effect:
             tempEnt.set_property_int('m_uchBackColor[2]', back_color[2])
 
     @staticmethod
-    def orb(users: Iterable,
+    def persistent_orb(users: Iterable,
             origin: Vector,
-            life: float = 1,         # LifeTime in seconds
-            brightness: float = 255, # Alpha (0-255)
+            color: Tuple[int, int, int] = (255, 255, 255),  # Color. Just a RGB tuple contatining numbers 0-255
             scale: float = 1,
-            sprite: int = 0,         # Variant of sprite (0-13)
-            persistent: bool = False
+            sprite: int = 0,          # Variant of sprite (0-13)
+            ) -> Entity:
+
+        # Sprite model loading.
+        # String: custom path
+        # Int: number from list of sprites
+        if isinstance(sprite, int):     model_name = orb_sprites[sprite % len(orb_sprites)]
+        elif isinstance(sprite, str):   model_name = sprite
+        else:                           raise ValueError("sprite should be int or str")
+
+        with persistent_entity('env_glow') as Ent:
+
+            # Setting model
+            Ent.model = Model(model_name)
+
+            # Position to spawn
+            Ent.origin = origin
+
+            # —
+            Ent.scale = scale
+
+            # Making transparent and make entity differes glowing radius based on distance
+            Ent.render_mode = RenderMode.GLOW
+
+        # Making changes after entity spawn
+        Ent.call_input('ColorRedValue', color[0])
+        Ent.call_input('ColorGreenValue', color[1])
+        Ent.call_input('ColorBlueValue', color[2])
+        Ent.call_input('Alpha', 255)
+
+        # Returning created Entity
+        return Ent
+
+    @staticmethod
+    def temporary_orb(users: Iterable,
+            origin: Vector,
+            sprite: int = 0, # Variant of sprite (0-13)
+            life: float = 1, # LifeTime in seconds
+            brightness: float = 255,
+            scale: float = 1,
             ) -> None:
 
         # Sprite model loading.
@@ -174,44 +211,23 @@ class effect:
         elif isinstance(sprite, str):   model_name = sprite
         else:                           raise ValueError("sprite should be int or str")
 
-        if persistent:
+        with temporary_entity('GlowSprite', users) as tempEnt:
 
-            with persistent_entity('env_glow') as Ent:
+            # Sprite model
+            model_index = engine_server.precache_model(model_name)
+            tempEnt.model_index = model_index
 
-                # Setting model
-                Ent.model = Model(model_name)
+            # Position to spawn
+            tempEnt.origin = origin
 
-                # Position to spawn
-                Ent.origin = origin
+            # Length of life in seconds
+            tempEnt.life_time = life
 
-                # —
-                Ent.scale = scale
+            # Alpha
+            tempEnt.brightness = brightness
 
-                # Making transparent and make entity differes glowing radius based on distance
-                Ent.render_mode = RenderMode.GLOW
-
-                # Returning entity
-                return Ent
-
-        else:
-
-            with temporary_entity('GlowSprite', users) as tempEnt:
-
-                # Sprite model
-                model_index = engine_server.precache_model(model_name)
-                tempEnt.model_index = model_index
-
-                # Position to spawn
-                tempEnt.origin = origin
-
-                # Length of life in seconds
-                tempEnt.life_time = life
-
-                # Alpha
-                tempEnt.brightness = brightness
-
-                # —
-                tempEnt.scale = scale
+            # —
+            tempEnt.scale = scale
 
     @staticmethod
     def muzzle_flash(users: Iterable,

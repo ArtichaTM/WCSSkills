@@ -4,15 +4,15 @@
 # =============================================================================
 # Python Imports
 # Math
-import random
 from random import randint
 from math import sqrt
+# typing
+from typing import Set, List, Tuple
 
 # Source.Python Imports
 # Entity
 from entities.entity import Entity
 from filters.entities import EntityIter
-from filters.players import PlayerIter
 # Player
 from players.entity import Player
 # Weapon
@@ -63,8 +63,6 @@ from WCSSkills.other_functions.constants import weapon_translations
 # Enumeratings
 from WCSSkills.other_functions.constants import ImmuneTypes
 from WCSSkills.other_functions.constants import ImmuneReactionTypes
-# Logger
-from WCSSkills.WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -2140,13 +2138,12 @@ class MiniMap(ActiveSkill, repeat_functions):
         self.center_position[2] += 20
 
         # Spawning center of map (not owner, view_coordinates + height)
-        self.entity_list.append([effect.orb(
+        self.entity_list.append([effect.persistent_orb(
             users = (self.owner.index, ),
             origin = self.center_position,
-            brightness = 255,
-            scale = 0.01,
-            sprite = 6,
-            persistent = True
+            color=(0, 0, 255),
+            scale = 0.1,
+            sprite = 1,
         ), self.owner])
 
         for player in PlayerIter():
@@ -2158,14 +2155,16 @@ class MiniMap(ActiveSkill, repeat_functions):
             else: sprite_code = 0
 
             # Spawning orb
-            self.entity_list.append([effect.orb(
+            orb_ent = effect.persistent_orb(
                 users = (self.owner.index,),
                 origin = self.calculate_orb_position(player),
                 brightness = 255,
                 scale = 0.1,
-                sprite = sprite_code,
-                persistent = True
-            ), player])
+                sprite = 1
+            )
+
+            # Spawning orb
+            self.entity_list.append([orb_ent, player])
 
         # Starting update repeat
         self._repeat_start()
