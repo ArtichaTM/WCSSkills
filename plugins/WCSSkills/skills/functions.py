@@ -12,12 +12,17 @@ from random import uniform
 from mathlib import Vector
 # Delay
 from listeners.tick import Delay
+# Models precache
+from engines.precache import Model
 # Entities
 from entities import TakeDamageInfo
 from entities.entity import Entity, BaseEntity
 from entities.helpers import index_from_pointer
 from entities.hooks import EntityPreHook, EntityCondition
+# Entity constants
 from entities.constants import WORLD_ENTITY_INDEX
+from entities.constants import SolidType
+from entities.constants import EntityEffects
 # Engine trace
 from engines.trace import GameTrace
 from engines.trace import Ray
@@ -42,6 +47,7 @@ __all__ = (
     'on_take_physical_damage',
     'on_take_magic_damage',
     'paralyze',
+    'Triggers',
     'active_weapon_drop',
     'screen_angle_distortion',
     'Throw_player_upwards',
@@ -119,6 +125,49 @@ def skills_on_take_damage(args) -> Union[None, bool]:
                 # Then canceling hit
                 return False
 
+class Triggers:
+
+    @staticmethod
+    def once(start: Vector, end: Vector) -> Entity:
+        """Creates trigger_once with start and end
+        :param start: Start position of trigger
+        :param end: End position of trigger
+        :return: Trigger Entity """
+
+        # Calculating origin of trigger
+        center = (start + end) / 2
+
+        # Calculating center->corner distance
+        center_corner = (start - end) / 2
+
+        # Creatin new entity
+        trigger = Entity.create('trigger_once')
+
+        # Setting model (bcz entity should have model)
+        trigger.model = Model('models\\antlers\\antlers.mdl')
+
+        # Adding NoDraw effect because of bugs with trigger_once+model
+        trigger.effects |= EntityEffects.NODRAW
+
+        # Teleporting to center(origin) location
+        trigger.origin = center
+
+        # Spawning
+        trigger.spawn()
+
+        # Adding flags to trigger from players only
+        trigger.spawn_flags = 512
+
+        # Adding bounding box
+        trigger.mins = center - center_corner
+        trigger.maxs = center + center_corner
+
+        # Changing solid type to bounding box
+        trigger.solid_type = SolidType.BBOX
+
+        # Returning created entity
+        return trigger
+
 def immunes_check(victim: wcs_player_entity,
                   form: ImmuneTypes,
                   immune_type: str,
@@ -170,10 +219,9 @@ def paralyze(
         movement and camera rotate
     :param form: Type of paralyze (Aura/Default/...) (ImmuneTypes)
     :return: ImmuneReactionTypes type.
-        1 - worked
+        1 - passed
         2 - immune
         3 - deflect
-
     """
 
     result = immunes_check(victim, form, 'paralyze',
