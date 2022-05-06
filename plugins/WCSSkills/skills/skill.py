@@ -52,7 +52,7 @@ from WCSSkills.other_functions.functions import *
 # WCS_Player
 from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
 # Effects
-from WCSSkills.other_functions.wcs_effects import effect
+from WCSSkills.other_functions.wcs_effects import effect, persistent_entity
 # Skills information
 from WCSSkills.db.wcs import Skills_info
 # Constants
@@ -95,7 +95,7 @@ __all__ = (
 'Vampire_damage_percent', # Gives owner hp as percent of damage dealt
 'Drop_weapon_chance', # Drops enemy weapon with such chance
 'Screen_rotate_attack', # Rotates enemy screen with a chance
-'Mine_Place', # Places mine in the air
+'Static_Mine', # Places mine in the air
 'MiniMap', # Places minimap with player as orbs corresponding to their position
 )
 
@@ -2043,60 +2043,13 @@ class Weapon_give_start(BaseSkill):
                 ST2(f"\4[WCS]\1 Вам выдали \5{', '.join(weapons)}\1,"
                     f" у вас осталось \5{money}$\1").send(self.owner.index)
 
-class Mine_Place(ActiveSkill, RadiusActivate, repeat_functions):
-    #__slots__ = ('position_repeat',)
-
-    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
-
-        # Calling inherited classes inits
-        ActiveSkill.__init__(self, userid, lvl, settings)
-        RadiusActivate.__init__(self)
-
-        # repeat_functions initialize
-        self.repeat = Repeat(self.change_position)
-        self.repeat_delay = 0.2
-
-        # Active skill initialize
-        self.cd = 100 - (self.lvl/100)
-        self.delay = Delay(self.cd//2, self.cd_passed)
-
-    def bind_pressed(self) -> None:
-        if super().bind_pressed():
-
-            # Initializing sphere
-            self.sphere_initialize()
-
-            # Starting position update cycle
-            self._repeat_start()
-
-            # Adding delay
-            self.delay = Delay(self.cd, self.cd_passed)
-
-    def bind_released(self) -> None:
-
-        # Return if sphere is not initialized
-        if not self.radius: return
-
-        # Stop position update cycle
-        self._repeat_stop()
-
-        # Zeroing radius to mark, that sphere is uninitialized
-        self.radius = 0
-
-    def change_position(self):
-
-        # Spawning orb, that marks future spawn position
-        # position: Vector = self.find_point()
-        position: Vector = self.owner.view_coordinates
-
-
-    def close(self) -> None:
-        super().close()
-
 class MiniMap(ActiveSkill, repeat_functions):
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
         super().__init__(userid, lvl, settings)
+
+        # Setting update map type based on user settings
+        self.update_map = self.update_map_default
 
         # repeat_functions initialize
         self.repeat = Repeat(self.update_map)
@@ -2146,19 +2099,18 @@ class MiniMap(ActiveSkill, repeat_functions):
             sprite = 1,
         ), self.owner])
 
-        for player in PlayerIter():
-
-            # Player is one team with owner
-            if player.team_index == self.owner.team_index: sprite_code = 1
-
-            # Player is enemy to owner
-            else: sprite_code = 0
+        # Iterating over all players and setting ball
+        for player in WCS_Player.iter():
+            if player.team_index == self.owner.team_index: # Player in our team?
+                color = (0, 255, 0) # Setting green color
+            else:
+                color = (255, 0, 0) # Setting red color
 
             # Spawning orb
             orb_ent = effect.persistent_orb(
                 users = (self.owner.index,),
                 origin = self.calculate_orb_position(player),
-                brightness = 255,
+                color =  color,
                 scale = 0.1,
                 sprite = 1
             )
@@ -2170,13 +2122,24 @@ class MiniMap(ActiveSkill, repeat_functions):
         self._repeat_start()
 
         # Delay map disable
-        self.turn_off_delay = Delay(5, self.deactivate_map)
+        self.turn_off_delay = Delay(50, self.deactivate_map)
 
     def update_map(self):
-        for entity, player in self.entity_list:
+        raise NotImplementedError("__init__ should assign update_map a function")
+
+    def update_map_default(self):
+        pop_counter = 0
+
+        for num, (orb_ent, player) in enumerate(self.entity_list.copy()):
+
+            # Pop player from list, if killed
+            if player.health <= 0:
+                orb_ent.remove()
+                self.entity_list.pop(num-pop_counter)
+                pop_counter += 1
 
             # Calculating vector player->enemy
-            entity.teleport(origin=self.calculate_orb_position(player))
+            orb_ent.teleport(origin=self.calculate_orb_position(player))
 
     def deactivate_map(self):
 

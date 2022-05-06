@@ -605,28 +605,6 @@
         }
     },
 
-
-    "skill.Mine_Place": {
-        "name": "Мина",
-        "group": "Активные",
-        "description": [
-            "Ваши познания в инженерии и магии",
-            "позволили создавать мины, левитирующие",
-            "в воздухе."
-        ],
-        "max_lvl": 9500,
-        "min_player_lvl": 4000,
-        "settings_type": {
-            "hit notify": "bool"
-        },
-        "settings_name": {
-            "hit notify": "Оповещать о взрыве мины"
-        },
-        "settings_cost": {
-            "hit notify": 100
-        }
-    },
-
     "skill.Weapon_give_start": {
         "name": "Призыв оружия",
         "group": "Стартовые",
@@ -794,7 +772,6 @@
             "item_cutters": 300
         }
     },
-
 
     "skill.MiniMap": {
         "name": "Мини-карта",
