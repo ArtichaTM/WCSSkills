@@ -237,6 +237,11 @@ class WCS_Player(Player): # Short: WCSP
         if self.__class__ is other.__class__: self.index = other.index
         else: raise NotImplemented
 
+    @staticmethod
+    def iter():
+        for WCSP in WCS_Players.values():
+            yield WCSP
+        raise StopIteration
 
     @staticmethod
     def from_userid(userid, caching=None, **kwargs):
