@@ -784,11 +784,50 @@
             "Улучшение карты позволит вам увеличить её",
             "продолжительность, а также открыть новые способности"
         ],
-        "max_lvl": 10000,
+        "max_lvl": -1,
         "min_player_lvl": 2000,
-        "settings_type": {},
-        "settings_name": {},
-        "settings_cost": {}
+        "settings_type": {
+            "size increase": "bool",
+            "size decrease": "bool",
+            "update multiply 1": "bool",
+            "update multiply 2": "bool",
+            "penetrate immune": "bool"
+        },
+        "settings_name": {
+            "size increase": "Увеличить карту",
+            "size decrease": "Уменьшить карту",
+            "update multiply 1": "Удвоение скорости обновления 1",
+            "update multiply 2": "Удвоение скорости обновления 2",
+            "penetrate immune": "Пробивать анти-обнаружение"
+        },
+        "settings_cost": {
+            "size increase": 0,
+            "size decrease": 0,
+            "update multiply 1": 1000,
+            "update multiply 2": 5000,
+            "penetrate immune": 7000
+        }
+    },
+
+    "skill.Static_Mine": {
+        "name": "Мина",
+        "group": "Активные",
+        "description": [
+            "Ваши познания в инженерии и магии",
+            "позволили создавать мины, левитирующие",
+            "в воздухе."
+        ],
+        "max_lvl": -1,
+        "min_player_lvl": 5000000,
+        "settings_type": {
+            "explode notify": "bool"
+        },
+        "settings_name": {
+            "explode notify": "Оповещать о взрыве мины"
+        },
+        "settings_cost": {
+            "explode notify": 100
+        }
     },
 
     "immune.paralyze": {
@@ -826,10 +865,45 @@
         }
     },
 
+    "immune.presence": {
+        "name": "Присутствие",
+        "group": "Иммунитеты",
+        "description": [
+            "Скрывает ваше присутствие от противников.",
+            "Прицельные и обнаруживающие навыки с",
+            "некоторой вероятностью вас не заметят",
+            " ",
+            "Каждая настройка разделяет шанс пополам на",
+            "каждый вид защиты. Выбирайте лишь нужное вам!"
+        ],
+        "max_lvl": 1000,
+        "min_player_lvl": 0,
+        "settings_type": {
+            "Default": "bool",
+            "Mirror": "bool",
+            "Aura": "bool",
+            "Ultimate": "bool"
+        },
+        "settings_name": {
+            "Default": "Обычные",
+            "Mirror": "Зеркальные",
+            "Aura": "Аура",
+            "Ultimate": "Активные"
+        },
+        "settings_cost": {
+            "Default": 0,
+            "Mirror": 0,
+            "Aura": 0,
+            "Ultimate": 0
+        }
+    },
+
     "immune.screen_rotate": {
         "name": "Поворот экрана",
         "group": "Иммунитеты",
         "description": [
+            "С некоторым шансом останавливает действие навыков,",
+            "которые разворачивают ваш экран",
             " ",
             "Каждая настройка разделяет шанс пополам на",
             "каждый вид защиты. Выбирайте лишь нужное вам!"

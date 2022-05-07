@@ -20,6 +20,7 @@ from weapons.engines.csgo import Weapon
 # Listeners
 from listeners.tick import Delay
 from listeners.tick import Repeat
+from listeners import OnEntityOutputListenerManager
 # Events
 from events.manager import event_manager
 from events.hooks import pre_event_manager
@@ -95,7 +96,7 @@ __all__ = (
 'Vampire_damage_percent', # Gives owner hp as percent of damage dealt
 'Drop_weapon_chance', # Drops enemy weapon with such chance
 'Screen_rotate_attack', # Rotates enemy screen with a chance
-'Static_Mine', # Places mine in the air
+# 'Static_Mine', # Places mine in the air
 'MiniMap', # Places minimap with player as orbs corresponding to their position
 )
 
@@ -140,6 +141,12 @@ class BaseSkill:
 
                 # If setting active
                 if value is True:
+
+                    # Will lvl go under 0?
+                    if lvl - costs[setting] < 0:
+
+                        # Cancel activation. Not enough levels
+                        continue
 
                     # Subtracting it's cost
                     lvl -= costs[setting]
@@ -596,9 +603,6 @@ class Slow_fall(BaseSkill, repeat_functions):
 
         # Registration for jump
         event_manager.register_for_event('player_jump', self.activate_tick)
-
-        # Check for conflict with other perks
-
 
     def activate_tick(self, _) -> None:
 
@@ -2005,7 +2009,7 @@ class Weapon_give_start(BaseSkill):
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
         super().__init__(userid, lvl, settings, exclude_costs=False)
 
-        # How many money owner has?
+        # How much money owner has?
         money = self.lvl if self.lvl > 500 else 500
 
         # Set, that store all provided weapons
@@ -2051,9 +2055,16 @@ class MiniMap(ActiveSkill, repeat_functions):
         # Setting update map type based on user settings
         self.update_map = self.update_map_default
 
+        # Map scale modifier
+        self.scale_modifier = 0.04
+        if self.settings['size increase']: self.scale_modifier += 0.02
+        if self.settings['size decrease']: self.scale_modifier -= 0.02
+
         # repeat_functions initialize
         self.repeat = Repeat(self.update_map)
         self.repeat_delay = 0.5
+        if self.settings['update multiply 1']: self.repeat_delay /= 2
+        if self.settings['update multiply 2']: self.repeat_delay /= 2
 
         self.center_position = None
         self.entity_list = []
@@ -2062,10 +2073,19 @@ class MiniMap(ActiveSkill, repeat_functions):
         self.cd = 1
         self.delay = Delay(self.cd//2, self.cd_passed)
 
-        # Map turn-off delay
+        # Map turn-off
+        self.turn_off_length = 5
         self.turn_off_delay = None
 
+        # Notifying player
+        if self.owner.data_info['skills_activate_notify']:
+            ST2(f"\4[WCS]\1 Вы можете создать миникарту длительностью "
+            f"\5{self.turn_off_delay:.1f}\1 и откатом в "
+            f"\5{self.cd:.1f}\1с").send(self.owner.index)
+
     def bind_pressed(self) -> None:
+
+        # Activate map, if ability not on cooldown
         if super().bind_pressed():
             self.activate_map()
 
@@ -2074,7 +2094,7 @@ class MiniMap(ActiveSkill, repeat_functions):
 
     def calculate_orb_position(self, target: WCS_Player):
         """Calculates vector player->enemy"""
-        return self.center_position + ((target.origin - self.owner.origin) * 0.04)
+        return self.center_position + ((target.origin - self.owner.origin) * self.scale_modifier)
 
     def activate_map(self):
 
@@ -2099,8 +2119,33 @@ class MiniMap(ActiveSkill, repeat_functions):
             sprite = 1,
         ), self.owner])
 
+        # Is player skill improved with penetrate power?
+        if self.settings['penetrate immune']:
+
+            # Yes. Set penetrate Type
+            penetrate = ImmuneTypes.Penetrate
+
+        else:
+
+            # No. Set default type
+            penetrate = ImmuneTypes.Default
+
         # Iterating over all players and setting ball
         for player in WCS_Player.iter():
+
+            # Detect check
+            answer = immunes_check(
+                player,              # Targeting victim
+                penetrate,           # Map check consider to be more Default, then Ultimate actually
+                'detect',            # MiniMap is detecting type
+                self.detect_deflect, # After deflect call self.detect_deflected function
+                # Next goes arguments, that will be passed to self.detect_deflect on deflect
+                player               # Pass player, that deflected detect
+            )
+
+            # Go to the next loop, if player immune/deflect against detect
+            if answer != ImmuneReactionTypes.Passed: continue
+
             if player.team_index == self.owner.team_index: # Player in our team?
                 color = (0, 255, 0) # Setting green color
             else:
@@ -2122,7 +2167,7 @@ class MiniMap(ActiveSkill, repeat_functions):
         self._repeat_start()
 
         # Delay map disable
-        self.turn_off_delay = Delay(50, self.deactivate_map)
+        self.turn_off_delay = Delay(self.turn_off_length, self.deactivate_map)
 
     def update_map(self):
         raise NotImplementedError("__init__ should assign update_map a function")
@@ -2161,10 +2206,114 @@ class MiniMap(ActiveSkill, repeat_functions):
         # Stop update repeat
         self._repeat_stop()
 
+    def detect_deflect(self, user):
+        """Called when map detection is deflected"""
+
+        # Notify victim
+        ST2("\4[WCS]\1 Вы защитились от навыка обнаружения игрока \5"
+            f"{self.owner.name:.10}\1").send(user.index)
+
+    def close(self) -> None:
+        super().close()
+        self.deactivate_map()
+
+class Static_Mine(ActiveSkill):
+    __slots__ = ('mine_dict', 'damage_amount')
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(userid, lvl, settings)
+
+        # Active ability variables
+        self.cd = 5
+        self.delay = Delay(self.cd//2, self.cd_passed)
+
+        # Amount of damage, that dealt by explode of mine
+        self.damage_amount = 30
+
+        # Set, that contains active mines.
+        self.mine_dict: dict[str, Tuple[Entity, Entity]] = dict()
+
+        # Applying for entity output listener to listen for trigger activate
+        OnEntityOutputListenerManager.register_listener(self.entity_output)
+
+    def bind_pressed(self) -> None:
+        if super().bind_pressed():
+
+            name = f"Static_mine({randint(0,10000)})"
+
+            # Setting mine origin
+            spawn_location = self.owner.view_coordinates *0.99
+            spawn_location[2] += 50
+
+            with persistent_entity('prop_static') as mine_model:
+                mine_model.model = Model('models\\props_crates\\static_crate_40.mdl')
+                mine_model.origin = spawn_location
+                mine_model.solid = 6
+            mine_model.health = 50000
+
+            # Creating trigger for mine
+            trigger = Triggers.multiple(spawn_location - 50, spawn_location + 50)
+
+            # Adding target_name to trigger to identify him in next function calls
+            trigger.target_name = name
+
+            # Creating list for future [Prop, Trigger] list
+            self.mine_dict[name] = mine_model, trigger
+
+            # Mine placed. Delay skill
+            self.delay = Delay(self.cd, self.cd_passed)
+
+    def bind_released(self) -> None: pass
+
+    def entity_output(self, name: str, activator: Entity, caller: Entity, value, delay):
+        if name != 'OnTrigger': return
+        if caller.target_name not in self.mine_dict: return
+
+        # Dealing with WCSP. Activator always WCSP, because:
+        # Trigger works only for players =>  Dealing with
+        # All players are WCS_Player-s   =>  WCS_Player
+        activator: WCS_Player = WCS_Player.from_index(activator.index)
+
+        # Is activator resisted to detect?
+        resist: ImmuneReactionTypes = immunes_check(activator,
+            ImmuneTypes.Default,
+            'detect',
+            self.explode_deflect,
+            activator
+        )
+
+        if resist is ImmuneReactionTypes.Immune:
+            # Notify victim
+            ST2("\4[WCS]\1 Вы защитились от мины игрока \5"
+                f"{self.owner.name:.10}\1. Мина не сработала").send(activator.index)
+
+            # Break further changes
+            return
+
+        # Nothing changed, if user deflected/Immune
+        if resist is not ImmuneReactionTypes.Passed: return
+
+        # Remove trigger and model_prop entities + popping them from mine_dict
+        [entity.remove() for entity in self.mine_dict.pop(caller.target_name)]
+
+        # Dealing damage to activator
+        activator.take_damage(
+            damage = self.damage_amount,
+            damage_type = WCS_DAMAGE_ID,
+            attacker_index = self.owner.index
+        )
+
+    def explode_deflect(self, player: WCS_Player):
+        # Notify victim
+        ST2("\4[WCS]\1 Вы защитились от мины игрока \5"
+            f"{self.owner.name:.10}\1. Мина не сработала").send(player.index)
+
     def close(self) -> None:
         super().close()
 
-        self.deactivate_map()
+        for prop, mine in self.mine_dict.values():
+            mine.remove()
+            prop.remove()
 
 # class (BaseSkill):
 #
