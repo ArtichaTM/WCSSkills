@@ -43,6 +43,7 @@ from WCSSkills.other_functions.constants import ImmuneReactionTypes
 # =============================================================================
 
 __all__ = (
+    'immunes_check',
     'chance',
     'on_take_physical_damage',
     'on_take_magic_damage',
@@ -128,7 +129,7 @@ def skills_on_take_damage(args) -> Union[None, bool]:
 class Triggers:
 
     @staticmethod
-    def once(start: Vector, end: Vector) -> Entity:
+    def _create_normal_trigger(trigger_type: str, start: Vector, end: Vector) -> Entity:
         """Creates trigger_once with start and end
         :param start: Start position of trigger
         :param end: End position of trigger
@@ -140,8 +141,8 @@ class Triggers:
         # Calculating center->corner distance
         center_corner = (start - end) / 2
 
-        # Creatin new entity
-        trigger = Entity.create('trigger_once')
+        # Creating new entity
+        trigger = Entity.create(trigger_type)
 
         # Setting model (bcz entity should have model)
         trigger.model = Model('models\\antlers\\antlers.mdl')
@@ -167,6 +168,25 @@ class Triggers:
 
         # Returning created entity
         return trigger
+
+    @classmethod
+    def once(cls, start: Vector, end: Vector) -> Entity:
+        """Creates trigger_once with start and end
+        :param start: Start position of trigger
+        :param end: End position of trigger
+        :return: Trigger Entity """
+
+        return cls._create_normal_trigger('trigger_once', start, end)
+
+
+    @classmethod
+    def multiple(cls, start: Vector, end: Vector) -> Entity:
+        """Creates trigger_multiple with start and end
+        :param start: Start position of trigger
+        :param end: End position of trigger
+        :return: Trigger Entity """
+
+        return cls._create_normal_trigger('trigger_multiple', start, end)
 
 def immunes_check(victim: wcs_player_entity,
                   form: ImmuneTypes,

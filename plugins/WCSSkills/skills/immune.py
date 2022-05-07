@@ -153,3 +153,7 @@ class toss(ImmuneSkill):
 class teleport(ImmuneSkill):
     form = ('position_swap',)
     text = 'любого вида принудительной телепортации'
+
+class presence(ImmuneSkill):
+    form = ('aimbot', 'detect', 'reveal')
+    text = 'от любого вида обнаружения'
