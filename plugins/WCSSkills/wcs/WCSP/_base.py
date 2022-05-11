@@ -3,8 +3,10 @@
 # >> IMPORTS
 # =============================================================================
 # Python Imports
+# Future for annotate self class in methods
+from __future__ import annotations
 # Typing
-from typing import Union
+from typing import Union, Iterable
 # Random
 import random
 
@@ -232,27 +234,26 @@ class WCS_Player(Player): # Short: WCSP
         # Logging initialization
         WCSSkills.WCS_Logger.wcs_logger("player state", f"{self.name}: WCS_Player initialized")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"{self.__class__.__name__}(name={self.name},"
                f"index={self.index}, userid={self.userid})")
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if self.__class__ is other.__class__: self.index = other.index
         else: raise NotImplemented
 
     @staticmethod
-    def iter():
-        for WCSP in WCS_Players.values():
-            yield WCSP
+    def iter() -> Iterable[WCS_Player]:
+        for WCSP in WCS_Players.values(): yield WCSP
         raise StopIteration
 
     @staticmethod
-    def from_userid(userid, caching=None, **kwargs):
+    def from_userid(userid, caching=None, **kwargs) -> Union[WCS_Player, None]:
         try: return WCS_Players[userid]
         except KeyError: return None
 
     @staticmethod
-    def from_index(index):
+    def from_index(index) -> Union[WCS_Player, None]:
         try: return WCS_Players[userid_from_index(index)]
         except KeyError: return None
 
@@ -270,7 +271,7 @@ class WCS_Player(Player): # Short: WCSP
     def invisibility(self) -> int:
         return self.color.a
 
-    def view_entity_offset(self, max_offset, player_only=True) -> Union[Entity_entity, None]:
+    def view_entity_offset(self, max_offset, player_only=True) -> Union[WCS_Player, None]:
         """ Returns the most close entity to the crosshair
         :param max_offset: More value, more allowed angle. -1 <= offset <= 1
         :param player_only: Select entity with classname 'player'
@@ -315,7 +316,7 @@ class WCS_Player(Player): # Short: WCSP
                     same_team: bool = False,
                     form: other_functions.constants.ImmuneTypes = None,
                     immune_type: str = None
-                       ) -> wcs_player_entity:
+                       ) -> Iterable[WCS_Player]:
         """Returns WCS_Player's that within owner in some radius
         :param radius: radius to check in units
         :param same_team: Check for only same team with owner?
