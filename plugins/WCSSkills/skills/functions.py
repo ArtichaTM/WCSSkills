@@ -37,6 +37,7 @@ from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
 from WCSSkills.other_functions.constants import ImmuneTypes
 from WCSSkills.other_functions.constants import ImmuneReactionTypes
+from WCSSkills.other_functions.constants import AffinityTypes
 
 # =============================================================================
 # >> All
@@ -371,4 +372,18 @@ def will_be_stuck(entity: Entity_entity, position: Vector) -> bool:
     if trace.did_hit(): return True
 
     # Otherwise return True
+    else: return False
+
+def affinity_check(self, affinity: AffinityTypes) -> bool:
+    """Checks for owner affinity. Return False, if owner affinity is other"""
+
+    # User doesn't have any affinity. Add current, return "success"
+    if self.owner.affinity == AffinityTypes.NONE:
+        self.owner.affinity = affinity
+        return True
+
+    # User under current affinity. Return "success"
+    elif self.owner.affinity == affinity: return True
+
+    # User belongs to another group. Return "error"
     else: return False

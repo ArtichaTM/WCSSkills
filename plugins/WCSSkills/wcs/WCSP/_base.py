@@ -145,6 +145,9 @@ class WCS_Player(Player): # Short: WCSP
         # Variable to change skills
         self.skills_change = [None, None, None, None, None]
 
+        # Affinity. 'Light'/'Dark'/'' for now
+        self.affinity = other_functions.constants.AffinityTypes.NONE
+
         # Selected skills information
         # Max achieved lvl
         self.skills_selected_lvls = [None, None, None, None, None]
@@ -252,6 +255,20 @@ class WCS_Player(Player): # Short: WCSP
     def from_index(index):
         try: return WCS_Players[userid_from_index(index)]
         except KeyError: return None
+
+    @property
+    def invisibility(self) -> None:
+        ...
+
+    @invisibility.setter
+    def invisibility(self, percent: int) -> None:
+        color = self.color
+        color.a = int((100-percent)*2.55)
+        self.color = color
+
+    @invisibility.getter
+    def invisibility(self) -> int:
+        return self.color.a
 
     def view_entity_offset(self, max_offset, player_only=True) -> Union[Entity_entity, None]:
         """ Returns the most close entity to the crosshair

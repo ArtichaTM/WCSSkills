@@ -107,34 +107,11 @@ class ImmuneReactionTypes(IntEnum):
 
 DamTyp.__contains__ = ImmuneTypes.__contains__
 DamageTypes = DamTyp
-# class DamageTypes(DamTyp):
-#
-#     def __contains__(self, item):
-#
-#         # Items is enum
-#         if isinstance(item, IntFlag):
-#
-#             # If with adding new value nothing changed -> value
-#             # already contains in enum
-#             if self.value | item.value == self.value: return True
-#
-#             # Changed -> value didn't contains in enum
-#             else: return False
-#
-#
-#         # Item is int
-#         elif isinstance(item, int):
-#
-#             # If with adding new value nothing changed -> value
-#             # already contains in enum
-#             if self.value | item == self.value: return True
-#
-#             # Changed -> value didn't contains in enum
-#             else:  return False
-#
-#         # No? Then we can't compare item with enum
-#         else:
-#             raise TypeError(f"Can't compare '{type(item)}' and 'IntFlag'")
+
+class AffinityTypes(IntEnum):
+    NONE = auto()
+    LIGHT = auto()
+    DARK = auto()
 
 # =============================================================================
 # >> Constants

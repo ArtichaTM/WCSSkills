@@ -119,7 +119,7 @@ class BaseSkill:
         """
 
         # Saving owner
-        self.owner = WCS_Player.from_userid(userid)
+        self.owner: WCS_Player = WCS_Player.from_userid(userid)
 
         # Setting name of skill
         self.name = f"skill.{type(self).__name__}"
