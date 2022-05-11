@@ -313,11 +313,14 @@ class WCS_Player(Player): # Short: WCSP
     def players_around(self,
                     radius: float,
                     same_team: bool = False,
-                    form = None,
-                    form_type = other_functions.constants.ImmuneTypes.Nothing
+                    form: other_functions.constants.ImmuneTypes = None,
+                    immune_type: str = None
                        ) -> wcs_player_entity:
-        """ Returns WCS_Player's that within owner in some radius
+        """Returns WCS_Player's that within owner in some radius
         :param radius: radius to check in units
+        :param same_team: Check for only same team with owner?
+        :param form: ImmuneTypes form of attack
+        :param immune_type: Which immune to check (paralyze/toss/...)
         :return: WCS_Player
         """
 
@@ -326,11 +329,11 @@ class WCS_Player(Player): # Short: WCSP
 
             if same_team and WCSP.team_index != self.team_index: return
 
-            # Return if shielded
+            # Return if shielded and shielding from that is ON
             if form is not None and skills.functions.immunes_check(
                     victim = WCSP,
                     form = form,
-                    immune_type='presence',
+                    immune_type = immune_type,
                     deflect_target=lambda : None,
                     ) != other_functions.constants.ImmuneReactionTypes.Passed:
                 return
