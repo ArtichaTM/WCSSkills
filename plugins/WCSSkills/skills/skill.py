@@ -1511,12 +1511,11 @@ class Toss(DelaySkill):
             # Then it's 100% bot
             return
 
-        result = Throw_player_upwards(
+        result = throw_player_upwards(
             owner = self.owner,
             victim = victim,
             power = self.power,
-            form = ImmuneTypes.Default
-            )
+            form = ImmuneTypes.Default )
 
         # Notifying
         if result == ImmuneReactionTypes.Passed:

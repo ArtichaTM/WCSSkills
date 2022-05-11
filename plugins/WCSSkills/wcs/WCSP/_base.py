@@ -310,14 +310,30 @@ class WCS_Player(Player): # Short: WCSP
         if minimum > abs(max_offset): return None
         return Entity_entity
 
-    def players_around(self, radius: float) -> wcs_player_entity:
+    def players_around(self,
+                    radius: float,
+                    same_team: bool = False,
+                    form = None,
+                    form_type = other_functions.constants.ImmuneTypes.Nothing
+                       ) -> wcs_player_entity:
         """ Returns WCS_Player's that within owner in some radius
         :param radius: radius to check in units
         :return: WCS_Player
         """
 
         # Iterating over all alive players
-        for WCSP in WCS_Players.values():
+        for WCSP in self.iter():
+
+            if same_team and WCSP.team_index != self.team_index: return
+
+            # Return if shielded
+            if form is not None and skills.functions.immunes_check(
+                    victim = WCSP,
+                    form = form,
+                    immune_type='presence',
+                    deflect_target=lambda : None,
+                    ) != other_functions.constants.ImmuneReactionTypes.Passed:
+                return
 
             # Player inside radius?
             if self.origin.get_distance(WCSP.origin) <= radius:
@@ -325,7 +341,7 @@ class WCS_Player(Player): # Short: WCSP
                 # Return this player
                 yield WCSP
 
-    def skills_activate(self, _=None) -> None:
+    def skills_activate(self, *_) -> None:
         """
         Activate skills. Usually in the start of round
         • Adding new skills to data_skills, if player never had this skill before

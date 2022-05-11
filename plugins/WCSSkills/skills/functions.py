@@ -52,7 +52,7 @@ __all__ = (
     'Triggers',
     'active_weapon_drop',
     'screen_angle_distortion',
-    'Throw_player_upwards',
+    'throw_player_upwards',
     'will_be_stuck',
 )
 
@@ -325,7 +325,7 @@ def screen_angle_distortion(
     # Success return
     return ImmuneReactionTypes.Passed
 
-def Throw_player_upwards(
+def throw_player_upwards(
         owner: wcs_player_entity,
         victim: wcs_player_entity,
         power: float,
@@ -333,7 +333,7 @@ def Throw_player_upwards(
 
     result = immunes_check(victim, form, 'toss_upwards',
                    # Deflect func and args
-                   Throw_player_upwards, victim, owner, power, ImmuneTypes.Any)
+                   throw_player_upwards, victim, owner, power, ImmuneTypes.Any)
     # Returning result, if skill is not passed
     if result is not ImmuneReactionTypes.Passed: return result
 
