@@ -2079,8 +2079,8 @@ class MiniMap(ActiveSkill, repeat_functions):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            ST2(f"\4[WCS]\1 Вы можете создать миникарту длительностью "
-            f"\5{self.turn_off_delay:.1f}\1 и откатом в "
+            ST2("\4[WCS]\1 Вы можете создать миникарту длительностью "
+            f"\5{self.turn_off_length:.1f}\1 и откатом в "
             f"\5{self.cd:.1f}\1с").send(self.owner.index)
 
     def bind_pressed(self) -> None:
