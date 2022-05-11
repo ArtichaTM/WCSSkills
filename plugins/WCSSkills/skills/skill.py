@@ -2315,10 +2315,164 @@ class Static_Mine(ActiveSkill):
             mine.remove()
             prop.remove()
 
+
+class Ghost_on_Knife(BaseSkill):
+    """
+    Giving benefits to player, that picks knife. Now applies:
+    • Speed
+    • Invisibility
+    Also there's an option to linger property longer after switch
+    """
+
+    __slots__ = ('enabled', 'invisibility', 'speed', 'linger_length')
+
+    def __init__(self, userid: int, lvl: int, settings: dict) -> None:
+        super().__init__(userid, lvl, settings, exclude_costs=False)
+
+        # Holds status of skill
+        # False: user holds NOT knife. Skill benefits OFF
+        # True: user hold knife.       Skill benefits ON
+        self.enabled = None
+        # Now set to None, because user can hold knife of perk start.
+        if self.owner.active_weapon.weapon_name == 'weapon_knife':
+            self.activate()
+        else: self.enabled = False
+
+        # Modifiers on activation
+        self.invisibility = 0
+        self.speed = 0
+        self.linger_length = 0
+
+        # Calculating modifiers
+
+        # Invisibility
+        if self.settings['invisibility']:
+
+            # Subtracting cost
+            left = self.lvl - self.costs['invisibility']
+
+            # If level enough to full upgrade, set invis to full and assign to lvl left levels
+            if left >= 0:
+                self.invisibility = 90
+
+                # Updating lvl with left levels
+                self.lvl = left
+
+            # Not enough
+            else:
+                # Calculate value
+                self.invisibility = (90/self.costs[settings]) * (-left)
+
+                # All levels depleted. Set them to zero
+                self.lvl = 0
+
+        # No invisibility
+        else: self.invisibility = 0
+
+        # Lingering
+        if self.settings['properties linger']:
+
+            # Subtracting cost
+            left = self.lvl - self.costs['properties linger']
+
+            # If level enough to full upgrade, set invis to full and assign to lvl left levels
+            if left >= 0:
+                self.linger_length = 1
+
+                # Updating lvl with left levels
+                self.lvl = left
+
+            # Not enough
+            else:
+                # Calculate value
+                self.linger_length = (-left) / 1000
+
+                # All lvls depleted. Set them to zero
+                self.lvl = 0
+
+        # No linger
+        else: self.linger_length = 0
+
+        # Speed
+        if self.settings['speed']:
+
+            # Adding speed, if there's left any lvls
+            if self.lvl: self.speed += (self.lvl / self.costs['speed']) / 100
+
+            # All levels depleted. Set to zero
+            self.lvl = 0
+
+        # No speed
+        else: self.speed = 0
+
+        # Registering for equipment change event
+        event_manager.register_for_event('item_equip', self.event_fire)
+
+        # Notifying user
+        if self.owner.data_info['skills_activate_notify']:
+            # Sending first message
+            ST2("\4[WCS]\1 При взятие ножа, вы получаете:").send(self.owner.index)
+
+            # Buffs description
+            if self.invisibility: ST2(f"• \5{self.invisibility:.0f}%\1 невидимости").send(self.owner.index)
+            if self.speed: ST2(f"• Увеличение скорости на \5{self.speed*100:.0f}%\1").send(self.owner.index)
+            if self.linger_length: ST2(f"• Эффект остаётся на \5{self.linger_length:.2f}"
+                               "\1 секунд после смены оружия").send(self.owner.index)
+
+            # Notify about something wrong, if nothing is activated
+            if not any((self.invisibility, self.speed, self.linger_length)):
+                ST2(F"\3Ничего\1. Проверьте настройки навыка").send(self.owner.index)
+
+    def event_fire(self, ev):
+
+        # Reject other players
+        if ev['userid'] != self.owner.userid: return
+
+        # Activating conditions
+        elif all((ev['item'] == 'knife', self.enabled == False)):
+
+            # Calling activate method
+            self.activate()
+
+        # Deactivating conditions
+        elif all((ev['item'] != 'knife', self.enabled == True)):
+
+            # We should delay deactivate, if linger is set
+            return Delay(self.linger_length, self.deactivate) if self.linger_length else self.deactivate()
+
+    def activate(self):
+
+        # Marking activation
+        self.enabled = True
+
+        # Adding speed
+        self.owner.speed += self.speed
+
+        # Adding invisibility
+        self.owner.invisibility = self.invisibility
+
+    def deactivate(self):
+
+        # Marking deactivation
+        self.enabled = False
+
+        # Removing speed
+        self.owner.speed -= self.speed
+
+        # Removing invisibility
+        self.owner.invisibility = 0
+
+    def close(self) -> None:
+        super().close()
+
+        # Deactivating, if activated
+        if self.enabled: self.deactivate()
+
+        # Unregistering from item switch event
+        event_manager.unregister_for_event('item_equip', self.event_fire)
+
 # class (BaseSkill):
-#
 #     __slots__ = ('', )
-#
 #     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
 #         super().__init__(userid, lvl, settings)
 #     def close(self) -> None:
