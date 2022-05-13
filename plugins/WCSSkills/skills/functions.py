@@ -54,6 +54,7 @@ __all__ = (
     'screen_angle_distortion',
     'throw_player_upwards',
     'will_be_stuck',
+    'affinity_check'
 )
 
 # =============================================================================
@@ -374,16 +375,16 @@ def will_be_stuck(entity: Entity_entity, position: Vector) -> bool:
     # Otherwise return True
     else: return False
 
-def affinity_check(self, affinity: AffinityTypes) -> bool:
+def affinity_check(player, affinity: AffinityTypes) -> bool:
     """Checks for owner affinity. Return False, if owner affinity is other"""
 
     # User doesn't have any affinity. Add current, return "success"
-    if self.owner.affinity == AffinityTypes.NONE:
-        self.owner.affinity = affinity
+    if player.affinity == AffinityTypes.NONE:
+        player.affinity = affinity
         return True
 
     # User under current affinity. Return "success"
-    elif self.owner.affinity == affinity: return True
+    elif player.affinity == affinity: return True
 
     # User belongs to another group. Return "error"
     else: return False
