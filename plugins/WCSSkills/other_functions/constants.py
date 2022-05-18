@@ -141,13 +141,13 @@ orb_sprites = (
     'materials/sprites/glow06.vmt',
     'materials/sprites/glow07.vmt',
     'materials/sprites/light_glow02.vmt',
-    'light_glow02_add.vmt',
-    'light_glow02_add_noz.vmt',
-    'light_glow02_noz.vmt',
-    'light_glow03.vmt',
-    'light_glow03_nofog.vmt',
-    'light_glow04.vmt',
-    'light_glow04_add_noz.vmt',
+    'materials/sprites/light_glow02_add.vmt',
+    'materials/sprites/light_glow02_add_noz.vmt',
+    'materials/sprites/light_glow02_noz.vmt',
+    'materials/sprites/light_glow03.vmt',
+    'materials/sprites/light_glow03_nofog.vmt',
+    'materials/sprites/light_glow04.vmt',
+    'materials/sprites/light_glow04_add_noz.vmt',
 )
 
 # =============================================================================

@@ -30,6 +30,10 @@
         "sound_level_up": {
             "name": "Звук повышения уровня",
             "default_value": true
+        },
+        "affinity_conflict_notify": {
+            "name": "Оповещение о конфликте навыков",
+            "default_value": true
         }
 
     },

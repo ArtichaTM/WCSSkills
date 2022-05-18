@@ -59,11 +59,12 @@ from WCSSkills.db.wcs import Skills_info
 # Constants
 from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
 from WCSSkills.other_functions.constants import WCS_FOLDER
-from WCSSkills.other_functions.constants import DamageTypes
 from WCSSkills.other_functions.constants import weapon_translations
 # Enumeratings
+from WCSSkills.other_functions.constants import DamageTypes
 from WCSSkills.other_functions.constants import ImmuneTypes
 from WCSSkills.other_functions.constants import ImmuneReactionTypes
+from WCSSkills.other_functions.constants import AffinityTypes
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -406,12 +407,29 @@ class Regenerate(BaseSkill, repeat_functions):
     def __init__(self, userid: int, lvl: int, settings: dict):
         super().__init__(userid, lvl, settings)
 
-        if self.lvl > 10:
+
+        # Checks for level for proper interval/radius/hp scaling
+
+        # 901 -> infinity
+        # Interval: 7
+        # Hp:       Scaling from 100 to infinite with step 100
+        if self.lvl > 900:
             self.interval = 7
-            self.hp = 5 + self.lvl // 100
+            self.hp = 91 + self.lvl // 100
+
+        # 11 -> 900
+        # Interval: 7
+        # Hp:       Scaling from 10 to 100 with step 10
+        elif self.lvl > 10:
+            self.interval = 7
+            self.hp = 10 + self.lvl // 10
+
+        # 0 -> 10
+        # Interval: Scaling from 17 to 10 with step 1
+        # Hp:       5
         else:
             self.interval = 17 - self.lvl
-            self.hp = 5
+            self.hp = 10
 
         self.repeat = Repeat(self.heal)
         self.repeat_delay = self.interval
@@ -2469,6 +2487,106 @@ class Ghost_on_Knife(BaseSkill):
 
         # Unregistering from item switch event
         event_manager.unregister_for_event('item_equip', self.event_fire)
+
+class Light_Aura_Regenerate(BaseSkill, repeat_functions):
+    __slots__ = ('interval', 'hp', 'radius')
+
+    def __init__(self, userid: int, lvl: int, settings: dict):
+        super().__init__(userid, lvl, settings)
+
+        # check for affinity
+        if not affinity_check(self.owner, AffinityTypes.LIGHT):
+            # User affinity is different from current skill
+
+            # Notify owner
+            if self.owner.data_info['affinity_conflict_notify']:
+                ST2("\4[WCS]\1 Возник конфликт сущности!").send(self.owner.index)
+
+            # Disables close function
+            self.close = super().close
+
+            # Disables future activation
+            return
+
+        # Checks for level for proper interval/radius/hp scaling
+
+        # 2010 -> infinity
+        # Interval: 7
+        # Hp:       Continues previous scaling
+        # Radius:   2000
+        if self.lvl >= 2010:
+            self.interval = 7
+            self.hp = 91 + self.lvl // 100
+            self.radius = 2000
+
+        # 901 -> 2010
+        # Interval: Scaling from 17 to 10 with step 1
+        # Hp:       Scaling from 100 to infinite with step 100
+        # Radius:   Continues previous scaling
+        elif self.lvl > 900:
+            self.interval = 7
+            self.hp = 91 + self.lvl // 100
+            self.radius = self.lvl - 10
+
+        # 11 -> 900
+        # Interval: 7
+        # Hp:       Scaling from 10 to 100 with step 10
+        # Radius:   Continue scaling
+        elif self.lvl > 10:
+            self.interval = 7
+            self.hp = 10 + self.lvl // 10
+            self.radius = self.lvl - 10
+
+        # 0 -> 10
+        # Interval: Scaling from 17 to 10 with step 1
+        # Hp:       5
+        # Radius:   0
+        else:
+            self.interval = 17 - self.lvl
+            self.hp = 10
+            self.radius = 0
+
+        self.repeat = Repeat(self.heal)
+        self.repeat_delay = self.interval
+        self._repeat_start()
+
+        if self.owner.data_info['skills_activate_notify']:
+            # Notifies player about perk activation
+            ST2("\4[WCS]\1 Аура регенерации "
+                f"\5{self.hp}\1хп/\5{self.interval}\1с радиусом "
+                f"\5{self.radius:.0f}\1").send(self.owner.index)
+
+    def heal(self) -> None:
+
+        # Healing owner
+        healed: int = self.owner.heal(self.hp)
+        if self.settings['notify'] and healed > 0:
+            ST2(f"\4[WCS]\1 Вы исцелились на \5{healed}\1хп "
+                "(Аура регенерации)").send(self.owner.index)
+
+        # Healing teammates
+        for player in self.owner.players_around(self.radius, True):
+
+            # Check for affinity. No heal for demons. Deal damage them!
+            if player.affinity == AffinityTypes.DARK:
+                ST2(f"\4[WCS]\1 Вы получили \5{1}\1 "
+                    "урон из-за ауры исцеления игрока \5"
+                    f"{self.owner.name}\1" ).send(player.index)
+                player.take_damage(
+                    damage = 1,
+                    damage_type = WCS_DAMAGE_ID,
+                    attacker_index = self.owner.index
+                )
+                continue
+
+            # All is ok with teammate race
+            healed: int = self.owner.heal(self.hp)
+            ST2(f"\4[WCS]\1 Вас исцелил игрок \5{self.owner.name}\1"
+                f" на \5{healed}\1хп").send(player.index)
+
+    def close(self) -> None:
+        super().close()
+        self._repeat_stop()
 
 # class (BaseSkill):
 #     __slots__ = ('', )

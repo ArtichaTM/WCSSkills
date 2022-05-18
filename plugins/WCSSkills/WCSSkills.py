@@ -25,9 +25,10 @@ def load():
 
     # Downloadables
     from stringtables.downloads import Downloadables
-    downloadables = Downloadables() # Instance
-    downloadables.add_directory(f'sound/{WCS_FOLDER}/') # Adding sounds to download list
-    downloadables.add_directory(f'models/{WCS_FOLDER}/') # Adding models download list
+    downloads = Downloadables() # Instance
+    downloads.add_directory(f'sound/{WCS_FOLDER}/') # Adding sounds to download list
+    downloads.add_directory(f'materials/models/{WCS_FOLDER}/') # Adding materials download list
+    downloads.add_directory(f'models/{WCS_FOLDER}/') # Adding models download list
 
     wcs_logger('info', 'Plugin loaded successfully')
 
