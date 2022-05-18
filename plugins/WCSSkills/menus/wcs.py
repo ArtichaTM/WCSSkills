@@ -798,7 +798,6 @@ def LK_callback(_, index, choice):
         LK_send(player)
 
 
-# noinspection PyTypeChecker
 def LK_user_groups(player):
     menu = PagedMenu(title=f'Навыки игрока {player.name[0:10]}',
                      select_callback=LK_user_groups_callback,
@@ -817,7 +816,6 @@ def LK_user_groups_callback(_, index, choice):
     # Sending skills menu
     LK_user_skills(player, choice.value)
 
-# noinspection PyTypeChecker
 def LK_user_skills(player, group):
     menu = PagedMenu(title=f'Навыки игрока {player.name[0:10]}',
                      select_callback=LK_user_skills_callback,
@@ -953,7 +951,7 @@ def LK_user_keyboard(command, index, _):
         # Then looking in data_skills
         for num, value in enumerate(player.data_skills):
 
-            # Is this, what we looking for?
+            # Is this, what are we looking for?
             if value[0] == skill:
 
                 # Yes. Getting value
@@ -973,7 +971,7 @@ def LK_user_keyboard(command, index, _):
         # Remember previous amount
         before = data[0]
 
-        # Increasing lvls
+        # Increasing levels amount
         data[0] += entered
 
         # Replace with new value

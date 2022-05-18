@@ -3,8 +3,6 @@
 # >> IMPORTS
 # =============================================================================
 # Python Imports
-# Future for annotate self class in methods
-from __future__ import annotations
 # Typing
 from typing import Union, Iterable
 # Random
@@ -26,6 +24,8 @@ from engines.server import server
 from filters.players import PlayerIter
 # SayText2
 from messages.base import SayText2
+# Entity
+from entities.entity import Entity
 
 WCS_Players = dict()
 # Plugin Imports
@@ -126,24 +126,20 @@ class WCS_Player(Player): # Short: WCSP
     """
 
     def __init__(self, userid: int, caching: bool = True):
-
-        # Executing Player __init__
         super().__init__(index_from_userid(userid), caching)
 
         # Setting target_name
         self.target_name = f"WCSP_{self.index}"
 
         # Loading information about player from databases
-        self.data_info = db.wcs.DB_users.info_load(self.steamid)
-        self.data_skills = db.wcs.DB_users.skills_load(self.steamid)
+        self.data_info: dict = db.wcs.DB_users.info_load(self.steamid)
+        self.data_skills: dict = db.wcs.DB_users.skills_load(self.steamid)
 
         # Basic information
         # Lvl of account (Summary of all skills)
-        self.total_lvls = self.data_info["total_lvls"]
-        # Skills that player lastly selected
-        self.skills_selected = eval(self.data_info["skills_selected"])
+        self.total_lvls: int = self.data_info["total_lvls"]
         # Levels in lvl bank
-        self.lk_lvls = self.data_info["LK_lvls"]
+        self.lk_lvls: int = self.data_info["LK_lvls"]
         # Variable to change skills
         self.skills_change = [None, None, None, None, None]
 
@@ -151,28 +147,47 @@ class WCS_Player(Player): # Short: WCSP
         self.affinity = other_functions.constants.AffinityTypes.NONE
 
         # Selected skills information
+        # Skills that player lastly selected
+        self.skills_selected: list = eval(self.data_info["skills_selected"])
         # Max achieved lvl
         self.skills_selected_lvls = [None, None, None, None, None]
-        # Selected (if sel.) level
+        # Selected (if selected, otherwise None) level
         self.skills_selected_lvl = [None, None, None, None, None]
         # Xp of skill
         self.skills_selected_xp = [None, None, None, None, None]
-        # Max xp, after which player lvls up
-        self.skills_selected_next_lvl = []
+        # Max xp, after which player levels-up up
+        self.skills_selected_next_lvl = [None, None, None, None, None]
         # Settings of skill
         self.skills_selected_settings = [None, None, None, None, None]
 
         # Loading information from data_skills into skills info
         for num, skill in enumerate(self.skills_selected):
             if skill is None or skill == 'Empty' or skill == 'BLOCKED':
+                # No skill selected, or slot blocked
 
-                # If no skill selected, there's no need to change anything
+                # Nothing changed
                 continue
 
             else:
+                # Skill exist
 
-                # Skills exist, searching for skill data in data_skills
+                # Searching for skill data in data_skills
                 data = self.data_skills[skill]
+
+                # May be skill has been changed, and now user level below required?
+
+                # Getting skill minimum level
+                min_lvl = db.wcs.Skills_info.get_min_lvl(self.skills_selected[num])
+
+                # Enough lvl?
+                if min_lvl > self.total_lvls:
+                    # No, minimum above player total
+
+                    # Excluding skill
+                    self.skills_selected[num] = None
+
+                    # Continue iteration
+                    continue
 
                 # Applying data to lists
                 self.skills_selected_lvls[num] = data[0]
@@ -181,38 +196,37 @@ class WCS_Player(Player): # Short: WCSP
                 self.skills_selected_settings[num] = data[3]
 
         # Adding max xp (after which player lvl up)
-        for value in self.skills_selected_lvls:
+        for index, value in enumerate(self.skills_selected_lvls):
 
             # Checking, if there's any skill in the slot
             if value is None:
 
                 # No, then place 'None' in the max xp list
-                self.skills_selected_next_lvl.append(None)
-                continue
+                self.skills_selected_next_lvl[index] = None
 
             else:
 
-                    # Skill exist, calculating new_lvl value
-                    self.skills_selected_next_lvl.append(
-                        next_lvl_xp_calculate(value))
+                # Skill exist, calculating new_lvl value
+                self.skills_selected_next_lvl[index] = \
+                    next_lvl_xp_calculate(value)
 
         # Skills, that is active right now
         # • Added at start of round
         # • Cleared in the end of round (pre_restart)
-        self.skills_active = set()
+        self._skills_active = set()
 
         # Holds information for functions, that uses keyboard enter
         self.enter_temp = None
 
         # XP multiplier (not used right now (doesn't change I mean)).
         # Multiply happens after all functions
-        self.xp_multiplier = 1
+        self.xp_multiplier: float = 1
 
         # Healing multiply
-        self.heal_multiplier = 1
+        self.heal_multiplier: float = 1
 
-        # lvls, that player has in Level Bank (LK)
-        self.lk_lvls = 100000
+        # Level Bank (LK) levels amount
+        self.lk_lvls: float = 100000
 
         # Immune to various skills of WCS_Player
         self.immunes = DefaultDict()
@@ -239,21 +253,31 @@ class WCS_Player(Player): # Short: WCSP
                f"index={self.index}, userid={self.userid})")
 
     def __eq__(self, other) -> bool:
-        if self.__class__ is other.__class__: self.index = other.index
+        if self.__class__ is other.__class__: return self.index == other.index
         else: raise NotImplemented
 
     @staticmethod
-    def iter() -> Iterable[WCS_Player]:
+    def iter():
+        """ Iterating over active WCS_Players
+        :return: Iterable
+        """
         for WCSP in WCS_Players.values(): yield WCSP
-        raise StopIteration
 
     @staticmethod
-    def from_userid(userid, caching=None, **kwargs) -> Union[WCS_Player, None]:
+    def from_userid(userid, **_):
+        """ Getting WCS_Player by userid
+        :param userid: userid of desired player
+        :return: None, if no WCS_Player found. Otherwise, WCS_Player instance
+        """
         try: return WCS_Players[userid]
         except KeyError: return None
 
     @staticmethod
-    def from_index(index) -> Union[WCS_Player, None]:
+    def from_index(index):
+        """ Getting WCS_Player by userid
+        :param index: index of desired player
+        :return: None, if no WCS_Player found. Otherwise, WCS_Player instance
+        """
         try: return WCS_Players[userid_from_index(index)]
         except KeyError: return None
 
@@ -262,80 +286,117 @@ class WCS_Player(Player): # Short: WCSP
         ...
 
     @invisibility.setter
-    def invisibility(self, percent: int) -> None:
+    def invisibility(self, amount: int) -> None:
+        """ Setting player invisibility by values [0,255]
+        :param amount: invisibility amount
+        :return: None
+        """
+        assert isinstance(amount, int), "invisibility takes only integers"
+        assert (0 <= amount <= 255), "invisibility should be in range from 0 to 255"
+
+        # Getting current player color
         color = self.color
-        color.a = int((100-percent)*2.55)
+
+        # Setting alpha
+        color.a = amount
+
+        # Applying new color to player
         self.color = color
 
     @invisibility.getter
     def invisibility(self) -> int:
+        """ Getting current player invisibility
+        :return: invisibility amount
+        """
         return self.color.a
 
-    def view_entity_offset(self, max_offset, player_only=True) -> Union[WCS_Player, None]:
+    def view_entity_offset(self, max_offset: int,
+                           player_only: bool = True,
+                           immune_type: str = 'presence',
+                           check_type: other_functions.constants.ImmuneTypes =
+                               other_functions.constants.ImmuneTypes.Default
+                           ) -> Union[Entity, None]:
         """ Returns the most close entity to the crosshair
         :param max_offset: More value, more allowed angle. -1 <= offset <= 1
         :param player_only: Select entity with classname 'player'
+        :param immune_type: Player only. Type of immune. By default, using ImmuneTypes.Default
+        :param check_type: Player only. what type of immune we should check
         :return: Entity that player looking at, or None, if nothing at crosshair
         """
 
         # Input argument check
-        if not (-1 <= max_offset <= 1): raise ValueError('Wrong offset. Offset should be -1 <= offset <= 1')
+        assert (-1 <= max_offset <= 1), 'Wrong offset. Offset should be -1 <= offset <= 1'
 
         # Looking for entities or only players?
         if player_only:
+
+            # Calling function for players
             entities = other_functions.functions.open_players(entity=self,
-                form = other_functions.constants.ImmuneTypes.Penetrate,
-                type_of_check='',
-                same_team=True)
+                form = check_type,
+                type_of_check = immune_type,
+                same_team=False)
         else:
+            # Calling function for entities
             entities = other_functions.functions.open_entities(owner=self)
 
+        # Nothing found? Return None
         if not entities: return None
 
+        # Creating new list for offsets
         offsets = []
 
         for entity in entities:
-            try: destination = entity.eye_location
-            except AttributeError: destination = entity.origin
-            else: destination[2] -= 18
 
+            # Getting entity origin
+            destination = entity.origin
+
+            # Calculating view vector (view_vector to entity)
             awaited_ray = (destination - self.eye_location).normalized()
 
+            # Calculating difference current_view_vector - needed_view_vector
             distance = self.view_vector.get_distance(awaited_ray)/2
 
             if max_offset < 0: distance = 1-distance
 
+            # Setting offset
             offsets.append(distance)
 
+        # Getting most close entity to crosshair
         minimum = min(offsets)
+
+        # Above limit? Return None
         if minimum > abs(max_offset): return None
-        return Entity_entity
+
+        # Otherwise, return closes entity
+        return entities[offsets.index(minimum)]
 
     def players_around(self,
-                    radius: float,
-                    same_team: bool = False,
-                    form: other_functions.constants.ImmuneTypes = None,
-                    immune_type: str = None
-                       ) -> Iterable[WCS_Player]:
+                       radius: float,
+                       same_team: bool = False,
+                       form: other_functions.constants.ImmuneTypes = None,
+                       immune_type: str = None,
+                       deflect_function: callable = lambda : None
+                       ):
         """Returns WCS_Player's that within owner in some radius
         :param radius: radius to check in units
         :param same_team: Check for only same team with owner?
         :param form: ImmuneTypes form of attack
         :param immune_type: Which immune to check (paralyze/toss/...)
+        :param deflect_function: Function, that will be called on immune deflect
         :return: WCS_Player
         """
 
-        # Iterating over all alive players
+        # Iterating over all alive WCS_Players
         for WCSP in self.iter():
 
             if same_team and WCSP.team_index != self.team_index: return
 
-            # Return if shielded and shielding from that is ON
+            # Continue to next player if shielded and shielding from that is ON
             if form is not None and skills.functions.immunes_check(
                     victim = WCSP,
                     form = form,
                     immune_type = immune_type,
-                    deflect_target=lambda : None,
+                    deflect_target = deflect_function,
                     ) != other_functions.constants.ImmuneReactionTypes.Passed:
                 return
 
@@ -346,8 +407,7 @@ class WCS_Player(Player): # Short: WCSP
                 yield WCSP
 
     def skills_activate(self, *_) -> None:
-        """
-        Activate skills. Usually in the start of round
+        """ Activates skills. Usually in the start of round
         • Adding new skills to data_skills, if player never had this skill before
         • Saving data_skills at the end of initialization
         • Changing active skills (applying skills_change into self.skills_selected)
@@ -356,12 +416,13 @@ class WCS_Player(Player): # Short: WCSP
         """
 
         # Is skills turned off?
-        if len(self.skills_active) != 0:
+        if len(self._skills_active):
+            # They're active!
 
-            # They're active! Turn them off, then run active
+            # Turn them off, then run activate
             self.skills_deactivate()
 
-        # Setting heal multiply to one
+        # Reset heal multiplier
         self.heal_multiplier = 1
 
         # Check if new skills exist
@@ -370,9 +431,12 @@ class WCS_Player(Player): # Short: WCSP
                               }) if set(self.skills_change) != {None} else None
 
         if change_skills is not None:
+            # There's new skills to change
+
             for skill in change_skills.difference(owned_skills):
                 # Logging
-                WCSSkills.WCS_Logger.wcs_logger('skill change', f"{self.name}: Selected new skill {skill}")
+                WCSSkills.WCS_Logger.wcs_logger('skill acquire',
+                                        f"{self.name}: Selected new skill {skill}")
 
                 # Adding new entry
                 self.data_skills[skill] = (0, 0, None, {})
@@ -385,8 +449,11 @@ class WCS_Player(Player): # Short: WCSP
 
                 # Saving previous skill
                 previous_skill: str = self.skills_selected[num]
-                if previous_skill is not None and previous_skill != 'Empty' and \
-                        previous_skill != 'BLOCKED':
+
+                # Is this is a skill?
+                if previous_skill not in {None, 'Empty', 'BLOCKED'}:
+
+                    # Saving information about previous skill
                     self.data_skills[previous_skill] = (self.skills_selected_lvls[num],
                                                         int(self.skills_selected_xp[num]),
                                                         self.skills_selected_lvl[num],
@@ -396,11 +463,14 @@ class WCS_Player(Player): # Short: WCSP
                 skill_name = skill_change
 
                 if 'skill_name' not in locals() or skill_name == 'Empty':
+                    # Skill slot is empty
+
                     self.skills_selected[num]: str = 'Empty'
                     self.skills_selected_lvls[num]: int = None
                     self.skills_selected_xp[num]: int = None
                     self.skills_selected_next_lvl[num]: int = None
                 else:
+                    # Skill is real
                     skill_lvl, skill_xp, skill_lvl_selected, \
                     skill_settings = self.data_skills[skill_change]
 
@@ -412,7 +482,8 @@ class WCS_Player(Player): # Short: WCSP
                         next_lvl_xp_calculate(skill_lvl)
 
                 # Logging skill change
-                WCSSkills.WCS_Logger.wcs_logger('skill change', f"{self.name}: {previous_skill} -> {skill_name}")
+                WCSSkills.WCS_Logger.wcs_logger('skill change',
+                                        f"{self.name}: {previous_skill} -> {skill_name}")
 
             self.skills_change[num] = None
 
@@ -454,27 +525,25 @@ class WCS_Player(Player): # Short: WCSP
 
                 # Checking for custom lvl selected
                 if self.skills_selected_lvl[num] is None:
-
-                    # Not selected, calling with maximum lvl
-                    self.skills_active.add(skill_class(self.userid,
-                                           self.skills_selected_lvls[num],
-                                           self.skills_selected_settings[num]))
+                    # Maximum level
+                    self._skills_active.add(skill_class(self.userid,
+                                                        self.skills_selected_lvls[num],
+                                                        self.skills_selected_settings[num]))
 
                 else:
-
-                    # Selected custom lvl, calling with selected lvl
-                    self.skills_active.add(skill_class(self.userid,
-                                           self.skills_selected_lvl[num],
-                                           self.skills_selected_settings[num]))
+                    # Custom level
+                    self._skills_active.add(skill_class(self.userid,
+                                                        self.skills_selected_lvl[num],
+                                                        self.skills_selected_settings[num]))
 
                 # Adding to not-repeat list
                 loaded.add(skill)
 
-        # Ultimate/Ability binds
+        # Ultimate/Ability binds activates with skill activate
         self.Buttons.round_start()
 
         # Notifying player, if he has no active skills
-        if len(self.skills_active) == 0:
+        if len(self._skills_active) == 0:
             SayText2(f"\4[WCS]\1 У вас нет активных навыков").send(self.index)
 
         # Updating data_skills
@@ -488,13 +557,13 @@ class WCS_Player(Player): # Short: WCSP
         """ Deactivates skills in the end of round"""
 
         # Iterating over all skills
-        for skill in self.skills_active:
+        for skill in self._skills_active:
 
             # Deactivating them
             skill.close()
 
         # Clearing skills_active, bcz no skills active :D
-        self.skills_active.clear()
+        self._skills_active.clear()
 
         # Unloading ultimate/ability
         self.Buttons.unload()
@@ -513,7 +582,7 @@ class WCS_Player(Player): # Short: WCSP
             return
 
         # Is skills turned on?
-        if len(self.skills_active) == 0:
+        if len(self._skills_active) == 0:
 
             # Skills deactivated! Abort skills deactivation
             return
@@ -550,11 +619,11 @@ class WCS_Player(Player): # Short: WCSP
         self.data_info["LK_lvls"]: int = self.lk_lvls
 
     def heal(self, hp: int, ignore_max=False) -> int:
-        hp = int(hp) * self.heal_multiplier
+        hp = hp * self.heal_multiplier
 
         # If ignoring max_hp, add all hp
         if ignore_max:
-            self.health += hp
+            self.health += int(hp)
             return hp
 
         # Detecting if hp is below max_hp
@@ -569,45 +638,59 @@ class WCS_Player(Player): # Short: WCSP
             self.health += insufficiency
             return insufficiency
 
-        # If nothing happened, healed hp will not be at max_health
+        # If nothing above happened, healed hp will not be at max_health
         else:
             self.health += hp
             return hp
 
-    def add_xp(self, amount: int, reason: str = None) -> None:
-        pass
-        skills_amount: int = len(self.skills_active)
-        if skills_amount == 0:
-            return
+    def add_xp(self, amount: int, reason: str = None, divide: bool = True) -> None:
+
+        # Getting skills amount
+        skills_amount: int = len(self.skills_selected)
+
+        # If no active skills, return
+        if skills_amount == 0: return
+
+        # User enabled xp notify?
         if self.data_info['xp_add_notify']:
             # Notifying player about added xp
+
+            # No reason
             if reason is None:
-                # If reason is not present
+
+                # Use string without reason
                 SayText2(f"\4[WCS]\1 Вы получили \5{amount}\1 опыта").send(self.index)
+
+            # Reason exist
             else:
-                # If reason is present
+
+                # Add reason in string
                 SayText2(f"\4[WCS]\1 Вы получили \5{amount}\1 "
                          f"опыта за \5{reason}\1").send(self.index)
-        amount: float = amount // skills_amount
+
+        # Amount of xp to add for each skill, if divide enabled
+        if divide: amount: int = amount // skills_amount
 
         # Going through every skill
         for num, current_xp in enumerate(self.skills_selected_xp):
 
-            if self.skills_selected[num] is None or \
-                    self.skills_selected[num] == 'Empty' or \
-                    self.skills_selected[num] == 'BLOCKED':
-                continue
+            # # May be there's no need for next 5 lines
+            # # Breaking, if there's skill in current slot
+            # if self.skills_selected[num] is None or \
+            #         self.skills_selected[num] == 'Empty' or \
+            #         self.skills_selected[num] == 'BLOCKED':
+            #     continue
 
             # Checking, if in this slot skill is present
-            if current_xp is None:
-                continue
+            if current_xp is None: continue
 
             # Adding xp
             self.skills_selected_xp[num] += amount
 
+            # Variable to check, if skill leveled up by this xp
             leveled_up = False
 
-            # Adding lvl, if there's enough xp
+            # Adding lvl, while there's enough xp
             while self.skills_selected_xp[num] > self.skills_selected_next_lvl[num]:
 
                 # Leveled up?
@@ -622,7 +705,7 @@ class WCS_Player(Player): # Short: WCSP
                 # Subtracting xp, that needed to lvl up
                 self.skills_selected_xp[num] -= self.skills_selected_next_lvl[num]
 
-                # Adding new max_xp
+                # Setting new max_xp
                 self.skills_selected_next_lvl[num] = \
                     next_lvl_xp_calculate(self.skills_selected_lvls[num])
 
@@ -631,13 +714,72 @@ class WCS_Player(Player): # Short: WCSP
                          f"\4{db.wcs.Skills_info.get_name(self.skills_selected[num])}\1 "
                          f"до \5{self.skills_selected_lvls[num]}\1").send(self.index)
 
-            if leveled_up and self.data_info['sound_level_up']:
+                # Player enabled sound for every up?
+                if self.data_info['sound_level_up_for_every_up']:
+
+                    # Playing sound
+                    self.emit_sound(f'{other_functions.constants.WCS_FOLDER}/level_up.mp3',
+                        attenuation=1.1,
+                        volume = 0.5)
+
+            # Playing sound, if player enabled sounds and disabled sound for each
+            if leveled_up and self.data_info['sound_level_up'] and not self.data_info[
+                'sound_level_up_for_every_up']:
 
                 # Playing sound
                 self.emit_sound(f'{other_functions.constants.WCS_FOLDER}/level_up.mp3',
                     attenuation=1.1,
                     volume = 0.5
                 )
+
+    def add_level(self, amount: int, reason: str = None) -> None:
+
+        # No reason
+        if reason is None:
+
+            # Use string without reason
+            SayText2(f"\4[WCS]\1 Вы получили \5{amount}\1 уровней").send(self.index)
+
+        # Reason exist
+        else:
+
+            # Add reason in string
+            SayText2(f"\4[WCS]\1 Вы получили \5{amount}\1 "
+                     f"уровней за \5{reason}\1").send(self.index)
+
+        # Going through every skill
+        for num, current_lvl in enumerate(self.skills_selected_lvls):
+
+            # Checking, if slot is used to skill (not blocked, empty, e.t.c.)
+            if current_lvl is None: continue
+
+            # Adding lvl
+            self.skills_selected_lvls[num] += amount
+
+            # Adding +1 to player lvl count
+            self.total_lvls += amount
+
+            # Setting new max_xp
+            self.skills_selected_next_lvl[num] = \
+                next_lvl_xp_calculate(self.skills_selected_lvls[num])
+
+    def add_level_to_bank(self, amount: int, reason: str = None) -> None:
+
+        # No reason
+        if reason is None:
+
+            # Use string without reason
+            SayText2(f"\4[WCS]\1 Вы получили \5{amount}\1 уровней в банк").send(self.index)
+
+        # Reason exist
+        else:
+
+            # Add reason in string
+            SayText2(f"\4[WCS]\1 Вы получили \5{amount}\1 "
+                     f"уровней в банк за \5{reason}\1 ").send(self.index)
+
+        # Adding levels to player bank
+        self.lk_lvls += amount
 
     def unload_instance(self) -> None:
         """ Func saves player data to db's and remove WCS_Player from WCS_Players """

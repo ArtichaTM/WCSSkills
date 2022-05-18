@@ -364,7 +364,7 @@ class Health(BaseSkill):
         super().__init__(userid, lvl, settings)
 
         # Adding health
-        self.owner.heal(self.lvl, ignore = True)
+        self.owner.heal(self.lvl, ignore_max = True)
 
         if self.owner.data_info['skills_activate_notify']:
             # Notifying player
