@@ -92,7 +92,7 @@ def admin_heal(admin, target, reason, amount: int = 100):
              f"\5{target.name}\1").send(admin.index)
 
     # Deactivating
-    target.heal(amount, ignore=True)
+    target.heal(amount, ignore_max=True)
 
     # Messaging skill deactivate to target
     if reason.value[1] == '—':

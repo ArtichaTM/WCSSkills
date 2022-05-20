@@ -4,7 +4,7 @@
 # =============================================================================
 # Python Imports
 # Typing
-from typing import Union, Iterable
+from typing import Union, Iterable, Dict, List
 # Random
 import random
 
@@ -132,8 +132,13 @@ class WCS_Player(Player): # Short: WCSP
         self.target_name = f"WCSP_{self.index}"
 
         # Loading information about player from databases
+
+        # Dict[skill_name] = List[lvl, xp, selected_lvl, settings_dict]
+        self.data_skills: Dict[str, List[int, int, Union[None, int], Dict]
+            ] = db.wcs.DB_users.skills_load(self.steamid)
+
+        # Settings, levels, etc...
         self.data_info: dict = db.wcs.DB_users.info_load(self.steamid)
-        self.data_skills: dict = db.wcs.DB_users.skills_load(self.steamid)
 
         # Basic information
         # Lvl of account (Summary of all skills)
@@ -527,14 +532,14 @@ class WCS_Player(Player): # Short: WCSP
                 if self.skills_selected_lvl[num] is None:
                     # Maximum level
                     self._skills_active.add(skill_class(self.userid,
-                                                        self.skills_selected_lvls[num],
-                                                        self.skills_selected_settings[num]))
+                                self.skills_selected_lvls[num],
+                                self.skills_selected_settings[num]))
 
                 else:
                     # Custom level
                     self._skills_active.add(skill_class(self.userid,
-                                                        self.skills_selected_lvl[num],
-                                                        self.skills_selected_settings[num]))
+                                self.skills_selected_lvl[num],
+                                self.skills_selected_settings[num]))
 
                 # Adding to not-repeat list
                 loaded.add(skill)

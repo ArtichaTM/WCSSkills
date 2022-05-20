@@ -31,7 +31,7 @@
             "name": "Звук повышения уровня",
             "default_value": true
         },
-•        "sound_level_up_for_every_up": {
+        "sound_level_up_for_every_up": {
             "name": "Звук повышения уровня для каждого повышения",
             "default_value": false
         },

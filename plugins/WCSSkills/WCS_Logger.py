@@ -2,23 +2,21 @@ from datetime import datetime
 from typing import Any
 
 from WCSSkills.other_functions.constants import PATH_TO_LOG
-from paths import LOG_PATH
 
-
-class WCS_Logger:
+class wcs_logger:
     __slots__ = ('file',)
+    path = PATH_TO_LOG
 
-    def __init__(self, path):
-        log_path = LOG_PATH / path
+    def __init__(self):
 
         # Does the parent directory exist?
-        if not log_path.parent.isdir():
+        if not self.path.parent.isdir():
 
             # Create the parent directory
-            log_path.parent.makedirs()
+            self.path.parent.makedirs()
 
         # Opening file
-        self.file = open(log_path, mode='a', encoding='utf-8')
+        self.file = open(self.path, mode='a', encoding='utf-8')
 
     def unload_instance(self):
 
@@ -41,4 +39,4 @@ class WCS_Logger:
             print(f'[WCSSkills {prefix.upper().rjust(7):.7}] {msg}')
 
 
-wcs_logger = WCS_Logger(PATH_TO_LOG)
+wcs_logger = wcs_logger()

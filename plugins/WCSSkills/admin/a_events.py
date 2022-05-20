@@ -14,7 +14,7 @@ from WCSSkills.WCS_Logger import wcs_logger
 
 
 @Event('Punishment_expired')
-def something(ev):
+def punishment_expired(ev):
 
     # Logging punishment expire
     wcs_logger('PUNISHMENT', f"{ev['victim_name']} {Punishment_types(ev['etype']).name} expired")

@@ -16,6 +16,7 @@ from paths import PLUGIN_DATA_PATH
 from paths import EVENT_PATH
 from paths import PLUGIN_PATH
 from paths import SOUND_PATH
+from paths import LOG_PATH
 
 # Plugin Imports
 # Folder name
@@ -253,9 +254,9 @@ for local in locals().copy().items():
 
 # Logs
 if WCSSKILLS_DEBUG:
-    PATH_TO_LOG = f"{WCS_FOLDER}/log.log"
+    PATH_TO_LOG = LOG_PATH / f"{WCS_FOLDER}" / "log.log"
 else:
-    PATH_TO_LOG = f"{WCS_FOLDER}/{datetime.today().strftime('%Y-%m-%d')}.log"
+    PATH_TO_LOG = LOG_PATH / f"{WCS_FOLDER}" / f"/{datetime.today().strftime('%Y-%m-%d')}.log"
 
 
 # =============================================================================

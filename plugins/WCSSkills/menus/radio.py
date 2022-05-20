@@ -17,6 +17,7 @@ from WCSSkills.db.wcs import Skills_info
 
 # Sound imports
 from WCSSkills.other_functions.constants import WCS_FOLDER, VOLUME_MENU
+# Entity
 from entities.entity import Entity
 
 # =============================================================================
@@ -111,7 +112,6 @@ class PagedMenu(PagedRadioMenu):
 
         return super()._select(player_index, choice_index)
 
-
     def _select_close(self, player_index):
         Entity(player_index).emit_sound(f'{WCS_FOLDER}/menus/back.mp3', volume=VOLUME_MENU)
         super()._select_close(player_index)
@@ -120,7 +120,7 @@ class PagedMenu(PagedRadioMenu):
 def player_skill_groups():
     menu = []
     for group in Skills_info.get_groups():
-        menu.append(PagedOption(f"{group}", value=group))
+        menu.append(PagedOption(str(group), value=group))
     return menu
 
 

@@ -1695,12 +1695,12 @@ class Vampire_damage_percent(BaseSkill):
         amount_to_heal = ev['dmg_health'] * self.vampire_percent
 
         # Healing, and stores healed hp
-        healed = self.owner.heal(amount_to_heal)
+        healed = self.owner.heal(int(amount_to_heal))
 
         # Notifying owner
-        if self.settings['hit notify']:
-            ST2(f"\4[WCS]\1 Вы исцелились на \5{healed:.1f}"
-                     '\1').send(self.owner.index)
+        if self.settings['hit notify'] and healed > 0:
+            ST2(f"\4[WCS]\1 Вы исцелились на \5{healed}"
+                     '\1 хп').send(self.owner.index)
 
     def close(self) -> None:
         super().close()

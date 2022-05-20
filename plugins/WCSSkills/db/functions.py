@@ -40,4 +40,6 @@ class Disconnected_user:
             return instance
         else: return Player(index)
 
+    def __bool__(self): return False
+
     def kick(self, reason): pass
