@@ -2129,7 +2129,6 @@ class MiniMap(ActiveSkill, repeat_functions):
 
         # Spawning center of map (not owner, view_coordinates + height)
         self.entity_list.append([effect.persistent_orb(
-            users = (self.owner.index, ),
             origin = self.center_position,
             color=(0, 0, 255),
             scale = 0.1,
@@ -2170,7 +2169,6 @@ class MiniMap(ActiveSkill, repeat_functions):
 
             # Spawning orb
             orb_ent = effect.persistent_orb(
-                users = (self.owner.index,),
                 origin = self.calculate_orb_position(player),
                 color =  color,
                 scale = 0.1,

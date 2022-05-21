@@ -21,7 +21,7 @@ from WCSSkills.other_functions.constants import PATH_FILE_DATABASE_USERS
 from WCSSkills.other_functions.constants import PATH_FILE_JSON_SKILLS_INFO
 from WCSSkills.other_functions.constants import PATH_FILE_JSON_PLAYER_SETTINGS
 # Logger
-from ..WCS_Logger import wcs_logger
+from WCSSkills.WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -34,7 +34,7 @@ __all__ = ('DB_users',
 # >> Classes
 # =============================================================================
 
-class DB_users:
+class _DB_users:
     """
     Class that realizes work with database:
     • Connecting users.db
@@ -159,7 +159,8 @@ class DB_users:
         self.db.commit()
         self.db.close()
 
-class Skills_info:
+
+class _Skills_info:
     """
     Class that realizes loading info about skills:
     • Name
@@ -332,7 +333,7 @@ class Skills_info:
                 return group
 
 
-class Player_settings:
+class _Player_settings:
     """ Class that realizes loading info about player settings:
     • Name
     • Default value
@@ -383,6 +384,6 @@ class Player_settings:
         return self.json[form].keys()
 
 # Singletons
-DB_users = DB_users()
-Skills_info = Skills_info()
-Player_settings = Player_settings()
+DB_users = _DB_users()
+Skills_info = _Skills_info()
+Player_settings = _Player_settings()

@@ -3,7 +3,7 @@ from typing import Any
 
 from WCSSkills.other_functions.constants import PATH_TO_LOG
 
-class wcs_logger:
+class _wcs_logger:
     __slots__ = ('file',)
     path = PATH_TO_LOG
 
@@ -39,4 +39,4 @@ class wcs_logger:
         self.file.close()
 
 
-wcs_logger = wcs_logger()
+wcs_logger = _wcs_logger()

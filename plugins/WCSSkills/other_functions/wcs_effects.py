@@ -30,7 +30,8 @@ from WCSSkills.other_functions.constants import orb_sprites
 # =============================================================================
 
 __all__ = (
-    'effects'
+    'effect',
+    'Triggers'
 )
 
 # =============================================================================
@@ -158,7 +159,7 @@ class effect:
             tempEnt.set_property_int('m_uchBackColor[2]', back_color[2])
 
     @staticmethod
-    def persistent_orb(users: Iterable,
+    def persistent_orb(
             origin: Vector,
             color: Tuple[int, int, int] = (255, 255, 255),  # Color. Just a RGB tuple contatining numbers 0-255
             scale: float = 1,
@@ -255,6 +256,8 @@ class effect:
              origin: Vector,    # Position at which smoke will be spawned
              scale: float = 1   # Scale of model
              ) -> None:
+
+        # Creating temporary smoke
         with temporary_entity('Smoke', users) as tempEnt:
             # Position to spawn
             tempEnt.origin = origin
@@ -296,9 +299,7 @@ class effect:
         if not isinstance(users, Iterable) :
             raise TypeError('Wrong users argument')
 
-        if isinstance(model, str):
-            pass
-        else:
+        if not isinstance(model, str):
             raise TypeError('Wrong model argument')
 
         with temporary_entity('Sprite', users) as tempEnt:

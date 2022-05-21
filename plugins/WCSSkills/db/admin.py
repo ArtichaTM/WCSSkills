@@ -40,7 +40,7 @@ __all__ = ('DB_admin',
 # =============================================================================
 # >> Classes
 # =============================================================================
-class DB_admin:
+class _DB_admin:
     """ Class saves all punished players """
     __slots__ = ('db', 'repeat')
     path_to_db = PATH_FILE_DATABASE_ADMIN
@@ -331,7 +331,7 @@ class DB_admin:
         # Logging close
         wcs_logger('db', f'DB_admin closing')
 
-class DC_history:
+class _DC_history:
     """ Saves all disconnected players.
     • Can be iterable. Iterates over all players,
     and returns list [date of disconnect, name, steamid, ip]
@@ -414,5 +414,5 @@ class DC_history:
             dump(self.json, file, ensure_ascii = False)
 
 # Singletons
-DB_admin = DB_admin()
-DC_history = DC_history()
+DB_admin = _DB_admin()
+DC_history = _DC_history()
