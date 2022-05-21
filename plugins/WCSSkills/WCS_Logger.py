@@ -18,11 +18,6 @@ class wcs_logger:
         # Opening file
         self.file = open(self.path, mode='a', encoding='utf-8')
 
-    def unload_instance(self):
-
-        # Closing logs on exit
-        self.file.close()
-
     def __call__(self, prefix: str, msg: Any, console: bool = False):
 
         msg = msg.replace('\n', '\n---> ')
@@ -37,6 +32,11 @@ class wcs_logger:
         # Echo to console if needed
         if console:
             print(f'[WCSSkills {prefix.upper().rjust(7):.7}] {msg}')
+
+    def unload_instance(self):
+
+        # Closing logs on exit
+        self.file.close()
 
 
 wcs_logger = wcs_logger()
