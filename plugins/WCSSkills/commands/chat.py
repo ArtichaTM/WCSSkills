@@ -108,32 +108,32 @@ def lk(comm):
 # >> Admin
 # =============================================================================
 
-@TypedSayCommand('admin', 'wcs_admin_base')
+@TypedSayCommand('admin', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
-@TypedSayCommand('админ', 'wcs_admin_base')
+@TypedSayCommand('админ', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
-@TypedSayCommand('!админ', 'wcs_admin_base')
+@TypedSayCommand('!админ', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
 
-@TypedSayCommand('!admin', 'wcs_admin_base')
+@TypedSayCommand('!admin', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
 
-@TypedSayCommand('/admin', 'wcs_admin_base')
+@TypedSayCommand('/admin', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
-@TypedSayCommand('/админ', 'wcs_admin_base*')
+@TypedSayCommand('/админ', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK

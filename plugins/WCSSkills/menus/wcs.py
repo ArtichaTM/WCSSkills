@@ -30,40 +30,13 @@ from WCSSkills.admin.menu import AdminPlayers_player
 # Logging
 from ..WCS_Logger import wcs_logger
 #
-from .functions import RMSound
+from .functions import RMSound, KeyboardTyping
 
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
 
-__all__ = ('MainMenu', 'MainMenu_callback',
-           'my_skills', 'my_skills_callback',
-           'skill_parameters', 'skill_parameters_callback',
-           'skill_parameter_lvls', 'skill_parameter_lvls_callback',
-           'skill_parameter_lvls_keyboard',
-           'skill_change_groups', 'skill_change_groups_callback',
-           'skill_change_skills', 'skill_change_skills_callback',
-           'skill_change_skills_list', 'skill_change_skills_list_callback',
-           'skills_info',
-           'skills_info_description', 'skills_info_description_callback',
-           'players_list', 'players_list_callback',
-           'player_info', 'player_info_callback',
-           'player_info_opened',
-           'player_info_selected', 'player_info_selected_callback',
-           'LK', 'LK_callback',
-           'LK_user_skills', 'LK_user_skills_callback',
-           'LK_user_groups', 'LK_user_groups_callback',
-           'LK_user_keyboard',
-           'LK_send', 'LK_send_callback',
-           'LK_send_keyboard')
-
-# =============================================================================
-# >> Keyboard enter globals
-# =============================================================================
-
-KB_WCS_LEVEL_SET = 0
-KB_LK_WASTE = 0
-KB_LK_SEND = 0
+__all__ = ('MainMenu',)
 
 #==============================================================================
 # >> WCS
@@ -100,7 +73,7 @@ def MainMenu_callback(*args):
         skill_change_groups(player)
         return
     elif args[2].value == 'Skills info':
-        skills_info(player)
+        skills_info_groups(player)
         return
     elif args[2].value == 'Players list':
         players_list(player)
@@ -197,7 +170,6 @@ def skill_parameters_callback(*args):
         skill_settings(player, choice)
 
 
-# noinspection PyTypeChecker
 def skill_parameter_lvls(player, choice):
     menu = PagedMenu(title='Уровень:',
                    select_callback=skill_parameter_lvls_callback,
@@ -219,11 +191,10 @@ def skill_parameter_lvls(player, choice):
 
     menu.send(player.index)
 
-def skill_parameter_lvls_callback(*args):
-    player = WCS_Player.from_index(args[1])
-    if type(args[2]) == type(tuple()): choice = args[2]
-    else: choice = args[2].value
-    skill = Skills_info.get_name(player.skills_selected[choice[0]])
+def skill_parameter_lvls_callback(command, index, choice):
+    player = WCS_Player.from_index(index)
+    choice = choice.value
+    skill = Skills_info.get_name(player.skills_selected[command])
 
     if choice[1] is None:
 
@@ -243,108 +214,57 @@ def skill_parameter_lvls_callback(*args):
         # Sound
         RMSound.next(player)
 
-        # Printing information
-        SayText2("\2[SYS]\1 Напишите число в чат").send(player.index)
-        SayText2("\2[SYS]\1 Введите \7STOP\1 для отмены").send(player.index)
-
         # Saving info to enter_temp
         player.enter_temp = ('skill_parameter_lvls_keyboard',
                              choice[0], choice[2], choice[3])
-
-        # Registering for chat
-        register_say_filter(skill_parameter_lvls_keyboard)
-
-    else:
-
-        # Sound
-        RMSound.final(player)
-
-        # Setting new lvl
-        player.skills_selected_lvl[choice[0]] = choice[1]
-
-        # Notify player
-        SayText2("\4[WCS]\1 Вы установили уровень навыка "
-        f"\5{skill}\1 на \5{choice[1]}\1").send(player.index)
+        # skill_id, Current, max
+        KeyboardTyping(
+            target = player,
+            previous_menu = skill_parameter_lvls,
+            previous_menu_args = (player, choice[0]),
+            success_function = skill_parameter_lvls_keyboard,
+            success_function_args = (choice[0], choice[2], choice[3])
+        )
 
 
-def skill_parameter_lvls_keyboard(command, index, _):
-    player = WCS_Player.from_index(index)
+def skill_parameter_lvls_keyboard(player: WCS_Player, entered: str, skill_id: str,
+                  current_lvl: int, maximum_skill_lvl: int):
 
-    # Player not using kb enter now
-    if player.enter_temp is None:
+    # Is he truly entered a number?
+    try: entered = int(entered)
 
-        # Return his command
-        return CommandReturn.CONTINUE
+    # No, say, that input is wrong
+    except ValueError:
+        return f"{entered} не является числом"
 
-    # Player using kb, but not this function
-    elif player.enter_temp[0] != 'skill_parameter_lvls_keyboard':
+    # Level can't be negative
+    entered = abs(entered)
 
-        # Continue filters work
-        return CommandReturn.CONTINUE
+    # Selected lvl above maximum of this skill
+    if entered > maximum_skill_lvl:
+        return f"{entered} уровень выше максимума навыка {player.enter_temp[3]}"
 
-    # If nothing bad happen, this is what we needs
-    else:
+    # Selected lvl is above his reached limit
+    elif entered > current_lvl:
+        return f"{entered} уровня вы ещё не достигли"
 
-        # Getting command
-        entered = command.command_string
+    # Well, everything is fine, changing skill lvl
 
-        # If he requested stop
-        if entered[:4] == 'STOP' or entered[:4] == 'stop':
+    # Sound
+    RMSound.final(player)
 
-            # Sound
-            RMSound.next(player)
+    # Setting new lvl
+    player.skills_selected_lvl[skill_id] = entered
 
-            # Unregister filter
-            unregister_say_filter(skill_parameter_lvls_keyboard)
+    # Notify player
+    SayText2("\4[WCS]\1 Вы установили уровень навыка "
+    f"\5{Skills_info.get_name(player.skills_selected[skill_id])}\1"
+    f" на \5{entered}\1").send(player.index)
 
-            # Call previous menu
-            skill_parameter_lvls(player, player.enter_temp[1])
+    # Success sound!
+    RMSound.final(player)
 
-            # Block command
-            return CommandReturn.BLOCK
 
-        # Allow menu
-        elif entered == 'wcs': return CommandReturn.CONTINUE
-
-        # Is he truly entered an number?
-        try: entered = int(entered)
-
-        # No, say, that input is wrong
-        except ValueError:
-            SayText2(f"\2[SYS]\1 {entered} не является числом").send(index)
-            return CommandReturn.BLOCK
-
-        # Level can't be negative
-        if entered < 0:
-            entered = abs(entered)
-
-        # Selected lvl above maximum of this skill
-        if entered > player.enter_temp[3]:
-            SayText2(f"\2[SYS]\1 {entered} уровень выше максимума навыка "
-                     f"{player.enter_temp[3]}").send(index)
-            return CommandReturn.BLOCK
-
-        # Selected lvl is above his reached limit
-        elif entered > player.enter_temp[2]:
-            SayText2(f"\2[SYS]\1 {entered} уровня вы ещё не достигли").send(index)
-            return CommandReturn.BLOCK
-
-        # Well, everything is fine
-        # Unload filter
-        unregister_say_filter(skill_parameter_lvls_keyboard)
-
-        # Changing skill by menu callback
-        skill_parameter_lvls_callback('', index, (player.enter_temp[1], entered))
-
-        # Clearing temp
-        player.enter_temp = None
-
-        # Success sound!
-        RMSound.final(player)
-
-        return CommandReturn.BLOCK
-
-# noinspection PyTypeChecker
 def skill_settings(player, choice):
     menu = PagedMenu(title='Параметры',
                      select_callback=skill_settings_callback,
@@ -402,7 +322,7 @@ def skill_settings_callback(_, index, choice):
     # Well, I didn't add any other types
     else: raise ValueError("Selected other parameter_type instead of bool")
 
-# noinspection PyTypeChecker
+
 def skill_change_groups(player):
     menu = PagedMenu(title='Категории навыков',
                    select_callback=skill_change_groups_callback,
@@ -423,7 +343,7 @@ def skill_change_groups_callback(*args):
     # Sending him to skills menu
     skill_change_skills(player, args[2].value)
 
-# noinspection PyTypeChecker
+
 def skill_change_skills(player, group: str):
     menu = PagedMenu(title=f'{group} навыки',
                    select_callback=skill_change_skills_callback,
@@ -518,19 +438,17 @@ def skill_change_skills_list_callback(*args):
         # Actually changing skill (prepare to change)
         player.skills_change[choice[0]] = choice[1]
 
-# noinspection PyTypeChecker
-def skills_info(player):
-    menu = PagedMenu(title='Информация',
-                     select_callback=skills_info_callback,
+
+def skills_info_groups(player):
+    menu = PagedMenu(title='Информация о навыках (группы)',
+                     select_callback = skills_info_groups_callback,
                      parent_menu = MainMenu,
                      parent_menu_args = (player,))
 
-    for num, skill in enumerate(Skills_info.get_classes()):
-        menu.append(PagedOption(f"{Skills_info.get_name(skill)}", value = skill))
-
+    menu.extend(player_skill_groups())
     menu.send(player.index)
 
-def skills_info_callback(*args):
+def skills_info_groups_callback(*args):
 
     # Getting player and other start info
     player = WCS_Player.from_index(args[1])
@@ -539,48 +457,44 @@ def skills_info_callback(*args):
     # Sound
     RMSound.next(player)
 
-    # Sending to new menu
+    # Sending to skills menu
+    skills_info_skills(player, choice)
+
+def skills_info_skills(player, group):
+    menu = PagedMenu(title='Информация о навыках',
+                     select_callback = skills_info_skills_callback,
+                     parent_menu = skills_info_groups,
+                     parent_menu_args = (player, group))
+
+    for skill in Skills_info.get_group_skills(group):
+        menu.append(PagedOption(f"{Skills_info.get_name(skill)}", value=skill))
+
+    menu.send(player.index)
+
+def skills_info_skills_callback(*args):
+
+    # Getting player and other start info
+    player = WCS_Player.from_index(args[1])
+    choice = args[2].value
+
+    # Sound
+    RMSound.next(player)
+
+    # Sending to skills menu
     skills_info_description(player, choice)
 
-# noinspection PyTypeChecker
+
 def skills_info_description(player, skill):
     desc = Skills_info.get_description(skill)
     name = Skills_info.get_name(skill)
 
-    if len(desc) <= 6:
-        menu = SimpleMenu(select_callback=skills_info_description_callback)
-        menu.append(Text(name))
-        menu.append(Text(' '))
-        menu.extend([Text(i) for i in desc])
-        menu.append(Text(' '))
-
-        menu.append(SimpleOption(7, 'Назад', 'Back'))
-    else:
-        menu = PagedMenu(title='Информация',
-                         select_callback=skills_info_callback,
-                         parent_menu = skills_info,
-                         parent_menu_args = (player, ))
-        menu.append(Text(name))
-        menu.extend([Text(i) for i in desc])
+    menu = PagedMenu(title=f"Навык {name}",
+                     parent_menu = skills_info_groups,
+                     parent_menu_args = (player, ))
+    menu.extend([Text(i) for i in desc])
 
     menu.send(player.index)
 
-def skills_info_description_callback(*args):
-
-    # Getting starter info
-    player = WCS_Player.from_index(args[1])
-    choice = args[2].value
-
-    # Is he going back? (Can be quit btw)
-    if choice == 'Back':
-
-        # Sound
-        RMSound.back(player)
-
-        # Going to parent
-        skills_info(player)
-
-# noinspection PyTypeChecker
 def players_list(player):
     menu = PagedMenu(title='Игроки',
                      select_callback=players_list_callback,
@@ -664,7 +578,7 @@ def player_info_callback(*args):
         # Sending admin player-control menu
         AdminPlayers_player(player, choice[1])
 
-# noinspection PyTypeChecker
+
 def player_info_opened(player, target):
     menu = PagedMenu(title=f'Навыки игрока {target.name[0:10]}',
                      parent_menu = player_info,
@@ -716,7 +630,7 @@ def player_info_selected_callback(*args):
     # Sending previous menu
     player_info(player, args[2].value)
 
-# noinspection PyTypeChecker
+
 def player_settings(player):
     menu = PagedMenu(title='Настройки',
                      select_callback=player_settings_callback,
@@ -858,7 +772,7 @@ def LK_user_keyboard(command, index, _):
         # Then pass him
         return CommandReturn.CONTINUE
 
-    # He using kb, but not this function
+    # He's using kb, but not this function
     elif player.enter_temp[0] != 'LK_user_keyboard':
 
         # Then pass him, to allow other filters work
@@ -992,7 +906,7 @@ def LK_user_keyboard(command, index, _):
     player.enter_temp = None
     return CommandReturn.BLOCK
 
-# noinspection PyTypeChecker
+
 def LK_send(player):
     menu = PagedMenu(title='Все игроки',
                      select_callback=LK_send_callback,
