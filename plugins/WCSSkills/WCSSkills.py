@@ -33,24 +33,30 @@ def load():
     wcs_logger('info', 'Plugin loaded successfully')
 
 def unload():
-    from .WCS_Logger import wcs_logger
-    wcs_logger('info', 'Plugin is unloading')
 
-    # Unloading players
-    from .wcs.WCSP.wcsplayer import WCS_Players as WCSP
-    for player in WCSP.values():
-        with suppress(AttributeError):
-            player.unload_instance()
+    # Making wcs_logger always close
+    try:
+        from .WCS_Logger import wcs_logger
+        wcs_logger('info', 'Plugin is unloading')
 
-    # Unloading Databases and JSONs
-    from .db.wcs import DB_users
-    from .db.admin import DB_admin, DC_history
-    DB_users.unload_instance()
-    DB_admin.unload_instance()
-    DC_history.unload_instance()
+        # Unloading players
+        from .wcs.WCSP.wcsplayer import WCS_Players as WCSP
+        for player in WCSP.values():
+            with suppress(AttributeError):
+                player.unload_instance()
 
-    # Logging plugin unload
-    wcs_logger('info','Plugin unloaded successfully')
+        # Unloading Databases and JSONs
+        from .db.wcs import DB_users
+        from .db.admin import DB_admin, DC_history
+        DB_users.unload_instance()
+        DB_admin.unload_instance()
+        DC_history.unload_instance()
 
-    # Unloading wcs_logger
-    wcs_logger.unload_instance()
+        # Logging plugin unload
+        wcs_logger('info','Plugin unloaded successfully')
+
+    finally:
+        # CLosing wcs_logger
+
+        # Unloading wcs_logger
+        wcs_logger.unload_instance()
