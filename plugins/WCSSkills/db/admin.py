@@ -18,6 +18,7 @@ from time import time
 from listeners.tick import Repeat
 
 # Plugin Imports
+# Making available using db_cursor in context_manager
 from .functions import db_cursor
 # Constants
 from WCSSkills.other_functions.constants import PATH_FILE_DATABASE_ADMIN
@@ -25,7 +26,7 @@ from WCSSkills.other_functions.constants import PATH_FILE_JSON_DISCONNECTED_PLAY
 from WCSSkills.admin.constants import Punishment_types
 from WCSSkills.admin.constants import amount_of_players_in_history as history_count
 # Logger
-from ..WCS_Logger import wcs_logger
+from WCSSkills.WCS_Logger import wcs_logger
 # Punishment expire event
 from WCSSkills.events.custom_events import Punishment_expired
 
@@ -39,23 +40,15 @@ __all__ = ('DB_admin',
 # =============================================================================
 # >> Classes
 # =============================================================================
-class _DB_admin:
-    """
-    Class saves all punished players
-    """
-    __slots__ = ('path_to_db', 'db', 'repeat')
+class DB_admin:
+    """ Class saves all punished players """
+    __slots__ = ('db', 'repeat')
+    path_to_db = PATH_FILE_DATABASE_ADMIN
 
-    def __init__(self, path_to_db):
-        """
-        :param path_to_db str
-            Where must be located db. Absolute path
-        """
-
-        # Saving path_do_db to class
-        self.path_to_db = path_to_db
+    def __init__(self):
 
         # Connecting db
-        self.db = sqlite3.connect(path_to_db)
+        self.db = sqlite3.connect(self.path_to_db)
 
         with db_cursor(self.db) as cur:
 
@@ -338,35 +331,28 @@ class _DB_admin:
         # Logging close
         wcs_logger('db', f'DB_admin closing')
 
-class _Disconnected_players:
-    """
-    Saves all disconnected players.
+class DC_history:
+    """ Saves all disconnected players.
     • Can be iterable. Iterates over all players,
     and returns list [date of disconnect, name, steamid, ip]
     • Use .add_entry with name, steamid and ip as arguments
     to add someone to list
     • Use .get_info to get all players in one list
     """
-    __slots__ = ('path_to_settings', 'json', 'position')
+    __slots__ = ('json', 'position')
+    path_to_settings = PATH_FILE_JSON_DISCONNECTED_PLAYERS
 
-    def __init__(self, path: str):
-        """
-        :param str path:
-            Determines where db is located. Absolute path
-        """
-
-        # Saving path to settings
-        self.path_to_settings = path
+    def __init__(self):
 
         # Checking if file exist
-        if not isfile(path):
+        if not isfile(self.path_to_settings):
 
             # No, doesn't. Creating file with one value
             with open(self.path_to_settings, 'w', encoding="utf-8") as file:
                 dump([], file, ensure_ascii = False)
 
         # Reading JSON
-        with open(path, encoding="utf-8") as file:
+        with open(self.path_to_settings, encoding="utf-8") as file:
             try:
                 self.json = loads(file.read())
             except JSONDecodeError:
@@ -427,6 +413,6 @@ class _Disconnected_players:
         with open(self.path_to_settings, 'w', encoding="utf-8") as file:
             dump(self.json, file, ensure_ascii = False)
 
-# Creating singletons
-DB_admin         =   _DB_admin             (PATH_FILE_DATABASE_ADMIN)
-DC_history       =   _Disconnected_players  (PATH_FILE_JSON_DISCONNECTED_PLAYERS)
+# Singletons
+DB_admin = DB_admin()
+DC_history = DC_history()

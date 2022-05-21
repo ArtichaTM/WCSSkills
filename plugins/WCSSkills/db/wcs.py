@@ -34,7 +34,7 @@ __all__ = ('DB_users',
 # >> Classes
 # =============================================================================
 
-class _DB_users:
+class DB_users:
     """
     Class that realizes work with database:
     • Connecting users.db
@@ -42,12 +42,13 @@ class _DB_users:
     • Reading WCS-based player info
     """
     __slots__ = ('db',)
+    path= PATH_FILE_DATABASE_USERS
 
-    def __init__(self, path_to_db):
+    def __init__(self):
     # On creating instance connect db
 
         # Connecting db
-        self.db = sqlite3.connect(path_to_db)
+        self.db = sqlite3.connect(self.path)
 
         # Setting Pragmas
         with db_cursor(self.db) as cur:
@@ -158,7 +159,7 @@ class _DB_users:
         self.db.commit()
         self.db.close()
 
-class _DB_skills:
+class Skills_info:
     """
     Class that realizes loading info about skills:
     • Name
@@ -166,17 +167,16 @@ class _DB_skills:
     • Maximum level to upgrade
     • Min player lvl to achieve
     """
-    __slots__ = ('json', 'groups', 'path')
+    __slots__ = ('json', 'groups')
+    path = PATH_FILE_JSON_SKILLS_INFO
 
-    def __init__(self, path_to_skills) -> None:
+    def __init__(self) -> None:
         """
         :param path_to_skills: Absolute path to JSON file
         """
 
-        self.path = path_to_skills
-
-        if not isfile(path_to_skills):
-            with open(path_to_skills, 'w', encoding="utf-8") as f:
+        if not isfile(self.path):
+            with open(self.path, 'w', encoding="utf-8") as f:
                 dump({"Health": {
                         "name": "Здоровье",
                         "group": "Start",
@@ -189,7 +189,7 @@ class _DB_skills:
                         "settings_cost": {}}},
                         f, ensure_ascii=False)
 
-        with open(path_to_skills, encoding="utf-8") as file:
+        with open(self.path, encoding="utf-8") as file:
             self.json = loads(file.read())
 
         self.groups = dict()
@@ -221,7 +221,6 @@ class _DB_skills:
         :param skill_name: Code of string (like Speed)
         :return: name of skill
         """
-
         return self.json[skill_name]['name']
 
 
@@ -333,24 +332,21 @@ class _DB_skills:
                 return group
 
 
-class _Player_settings:
-    """
-    Class that realizes loading info about player settings:
+class Player_settings:
+    """ Class that realizes loading info about player settings:
     • Name
     • Default value
     """
-    __slots__ = ('json', 'path')
+    __slots__ = ('json',)
+    path = PATH_FILE_JSON_PLAYER_SETTINGS
 
-    def __init__(self, path_to_settings: str):
-
-        # Saving path
-        self.path = path_to_settings
+    def __init__(self):
 
         # Checking if file exist
-        if not isfile(path_to_settings):
+        if not isfile(self.path):
 
             # No, doesn't. Creating file with one value
-            with open(path_to_settings, 'w', encoding="utf-8") as file:
+            with open(self.path, 'w', encoding="utf-8") as file:
                 dump({
                     "skills_activate_notify": {
                         "name": "Умения в начале раунда в чате",
@@ -358,7 +354,7 @@ class _Player_settings:
                     }, file, ensure_ascii=False)
 
         # Reading JSON
-        with open(path_to_settings, encoding="utf-8") as file:
+        with open(self.path, encoding="utf-8") as file:
             self.json = loads(file.read())
 
     def __repr__(self):
@@ -386,7 +382,7 @@ class _Player_settings:
     def get_values(self, form: str = 'wcs') -> list:
         return self.json[form].keys()
 
-# Creating singletons
-DB_users         =   _DB_users         (PATH_FILE_DATABASE_USERS)
-Skills_info      =   _DB_skills        (PATH_FILE_JSON_SKILLS_INFO)
-Player_settings  =   _Player_settings  (PATH_FILE_JSON_PLAYER_SETTINGS)
+# Singletons
+DB_users = DB_users()
+Skills_info = Skills_info()
+Player_settings = Player_settings()
