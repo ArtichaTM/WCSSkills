@@ -18,7 +18,7 @@ from effects.base import TempEntity
 # Entity
 from entities.entity import Entity
 # Render modes constant
-from entities.constants import RenderMode
+from entities.constants import RenderMode, SolidType, EntityEffects
 # Vector
 from mathlib import Vector
 
@@ -360,3 +360,65 @@ class effect:
             Ent.radius = show_radius
             Ent.origin = origin
             return Ent
+
+class Triggers:
+
+    @staticmethod
+    def _create_normal_trigger(trigger_type: str, start: Vector, end: Vector) -> Entity:
+        """Creates trigger_once with start and end
+        :param start: Start position of trigger
+        :param end: End position of trigger
+        :return: Trigger Entity """
+
+        # Calculating origin of trigger
+        center = (start + end) / 2
+
+        # Calculating center->corner distance
+        center_corner = (start - end) / 2
+
+        # Creating new entity
+        trigger = Entity.create(trigger_type)
+
+        # Setting model (bcz entity should have model)
+        trigger.model = Model('models\\antlers\\antlers.mdl')
+
+        # Adding NoDraw effect because of bugs with trigger_once+model
+        trigger.effects |= EntityEffects.NODRAW
+
+        # Teleporting to center(origin) location
+        trigger.origin = center
+
+        # Spawning
+        trigger.spawn()
+
+        # Adding flags to trigger from players only
+        trigger.spawn_flags = 512
+
+        # Adding bounding box
+        trigger.mins = center - center_corner
+        trigger.maxs = center + center_corner
+
+        # Changing solid type to bounding box
+        trigger.solid_type = SolidType.BBOX
+
+        # Returning created entity
+        return trigger
+
+    @classmethod
+    def once(cls, start: Vector, end: Vector) -> Entity:
+        """Creates trigger_once with start and end
+        :param start: Start position of trigger
+        :param end: End position of trigger
+        :return: Trigger Entity """
+
+        return cls._create_normal_trigger('trigger_once', start, end)
+
+
+    @classmethod
+    def multiple(cls, start: Vector, end: Vector) -> Entity:
+        """Creates trigger_multiple with start and end
+        :param start: Start position of trigger
+        :param end: End position of trigger
+        :return: Trigger Entity """
+
+        return cls._create_normal_trigger('trigger_multiple', start, end)

@@ -53,7 +53,7 @@ from WCSSkills.other_functions.functions import *
 # WCS_Player
 from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
 # Effects
-from WCSSkills.other_functions.wcs_effects import effect, persistent_entity
+from WCSSkills.other_functions.wcs_effects import effect, persistent_entity, Triggers
 # Skills information
 from WCSSkills.db.wcs import Skills_info
 # Constants
@@ -1682,7 +1682,7 @@ class Vampire_damage_percent(BaseSkill):
 
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
-            ST2(f"\4[WCS]\1 Вы исцеляете \5{self.vampire_percent*100:.1f}\1%"
+            ST2(f"\4[WCS]\1 Вы исцеляете \5{self.vampire_percent*100:.0f}\1%"
                      f" здоровья от урона по врагу").send(self.owner.index)
 
     def player_hurt(self, ev):

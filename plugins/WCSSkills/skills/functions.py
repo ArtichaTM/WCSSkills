@@ -12,8 +12,6 @@ from random import uniform
 from mathlib import Vector
 # Delay
 from listeners.tick import Delay
-# Models precache
-from engines.precache import Model
 # Entities
 from entities import TakeDamageInfo
 from entities.entity import Entity, BaseEntity
@@ -21,8 +19,6 @@ from entities.helpers import index_from_pointer
 from entities.hooks import EntityPreHook, EntityCondition
 # Entity constants
 from entities.constants import WORLD_ENTITY_INDEX
-from entities.constants import SolidType
-from entities.constants import EntityEffects
 # Engine trace
 from engines.trace import GameTrace
 from engines.trace import Ray
@@ -49,7 +45,6 @@ __all__ = (
     'on_take_physical_damage',
     'on_take_magic_damage',
     'paralyze',
-    'Triggers',
     'active_weapon_drop',
     'screen_angle_distortion',
     'throw_player_upwards',
@@ -127,68 +122,6 @@ def skills_on_take_damage(args) -> Union[None, bool]:
 
                 # Then canceling hit
                 return False
-
-class Triggers:
-
-    @staticmethod
-    def _create_normal_trigger(trigger_type: str, start: Vector, end: Vector) -> Entity:
-        """Creates trigger_once with start and end
-        :param start: Start position of trigger
-        :param end: End position of trigger
-        :return: Trigger Entity """
-
-        # Calculating origin of trigger
-        center = (start + end) / 2
-
-        # Calculating center->corner distance
-        center_corner = (start - end) / 2
-
-        # Creating new entity
-        trigger = Entity.create(trigger_type)
-
-        # Setting model (bcz entity should have model)
-        trigger.model = Model('models\\antlers\\antlers.mdl')
-
-        # Adding NoDraw effect because of bugs with trigger_once+model
-        trigger.effects |= EntityEffects.NODRAW
-
-        # Teleporting to center(origin) location
-        trigger.origin = center
-
-        # Spawning
-        trigger.spawn()
-
-        # Adding flags to trigger from players only
-        trigger.spawn_flags = 512
-
-        # Adding bounding box
-        trigger.mins = center - center_corner
-        trigger.maxs = center + center_corner
-
-        # Changing solid type to bounding box
-        trigger.solid_type = SolidType.BBOX
-
-        # Returning created entity
-        return trigger
-
-    @classmethod
-    def once(cls, start: Vector, end: Vector) -> Entity:
-        """Creates trigger_once with start and end
-        :param start: Start position of trigger
-        :param end: End position of trigger
-        :return: Trigger Entity """
-
-        return cls._create_normal_trigger('trigger_once', start, end)
-
-
-    @classmethod
-    def multiple(cls, start: Vector, end: Vector) -> Entity:
-        """Creates trigger_multiple with start and end
-        :param start: Start position of trigger
-        :param end: End position of trigger
-        :return: Trigger Entity """
-
-        return cls._create_normal_trigger('trigger_multiple', start, end)
 
 def immunes_check(victim: wcs_player_entity,
                   form: ImmuneTypes,
