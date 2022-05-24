@@ -127,24 +127,23 @@ def immunes_check(victim: wcs_player_entity,
                   form: ImmuneTypes,
                   immune_type: str,
                   deflect_target: Callable,
-                  *args):
+                  deflect_arguments: tuple,
+                  ):
     """ Decides, which immune (deflect/immune) is worked, if any
-
     :param victim: victim's WCS_Player
     :param form: ImmuneTypes form of attack
     :param immune_type: Which immune to check (paralyze/toss/...)
     :param deflect_target: function, the works on deflect
-    :param args: arguments passed to deflect function
+    :param deflect_arguments: arguments passed to deflect function
     :return: ImmuneReactionTypes
-
     """
 
-    # # Immune check
+    # Immunities check
 
     # If form is penetrate, return passed
     if form is ImmuneTypes.Penetrate: return ImmuneReactionTypes.Passed
 
-    # If type of attack in immunes
+    # If type of attack in immunities
     if form in victim.immunes[immune_type]: return ImmuneReactionTypes.Immune
     # Or victim has counter to all types
     if ImmuneTypes.Any in victim.immunes[immune_type]: return ImmuneReactionTypes.Immune
@@ -153,12 +152,12 @@ def immunes_check(victim: wcs_player_entity,
     if form << 1 in victim.immunes[immune_type]:
 
         # Passing to deflect function with args
-        deflect_target(*args)
+        deflect_target(*deflect_arguments)
 
         # Returning Deflect
         return ImmuneReactionTypes.Deflect
 
-    # If no immunes triggered, return Passed
+    # If no immunities triggered, return Passed
     return ImmuneReactionTypes.Passed
 
 def paralyze(

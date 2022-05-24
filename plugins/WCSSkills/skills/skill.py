@@ -7,7 +7,7 @@
 from random import randint
 from math import sqrt
 # typing
-from typing import Set, List, Tuple
+from typing import Iterable
 
 # Source.Python Imports
 # Entity
@@ -107,7 +107,7 @@ __all__ = (
 
 class BaseSkill:
     """ Base abstract skill for all new skills """
-    __slots__ = ('owner', 'lvl', 'settings', 'name', 'costs')
+    __slots__ = ('owner', 'lvl', 'settings', 'name', 'costs', '_efficiency')
 
     def __init__(self, userid: int, lvl: int, settings: dict, exclude_costs = True) -> None:
         """
@@ -169,9 +169,20 @@ class BaseSkill:
         # All is ok, set lvl as in arguments
         else: self.lvl = lvl
 
+        # Setting efficiency to 1 (default)
+        self._efficiency = 1
+
     def __repr__(self):
         return (f"{self.name}(lvl={self.lvl}, "
                f"settings={self.settings}, owner = {self.owner.__repr__()})")
+
+    @property
+    def efficiency(self) -> float:
+        return self._efficiency
+
+    @efficiency.setter
+    def efficiency(self, value: float) -> None:
+        self._efficiency = value
 
     def close(self) -> None:
         pass
@@ -180,8 +191,8 @@ class ActiveSkill(BaseSkill):
     """ Inherit this class, if u need to create ultimate/ability """
     __slots__ = ('delay', 'cd')
 
-    def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(userid, lvl, settings),
+    def __init__(self, userid: int, lvl: int, settings: dict, exclude_costs = True):
+        super().__init__(userid, lvl, settings, exclude_costs),
 
         # Adding skill to active skills class
         self.owner.Buttons.add_new_button(self)
@@ -226,8 +237,8 @@ class PeriodicSkill(BaseSkill, repeat_functions):
     """ Inherit this skill, if u need to create poison, fire, e.t.c. """
     __slots__ = ('infect_dict',)
 
-    def __init__(self, lvl: int, userid: int, settings: dict):
-        super().__init__(userid, lvl, settings)
+    def __init__(self, lvl: int, userid: int, settings: dict, exclude_costs = True):
+        super().__init__(userid, lvl, settings, exclude_costs)
 
         # Dictionary that stores infected players
         self.infect_dict = dict()
@@ -298,8 +309,8 @@ class DelaySkill(BaseSkill):
     """ Inherit this skill, if u need to create skill with cooldown """
     __slots__ = ('cd', 'cd_length')
 
-    def __init__(self, userid: int, lvl: int, settings: dict):
-        super().__init__(userid, lvl, settings)
+    def __init__(self, userid: int, lvl: int, settings: dict, exclude_costs = True):
+        super().__init__(userid, lvl, settings, exclude_costs)
 
         # length of cd
         self.cd_length = 0
@@ -312,6 +323,61 @@ class DelaySkill(BaseSkill):
 
     def cd_passed(self):
         pass
+
+
+class AuraSkill(BaseSkill, repeat_functions):
+    __slots__ = ('_victims', '_immune_type')
+
+    def __init__(self, userid: int, lvl: int, settings: dict, exclude_costs = True) -> None:
+        super().__init__(userid, lvl, settings, exclude_costs)
+
+        # List of victims, that affected by aura
+        self._victims = set()
+
+        # repeat_functions initialize
+        self.repeat = Repeat(self.check)
+
+    def _players_list(self) -> Iterable:
+        """
+        :return: Iterable with players around owner
+        """
+        raise NotImplementedError("Implement players_list, that will return Iterable"
+                                  "with players around owner")
+
+    def check(self):
+        """ Checks for players, that entered aura and left it """
+
+        # Getting victims generator
+        victims = self._players_list()
+
+        # Converting to set
+        victims = set(victims)
+
+        # Finding differences
+        left = victims.difference(self._victims)
+        entered = self._victims.difference(victims)
+
+        # Calling functions
+        for value in left: self._left(value)
+        for value in entered: self._entered(value)
+
+        # Updating set (removing 'left' and adding 'entered')
+        self._victims = self._victims.difference(left).union(entered)
+
+    def deflect_function(self, deflector: WCS_Player) -> None:
+        """ Called when player deflected aura """
+        pass
+
+    def _left(self, player: WCS_Player) -> None:
+        """ Called with player, who left aura """
+        pass
+
+    def _entered(self, player: WCS_Player) -> None:
+        """ Called with player, who entered aura """
+        pass
+
+    def close(self) -> None:
+        super().close()
 
 class RadiusActivate:
     # TODO: fix formulas
@@ -370,6 +436,10 @@ class Health(BaseSkill):
             # Notifying player
             ST2(f"\4[WCS]\1 Вы получили \5{self.lvl}\1 к хп").send(self.owner.index)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
 class Start_add_speed(BaseSkill):
     """
     Skill adds speed in the start of the round
@@ -394,6 +464,10 @@ class Start_add_speed(BaseSkill):
 
         # Adding speed
         self.owner.speed += self.speed/100
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -445,6 +519,10 @@ class Regenerate(BaseSkill, repeat_functions):
         if self.settings['notify'] and healed > 0:
             ST2(f"\4[WCS]\1 Вы исцелились на \5{healed}\1 "
                       "(регенерация)").send(self.owner.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -499,6 +577,10 @@ class Heal_per_step(BaseSkill):
                     ST2("\4[WCS]\1 Вы исцелились на "
                     f"\5{healed}\1 за шаг").send(self.owner.index)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
 
@@ -529,6 +611,10 @@ class Start_set_gravity(BaseSkill):
             if self.owner.data_info['skills_activate_notify']:
                 ST2(f"\4[WCS]\1 Ваша гравитация уменьшена на"
                 "\5 100\1%").send(self.owner.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -578,6 +664,10 @@ class Long_jump(BaseSkill):
         vel[0] = vel[0] * self.power
         vel[1] = vel[1] * self.power
         self.owner.teleport(velocity = vel)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -655,6 +745,10 @@ class Slow_fall(BaseSkill, repeat_functions):
         if self.owner.ground_entity != -1:
             self._repeat_stop()
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
         self._repeat_stop()
@@ -731,6 +825,10 @@ class Nearly_Aim(BaseSkill):
     def back(self) -> None:
         self.owner.view_coordinates = self.target_loc
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
         pre_event_manager.unregister_for_event('weapon_fire', self.fire)
@@ -777,6 +875,10 @@ class Trigger(ActiveSkill):
     def cd_passed(self) -> None:
         ST2(f"\5[WCS]\1 Триггер \5готов\1").send(self.owner.index)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
 class Start_add_max_hp(BaseSkill):
 
     def __init__(self, userid: int, lvl: int, settings: dict):
@@ -788,6 +890,10 @@ class Start_add_max_hp(BaseSkill):
         if self.owner.data_info['skills_activate_notify']:
             ST2("\4[WCS]\1 Ваше максимальное здоровье увеличено"
             f" на \4{self.lvl//2}\1").send(self.owner.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
 class Teleport(ActiveSkill):
     __slots__ = ('position', 'cd', 'allowed_distance', 'is_pressed')
@@ -867,6 +973,10 @@ class Teleport(ActiveSkill):
         if self.delay.running is True:
             self.delay.cancel()
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
 class Aim(BaseSkill):
 
     __slots__ = ('back_to_aim', 'target_loc')
@@ -945,6 +1055,10 @@ class Aim(BaseSkill):
         super().close()
         pre_event_manager.unregister_for_event('weapon_fire', self.fire)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
 class WalkOnAir(ActiveSkill):
     __slots__ = ('model', 'is_active', 'cd', 'repeat', 'entity')
 
@@ -1022,6 +1136,10 @@ class WalkOnAir(ActiveSkill):
             self.repeat.stop()
             self.entity.remove()
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
 class Poison(PeriodicSkill):
     __slots__ = ('chance', 'dmg', 'length')
 
@@ -1086,6 +1204,10 @@ class Poison(PeriodicSkill):
         # If there's no victims left in dict, abort poison
         if len(self.infect_dict) == 0:
             self._repeat_stop()
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -1165,6 +1287,10 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
                     pass
                 self.ammo_added.pop(weapon)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self):
         super().close()
         self._repeat_stop()
@@ -1216,6 +1342,10 @@ class Additional_percent_dmg(BaseSkill):
 
         return True
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self):
         super().close()
         on_take_physical_damage.remove(self.player_hurt)
@@ -1266,6 +1396,10 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
             else:
                 self.current_hops = 0
                 self._repeat_stop()
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -1368,6 +1502,10 @@ class Paralyze(DelaySkill):
         if self.settings['cooldown_pass notify']:
             ST2(f"\4[WCS]\1 Паралич \5готов\1").send(self.owner.index)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
@@ -1393,6 +1531,10 @@ class Smoke_on_wall_hit(BaseSkill):
                     index = ent.get_datamap_property_short('m_hThrower')
                     if index == self.owner.index:
                         ent.detonate()
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -1467,6 +1609,10 @@ class Damage_delay_defend(BaseSkill):
             # Index of weapon
             weapon_index=info[3]
         )
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -1575,6 +1721,10 @@ class Toss(DelaySkill):
             # Launching cooldown
             self.cd = Delay(1, self.cd_passed)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
 
@@ -1662,6 +1812,10 @@ class Mirror_paralyze(BaseSkill):
                 ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1"
                     f" отразил паралич").send(self.owner.index)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
 
@@ -1701,6 +1855,10 @@ class Vampire_damage_percent(BaseSkill):
         if self.settings['hit notify'] and healed > 0:
             ST2(f"\4[WCS]\1 Вы исцелились на \5{healed}"
                      '\1 хп').send(self.owner.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -1777,6 +1935,10 @@ class Drop_weapon_chance(BaseSkill):
             if self.settings['hit notify']:
                 ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1 "
                          f"отразил выброс оружия").send(self.owner.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -1860,6 +2022,10 @@ class Screen_rotate_attack(DelaySkill):
                 ST2(f"\4[WCS]\1 Игрок \5{victim.name:.10}\1 "
                      f"отразил поворота экрана").send(self.owner.index)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
 
@@ -1934,6 +2100,10 @@ class HE_Bloodhound(BaseSkill):
 
             # Adding -1 to ThinkTick, to delay his detonate
             grenade.set_property_int('m_nNextThinkTick', -1)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -2015,6 +2185,10 @@ class Attack_dodge(BaseSkill):
         # Always return bool
         return True
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
 
@@ -2063,6 +2237,10 @@ class Weapon_give_start(BaseSkill):
             else:
                 ST2(f"\4[WCS]\1 Вам выдали \5{', '.join(weapons)}\1,"
                     f" у вас осталось \5{money}$\1").send(self.owner.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
 class MiniMap(ActiveSkill, repeat_functions):
 
@@ -2228,6 +2406,10 @@ class MiniMap(ActiveSkill, repeat_functions):
         ST2("\4[WCS]\1 Вы защитились от навыка обнаружения игрока \5"
             f"{self.owner.name:.10}\1").send(user.index)
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
         self.deactivate_map()
@@ -2246,7 +2428,7 @@ class Static_Mine(ActiveSkill):
         self.damage_amount = 30
 
         # Set, that contains active mines.
-        self.mine_dict: dict[str, Tuple[Entity, Entity]] = dict()
+        self.mine_dict: dict[str, tuple[Entity, Entity]] = dict()
 
         # Applying for entity output listener to listen for trigger activate
         OnEntityOutputListenerManager.register_listener(self.entity_output)
@@ -2322,6 +2504,10 @@ class Static_Mine(ActiveSkill):
         # Notify victim
         ST2("\4[WCS]\1 Вы защитились от мины игрока \5"
             f"{self.owner.name:.10}\1. Мина не сработала").send(player.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()
@@ -2477,6 +2663,10 @@ class Ghost_on_Knife(BaseSkill):
         # Removing invisibility
         self.owner.invisibility = 0
 
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
+
     def close(self) -> None:
         super().close()
 
@@ -2581,6 +2771,10 @@ class Light_Aura_Regenerate(BaseSkill, repeat_functions):
             healed: int = self.owner.heal(self.hp)
             ST2(f"\4[WCS]\1 Вас исцелил игрок \5{self.owner.name}\1"
                 f" на \5{healed}\1хп").send(player.index)
+
+    @BaseSkill.efficiency.setter
+    def efficiency(self, value: float) -> None:
+        super().efficiency = value
 
     def close(self) -> None:
         super().close()

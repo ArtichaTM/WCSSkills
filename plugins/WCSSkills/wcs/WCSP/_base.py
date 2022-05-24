@@ -380,7 +380,7 @@ class WCS_Player(Player): # Short: WCSP
                        same_team: bool = False,
                        form: other_functions.constants.ImmuneTypes = None,
                        immune_type: str = None,
-                       deflect_function: callable = lambda : None
+                       deflect_function: callable = lambda : None,
                        ):
         """Returns WCS_Player's that within owner in some radius
         :param radius: radius to check in units
@@ -394,7 +394,7 @@ class WCS_Player(Player): # Short: WCSP
         # Iterating over all alive WCS_Players
         for WCSP in self.iter():
 
-            if same_team and WCSP.team_index != self.team_index: return
+            if same_team and WCSP.team_index != self.team_index: continue
 
             # Continue to next player if shielded and shielding from that is ON
             if form is not None and skills.functions.immunes_check(
@@ -402,8 +402,9 @@ class WCS_Player(Player): # Short: WCSP
                     form = form,
                     immune_type = immune_type,
                     deflect_target = deflect_function,
+                    deflect_arguments = (WCSP,)
                     ) != other_functions.constants.ImmuneReactionTypes.Passed:
-                return
+                continue
 
             # Player inside radius?
             if self.origin.get_distance(WCSP.origin) <= radius:
