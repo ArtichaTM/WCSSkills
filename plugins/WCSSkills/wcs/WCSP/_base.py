@@ -377,7 +377,7 @@ class WCS_Player(Player): # Short: WCSP
 
     def players_around(self,
                        radius: float,
-                       same_team: bool = False,
+                       same_team: Union[bool, None] = None,
                        form: other_functions.constants.ImmuneTypes = None,
                        immune_type: str = None,
                        deflect_function: callable = lambda : None,
@@ -394,7 +394,8 @@ class WCS_Player(Player): # Short: WCSP
         # Iterating over all alive WCS_Players
         for WCSP in self.iter():
 
-            if same_team and WCSP.team_index != self.team_index: continue
+            if same_team is True and WCSP.team_index != self.team_index: continue
+            if same_team is False and WCSP.team_index == self.team_index: continue
 
             # Continue to next player if shielded and shielding from that is ON
             if form is not None and skills.functions.immunes_check(
@@ -648,6 +649,15 @@ class WCS_Player(Player): # Short: WCSP
         else:
             self.health += hp
             return hp
+
+    @property
+    def skill_efficiency(self):
+        return sum([eff.efficiency for eff in self._skills_active]) / len(self._skills_active)
+
+    @skill_efficiency.setter
+    def skill_efficiency(self, value: float):
+        for skill in self._skills_active:
+            skill.efficiency = value
 
     def add_xp(self, amount: int, reason: str = None, divide: bool = True) -> None:
 
