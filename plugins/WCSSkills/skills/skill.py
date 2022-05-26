@@ -2786,3 +2786,6 @@ class Light_Aura_Regenerate(BaseSkill, repeat_functions):
 #         super().__init__(userid, lvl, settings)
 #     def close(self) -> None:
 #         super().close()
+#     @BaseSkill.efficiency.setter
+#     def efficiency(self, value: float) -> None:
+#         ...
