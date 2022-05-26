@@ -283,6 +283,9 @@ def skill_settings(player, choice):
             menu.append(PagedOption(f"{names[code]}"
             f": {'вкл' if value == True else 'выкл'} [{costs[code]}]",
                     value = (choice[1],code,parameter_type,value)))
+        elif parameter_type == 'percentage':
+            menu.append(PagedOption(f"{names[code]}: {value*100:.0f}%",
+                    value = (choice[1],code,parameter_type,value)))
         else:
             menu.append(PagedOption(f"{code} idk",
                         value = (choice[1],code,parameter_type,value)))
@@ -319,8 +322,56 @@ def skill_settings_callback(_, index, choice):
             SayText2(f"Изменение '\5{Skills_info.get_settings_name(skill, name)}\1'"
                      f" на \5{'вкл' if value == False else 'выкл'}\1").send(index)
 
+    elif parameter_type == 'percentage':
+
+        # Sound
+        RMSound.final(player)
+
+        # Calling KeyBoardTyping class
+        KeyboardTyping(
+            target = player,
+            previous_menu = skill_settings,
+            previous_menu_args = (player, ('skill_settings', skill_index)),
+            success_function = skill_settings_keyboard_percentage,
+            success_function_args = (skill_index, name)
+        )
+
     # Well, I didn't add any other types
-    else: raise ValueError("Selected other parameter_type instead of bool")
+    else: raise ValueError(f"parameter_type {parameter_type} is unavailable now")
+
+def skill_settings_keyboard_percentage(player: WCS_Player, entered: str, skill_index: int,
+        parameter_name: str):
+
+    # Is he truly entered a number?
+    try: entered = int(entered)
+
+    # No, say, that input is wrong
+    except ValueError:
+        return f"{entered} не является числом"
+
+    # Percentage should be in [0;100]
+    if entered < 0:
+        return "Процент не может быть отрицательным"
+    if entered > 100:
+        return "Процент не может быть больше 100"
+
+    # Well, everything is fine, changing skill setting
+
+    # Changing value
+    player.skills_selected_settings[skill_index][parameter_name] = entered/100
+
+    # Getting skill name
+    skill = player.skills_selected[skill_index]
+
+    # Notifying player
+    if player.data_info['skill_parameter_change_notify']:
+        SayText2("\5[WCS\1 Изменена настройка навыка \5"
+                f"{Skills_info.get_name(skill)}:\1").send(player.index)
+        SayText2(f"Изменение '\5{Skills_info.get_settings_name(skill, parameter_name)}\1'"
+                 f" на \5{entered}\1").send(player.index)
+
+    # Success sound
+    RMSound.final(player)
 
 
 def skill_change_groups(player):

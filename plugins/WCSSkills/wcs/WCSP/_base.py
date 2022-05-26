@@ -438,9 +438,10 @@ class WCS_Player(Player): # Short: WCSP
                               }) if set(self.skills_change) != {None} else None
 
         if change_skills is not None:
-            # There's new skills to change
+            # Player equipped skill for the first time
 
             for skill in change_skills.difference(owned_skills):
+
                 # Logging
                 WCSSkills.WCS_Logger.wcs_logger('skill acquire',
                                         f"{self.name}: Selected new skill {skill}")
@@ -484,7 +485,7 @@ class WCS_Player(Player): # Short: WCSP
                     self.skills_selected[num]: str = skill_name
                     self.skills_selected_lvls[num]: int = skill_lvl
                     self.skills_selected_xp[num]: int = skill_xp
-                    self.skills_selected_settings[num]: int = skill_settings
+                    self.skills_selected_settings[num]: dict = skill_settings
                     self.skills_selected_next_lvl[num]: int = \
                         next_lvl_xp_calculate(skill_lvl)
 
@@ -518,9 +519,16 @@ class WCS_Player(Player): # Short: WCSP
 
                             # Check for skill type
                             if skill_settings[setting] == 'bool':
-                                # If bool, setting to default value (False)
+
+                                # Default value for bool is False
                                 self.skills_selected_settings[num][setting] = \
                                     other_functions.constants.SKILL_SETTING_DEFAULT_BOOL
+
+                            elif skill_settings[setting] == 'percentage':
+                                # Percentage type which in [0; 100]
+
+                                # Default value for percentage is 100% (1)
+                                self.skills_selected_settings[num][setting] = 0.5
 
                 # Getting needed skill
 

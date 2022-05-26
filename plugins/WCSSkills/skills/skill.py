@@ -2546,15 +2546,21 @@ class Ghost_on_Knife(BaseSkill):
 
         # Calculating modifiers
 
-        # Invisibility
-        if self.settings['invisibility']:
+        # If invisibility proportion != 0
+        if self.settings['speed invisibility proportion']:
+
+            # If above 100, setting to 90
+            if self.settings['speed invisibility proportion'] > 90:
+                self.settings['speed invisibility proportion'] = 90
+
+            levels_subtracted = int(self.settings['speed invisibility proportion'] * 5040)
 
             # Subtracting cost
-            left = self.lvl - self.costs['invisibility']
+            left = self.lvl - levels_subtracted
 
             # If level enough to full upgrade, set invis to full and assign to lvl left levels
             if left >= 0:
-                self.invisibility = 90
+                self.invisibility = int(self.settings['speed invisibility proportion']*100)
 
                 # Updating lvl with left levels
                 self.lvl = left
@@ -2562,7 +2568,7 @@ class Ghost_on_Knife(BaseSkill):
             # Not enough
             else:
                 # Calculate value
-                self.invisibility = (90/self.costs[settings]) * (-left)
+                self.invisibility = int(self.lvl/90) # 1% invisibility per lvl
 
                 # All levels depleted. Set them to zero
                 self.lvl = 0
@@ -2588,20 +2594,15 @@ class Ghost_on_Knife(BaseSkill):
                 # Calculate value
                 self.linger_length = (-left) / 1000
 
-                # All lvls depleted. Set them to zero
+                # All levels depleted. Set them to zero
                 self.lvl = 0
 
         # No linger
         else: self.linger_length = 0
 
-        # Speed
-        if self.settings['speed']:
+        if self.lvl:
 
-            # Adding speed, if there's left any lvls
-            if self.lvl: self.speed += (self.lvl / self.costs['speed']) / 100
-
-            # All levels depleted. Set to zero
-            self.lvl = 0
+            self.speed += (self.lvl / 100) / 100
 
         # No speed
         else: self.speed = 0
@@ -2650,7 +2651,7 @@ class Ghost_on_Knife(BaseSkill):
         self.owner.speed += self.speed
 
         # Adding invisibility
-        self.owner.invisibility = self.invisibility
+        self.owner.invisibility = round(self.invisibility*2.55)
 
     def deactivate(self):
 
