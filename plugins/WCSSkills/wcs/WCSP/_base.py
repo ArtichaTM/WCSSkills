@@ -133,6 +133,10 @@ class WCS_Player(Player): # Short: WCSP
 
         # Loading information about player from databases
 
+        # Checking player existence
+        if not db.wcs.DB_users.player_exists(self.steamid):
+            db.wcs.DB_users.new_player(self.steamid)
+
         # Dict[skill_name] = List[lvl, xp, selected_lvl, settings_dict]
         self.data_skills: Dict[str, List[int, int, Union[None, int], Dict]
             ] = db.wcs.DB_users.skills_load(self.steamid)

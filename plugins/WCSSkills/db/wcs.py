@@ -57,21 +57,16 @@ class _DB_users:
             cur.execute('PRAGMA temp_store = MEMORY')
 
     def info_load(self, steamid: str) -> dict:
-    # Loading player data from db. Returns dict
+        """Loading player data from db. Returns dict"""
 
         with db_cursor(self.db) as cur:
-
-            # Check if table exists
-            cur.execute(f"SELECT name FROM sqlite_master WHERE type = 'table' AND name = '{steamid}.info'")
-
-            if not len(cur.fetchall()):
-                self._new_player(steamid=steamid)
 
             # Extracting data
             cur.execute(f"SELECT * FROM '{steamid}.info'")
             data = dict()
             for value in cur.fetchall():
                 data[value[0]] = value[1]
+
         return data
 
     def info_save(self, steamid: str, data: list) -> None:
@@ -121,8 +116,19 @@ class _DB_users:
             "(name,lvl,xp,lvl_selected,settings) VALUES (?,?,?,?,?)", data_skills)
         self.db.commit()
 
-    def _new_player(self, steamid: str) -> None:
-    # Function to create new tables in db, if player doesn't exist
+    def player_exists(self, steamid: str) -> bool:
+        """Checks if table exists"""
+
+        with db_cursor(self.db) as cur:
+
+            # Getting table
+            cur.execute(f"SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE '{steamid}.%'")
+
+            # Counting rows
+            return len(cur.fetchall()) == 2
+
+    def new_player(self, steamid: str) -> None:
+        """Function to create new tables in db, if player doesn't exist"""
 
         wcs_logger('db', f'New player tables with steamID {steamid} created', console=True)
 
