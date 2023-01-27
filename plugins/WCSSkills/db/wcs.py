@@ -42,7 +42,7 @@ class _DB_users:
     • Reading WCS-based player info
     """
     __slots__ = ('db',)
-    path= PATH_FILE_DATABASE_USERS
+    path = PATH_FILE_DATABASE_USERS
 
     def __init__(self):
     # On creating instance connect db

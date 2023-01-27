@@ -97,6 +97,7 @@ def AdminPlayers_callback(*args):
     AdminPlayers_player(WCS_Player.from_index(args[1]),
                         args[2].value)
 
+
 def AdminPlayers_player(player: WCS_Player, target: Union[Disconnected_user, WCS_Player]):
     menu = PagedMenu(title = f'Управление {target.name:.10}',
                      select_callback = AdminPlayers_player_callback,
@@ -180,7 +181,7 @@ def AdminPlayers_player_callback(_, index, choice):
         return
 
     if command == 'info':
-        
+
         # If player requesting info, targeting him to info function
         AdminPlayers_player_info(WCS_Player.from_index(index), target)
 
@@ -468,6 +469,7 @@ def Admin_left_players_callback(*args):
         target = WCS_Player.from_index(target.index)
 
     AdminPlayers_player(admin, target)
+
 
 def Admin_functions(admin):
     menu = PagedMenu(title='Функции',
