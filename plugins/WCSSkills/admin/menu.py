@@ -146,9 +146,9 @@ def AdminPlayers_player(player: WCS_Player, target: Union[Disconnected_user, WCS
     if 'wcss_admin.deactivate_skills' in player.permissions and target:
         menu.append(PagedOption('Отключение навыков на раунд',
                             value=(target, 'skills deactivate')))
-    # if 'wcss_admin.give_lvls' in player.permissions:
-    #     menu.append(PagedOption('Дать уровней',
-    #                             value=(target, 'give lvls')))
+    if 'wcss_admin.give_lvls' in player.permissions:
+        menu.append(PagedOption('Дать уровней',
+                                value=(target, 'give levels')))
     if 'wcss_admin.heal' in player.permissions and target:
         menu.append(PagedOption('Исцелить', value=(target, 'heal')))
 
@@ -175,6 +175,28 @@ def AdminPlayers_player_callback(_, index, choice):
 
         # Try to register filter command (function can be registered before)
         try: register_say_filter(health_request_solver)
+        except ValueError: pass
+
+        # Returning to avoid double calls
+        return
+
+    elif command == 'give levels':
+
+        # Getting player
+        player = WCS_Player.from_index(index)
+
+        # Saving kb info to enter_temp
+        player.enter_temp = ('give_levels_solver', choice.value)
+
+        # Notifying player
+        SayText2("\2Напишите число в чат.\1").send(player.index)
+        SayText2("\2Введите STOP для отмены.\1").send(player.index)
+
+        # Sound
+        RMSound.next(player)
+
+        # Try to register filter command (function can be registered before)
+        try: register_say_filter(give_levels_solver)
         except ValueError: pass
 
         # Returning to avoid double calls
@@ -262,6 +284,86 @@ def health_request_solver(command, index, _):
     # Blocking message
     return CommandReturn.BLOCK
 
+def give_levels_solver(command, index, _):
+
+    # Getting starter info
+    player = WCS_Player.from_index(index)
+
+    # If enter_temp is None, player is not using kb functions
+    if player.enter_temp is None:
+
+        # Then pass him
+        return CommandReturn.CONTINUE
+
+    # He's using kb, but not this function
+    elif player.enter_temp[0] != 'give_levels_solver':
+
+        # Then pass him, to allow other filters work
+        return CommandReturn.CONTINUE
+
+    # This is our user
+
+    # Getting target to give health
+    target: WCS_Player = player.enter_temp[1][0]
+
+    # Getting his command
+    entered = command.command_string
+
+    # Requested stop
+    if entered[:4] == 'STOP' or entered[:4] == 'stop':
+
+        # Unregister filter
+        unregister_say_filter(health_request_solver)
+
+        # Sending previous menu
+        AdminPlayers_player(player, target)
+
+        # Clearing player temp
+        player.enter_temp = None
+
+        # Blocking command
+        return CommandReturn.BLOCK
+
+    # Is his input really a number?
+    try: entered = int(entered)
+
+    # No
+    except ValueError:
+
+        # Notifying user about error
+        SayText2(f"\2Введено некорректное значение\1").send(index)
+
+        # Blocking command
+        return CommandReturn.BLOCK
+
+    # Should be above or equal 1
+    entered = abs(entered)
+
+    # Validation
+    if entered == 0:
+
+        # Notifying admin wrong number
+        SayText2(f"\2Невозможно выдать игроку 0 уровней\1").send(index)
+
+        # Blocking command
+        return CommandReturn.BLOCK
+
+    # Adding levels to target player
+    target.lk_lvls += entered
+
+    # Notifying target
+    SayText2(f"\2[Admin]\1 Админ \5{player.name}\1 добавил вам \5{entered}\1"
+             f" уровней в банк").send(target.index)
+
+    # Notifying admin
+    SayText2(f"\2[Admin]\1 Вы добавили \5{entered}\1 уровней"
+             f" игроку \5{target.name}\1 в банк").send(index)
+
+    # Unregistering current function from message check
+    unregister_say_filter(give_levels_solver)
+
+    # Blocking message
+    return CommandReturn.BLOCK
 
 def AdminPlayers_player_info(admin: WCS_Player,
          target: Union[WCS_Player, Disconnected_user]):
