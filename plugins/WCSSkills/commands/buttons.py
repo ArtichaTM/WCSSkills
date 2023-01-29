@@ -23,12 +23,14 @@ from listeners.tick import Repeat, Delay
 
 # Plugin imports
 # Info about skills
-from WCSSkills.db.wcs import Skills_info
+from ..db.wcs import Skills_info
+
 
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
 __all__ = ('Buttons',)
+
 
 class Buttons:
     """

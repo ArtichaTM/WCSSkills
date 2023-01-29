@@ -13,12 +13,14 @@ from messages.base import SayText2 as ST2
 
 # Mod Imports
 # Constants
-from WCSSkills.other_functions.constants import WCS_FOLDER
-from WCSSkills.other_functions.constants import VOLUME_MENU
+from ..other_functions.constants import WCS_FOLDER
+from ..other_functions.constants import VOLUME_MENU
 # WCS_Player
-from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
+from ..wcs.WCSP.wcsplayer import WCS_Player
+
 
 class RMSound:
+    """Namespace created to call for radio menu sounds"""
 
     @staticmethod
     def back(target):

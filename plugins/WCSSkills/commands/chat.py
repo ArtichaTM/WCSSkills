@@ -16,18 +16,15 @@ from filters.entities import EntityIter
 
 # Plugin imports
 # Player
-from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
+from ..wcs.WCSP.wcsplayer import WCS_Player
 # Main Radio Menu
-from WCSSkills.menus.wcs import MainMenu, LK
-from WCSSkills.admin.menu import AdminMain
+from ..menus.wcs import MainMenu, LK
+from ..admin.menu import AdminMain
 # Logger
-from WCSSkills.WCS_Logger import wcs_logger
+from ..WCS_Logger import wcs_logger
+# Debug state
+from ..other_functions.constants import WCSSKILLS_DEBUG
 
-
-def increase():
-    for x in range(0,10000):
-        yield x
-sc = increase()
 
 @ClientCommand('rtd')
 def test(_, index):
@@ -35,11 +32,13 @@ def test(_, index):
     wcs_logger(prefix='info', msg=f'rtd called by {player.name}')
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('t')
 def wcs(comm):
     player = WCS_Player.from_index(comm.index)
     wcs_logger(prefix='info', msg=f't called by {player.name}')
     return CommandReturn.BLOCK
+
 
 # =============================================================================
 # >> WCS
@@ -50,40 +49,48 @@ def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('цсы')
 def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
+
 
 @TypedSayCommand('цс')
 def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('wc')
 def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
+
 
 @TypedSayCommand('!wcs')
 def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
 
+
 @TypedSayCommand('/wcs')
 def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
+
 
 @TypedSayCommand('/цсы')
 def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('/цс')
 def wcs(comm):
     MainMenu(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
+
 
 # =============================================================================
 # >> LK
@@ -94,15 +101,18 @@ def lk(comm):
     LK(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('/lk')
 def lk(comm):
     LK(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('!lk')
 def lk(comm):
     LK(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
+
 
 # =============================================================================
 # >> Admin
@@ -113,39 +123,40 @@ def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('админ', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
+
 
 @TypedSayCommand('!админ', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
 
+
 @TypedSayCommand('!admin', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.CONTINUE
+
 
 @TypedSayCommand('/admin', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
+
 @TypedSayCommand('/админ', 'wcss_admin.menu_access')
 def admin(comm):
     AdminMain(WCS_Player.from_index(comm.index))
     return CommandReturn.BLOCK
 
-# =============================================================================
-# >> Other
-# =============================================================================
 
 # =============================================================================
 # >> Debug commands
 # =============================================================================
-from WCSSkills.other_functions.constants import WCSSKILLS_DEBUG
 
 if WCSSKILLS_DEBUG:
     @ClientCommand('tp')

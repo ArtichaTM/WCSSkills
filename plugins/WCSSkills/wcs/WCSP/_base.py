@@ -10,7 +10,7 @@ import random
 
 # Source.Python Imports
 # Players
-import WCSSkills.WCS_Logger
+from ...WCS_Logger import wcs_logger
 from players.entity import Player
 from players.helpers import index_from_userid, userid_from_index
 # Events
@@ -30,25 +30,30 @@ from entities.entity import Entity
 WCS_Players = dict()
 # Plugin Imports
 # Databases
-import WCSSkills.db as db
+from ... import db
 # Ultimate, ability, etc
-from WCSSkills.commands.buttons import Buttons
+from ...commands.buttons import Buttons
 # Skills
-from WCSSkills import skills
+from ... import skills
 # Typing types
-from WCSSkills.python.types import *
+from ...python.types import *
 # DefaultDict
-from WCSSkills.python.dictionaries import DefaultDict
+from ...python.dictionaries import DefaultDict
 # Other_functions module
-import WCSSkills.other_functions as other_functions
-# XP
+from ... import other_functions
 
 
 # =============================================================================
 # >> Functions
 # =============================================================================
-required_xp = lambda lvl: ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
-next_lvl_xp_calculate = lambda lvl: required_xp(lvl) - random.randint(0, int(required_xp(lvl) // 2))
+
+def required_xp(lvl: int):
+    return ((80 * lvl+1 ** 0.5) ** 2) ** 0.5
+
+
+def next_lvl_xp_calculate(lvl: int):
+    return required_xp(lvl) - random.randint(0, int(required_xp(lvl) // 2))
+
 
 # =============================================================================
 # >> Events on loading/unloading player
@@ -93,9 +98,11 @@ def player_unload(ev) -> None:
     except KeyError:
 
         # No. Logging warning and returning
-        WCSSkills.WCS_Logger.wcs_logger('player state', 'User without '
-                                   'WCS_Player disconnected', console=True)
+        wcs_logger.wcs_logger('player state',
+                              'User without WCS_Player disconnected',
+                              console=True)
         return
+
     else:
         # If nothing bad happened,
 
@@ -110,7 +117,7 @@ def player_unload(ev) -> None:
 # >> WCS_Player class
 # =============================================================================
 
-class WCS_Player(Player): # Short: WCSP
+class WCS_Player(Player):  # Short: WCSP
     """
 
     Class that realizes player-based WCS functionality:
@@ -255,7 +262,7 @@ class WCS_Player(Player): # Short: WCSP
         event_manager.register_for_event('round_end', self.skills_deactivate)
 
         # Logging initialization
-        WCSSkills.WCS_Logger.wcs_logger("player state", f"{self.name}: WCS_Player initialized")
+        wcs_logger("player state", f"{self.name}: WCS_Player initialized")
 
     def __repr__(self) -> str:
         return (f"{self.__class__.__name__}(name={self.name},"
@@ -341,8 +348,8 @@ class WCS_Player(Player): # Short: WCSP
 
             # Calling function for players
             entities = other_functions.functions.open_players(entity=self,
-                form = check_type,
-                type_of_check = immune_type,
+                form=check_type,
+                type_of_check=immune_type,
                 same_team=False)
         else:
             # Calling function for entities
@@ -384,7 +391,7 @@ class WCS_Player(Player): # Short: WCSP
                        same_team: Union[bool, None] = None,
                        form: other_functions.constants.ImmuneTypes = None,
                        immune_type: str = None,
-                       deflect_function: callable = lambda : None,
+                       deflect_function: callable = lambda: None,
                        ):
         """Returns WCS_Player's that within owner in some radius
         :param radius: radius to check in units
@@ -403,11 +410,11 @@ class WCS_Player(Player): # Short: WCSP
 
             # Continue to next player if shielded and shielding from that is ON
             if form is not None and skills.functions.immunes_check(
-                    victim = WCSP,
-                    form = form,
-                    immune_type = immune_type,
-                    deflect_target = deflect_function,
-                    deflect_arguments = (WCSP,)
+                    victim=WCSP,
+                    form=form,
+                    immune_type=immune_type,
+                    deflect_target=deflect_function,
+                    deflect_arguments=(WCSP,)
                     ) != other_functions.constants.ImmuneReactionTypes.Passed:
                 continue
 
@@ -447,8 +454,7 @@ class WCS_Player(Player): # Short: WCSP
             for skill in change_skills.difference(owned_skills):
 
                 # Logging
-                WCSSkills.WCS_Logger.wcs_logger('skill acquire',
-                                        f"{self.name}: Selected new skill {skill}")
+                wcs_logger('skill acquire', f"{self.name}: Selected new skill {skill}")
 
                 # Adding new entry
                 self.data_skills[skill] = (0, 0, None, {})
@@ -494,7 +500,7 @@ class WCS_Player(Player): # Short: WCSP
                         next_lvl_xp_calculate(skill_lvl)
 
                 # Logging skill change
-                WCSSkills.WCS_Logger.wcs_logger('skill change',
+                wcs_logger('skill change',
                                         f"{self.name}: {previous_skill} -> {skill_name}")
 
             self.skills_change[num] = None
@@ -569,7 +575,7 @@ class WCS_Player(Player): # Short: WCSP
         Delay(random.uniform(1, 4), self._data_skills_update)
 
         # Logging
-        WCSSkills.WCS_Logger.wcs_logger('skills', f"{self.name}: started round with "
+        wcs_logger('skills', f"{self.name}: started round with "
                              f"{', '.join(self.skills_selected)}.")
 
     def _skills_deactivate(self):
@@ -697,7 +703,9 @@ class WCS_Player(Player): # Short: WCSP
                          f"опыта за \5{reason}\1").send(self.index)
 
         # Amount of xp to add for each skill, if divide enabled
-        if divide: amount: int = amount // skills_amount
+        if divide:
+
+            amount: int = amount // skills_amount
 
         # Going through every skill
         for num, current_xp in enumerate(self.skills_selected_xp):
@@ -748,7 +756,7 @@ class WCS_Player(Player): # Short: WCSP
                     # Playing sound
                     self.emit_sound(f'{other_functions.constants.WCS_FOLDER}/level_up.mp3',
                         attenuation=1.1,
-                        volume = 0.5)
+                        volume=0.5)
 
             # Playing sound, if player enabled sounds and disabled sound for each
             if leveled_up and self.data_info['sound_level_up'] and not self.data_info[
@@ -757,8 +765,7 @@ class WCS_Player(Player): # Short: WCSP
                 # Playing sound
                 self.emit_sound(f'{other_functions.constants.WCS_FOLDER}/level_up.mp3',
                     attenuation=1.1,
-                    volume = 0.5
-                )
+                    volume=0.5)
 
     def add_level(self, amount: int, reason: str = None) -> None:
 
@@ -779,7 +786,8 @@ class WCS_Player(Player): # Short: WCSP
         for num, current_lvl in enumerate(self.skills_selected_lvls):
 
             # Checking, if slot is used to skill (not blocked, empty, e.t.c.)
-            if current_lvl is None: continue
+            if current_lvl is None:
+                continue
 
             # Adding lvl
             self.skills_selected_lvls[num] += amount
@@ -834,7 +842,7 @@ class WCS_Player(Player): # Short: WCSP
         db.admin.DC_history.add_entry(self.name, self.steamid, self.address)
 
         # Logging
-        WCSSkills.WCS_Logger.wcs_logger('player state', f"{self.name} WCS_Player unloaded")
+        wcs_logger('player state', f"{self.name} WCS_Player unloaded")
 
 
 # =============================================================================

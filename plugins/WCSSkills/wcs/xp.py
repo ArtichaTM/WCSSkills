@@ -20,13 +20,15 @@ from .WCSP.wcsplayer import WCS_Player, WCS_Players
 # >> All
 # =============================================================================
 
-__all__ = ('round_start',
-           'round_end',
-           'player_death',
-           'bomb_planted',
-           'bomb_exploded',
-           'bomb_defused'
-           )
+__all__ = (
+    'round_start',
+    'round_end',
+    'player_death',
+    'bomb_planted',
+    'bomb_exploded',
+    'bomb_defused'
+)
+
 
 # =============================================================================
 # >> Events to give XP
@@ -37,10 +39,12 @@ def round_start(_):
     for player in WCS_Players.values():
         player.add_xp(10*player.xp_multiplier, 'начало раунда')
 
+
 @Event('round_end')
 def round_end(_):
     for player in WCS_Players.values():
         player.add_xp(10*player.xp_multiplier, 'конец раунда')
+
 
 @Event('player_death')
 def player_death(ev):
@@ -87,6 +91,7 @@ def player_death(ev):
     if assister is not None:
         assister.add_xp(15, 'помощь')
 
+
 @Event('bomb_planted')
 def bomb_planted(ev):
     for player in WCS_Players.values():
@@ -104,6 +109,7 @@ def bomb_planted(ev):
                 player.add_xp(5*player.xp_multiplier, 'установку бомбы вашим союзником')
             continue
 
+
 @Event('bomb_exploded')
 def bomb_exploded(_):
     for player in WCS_Players.values():
@@ -115,6 +121,7 @@ def bomb_exploded(_):
             else:
                 player.add_xp(14*player.xp_multiplier, 'взрыв бомбы')
             continue
+
 
 @Event('bomb_defused')
 def bomb_defused(ev):

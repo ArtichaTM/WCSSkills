@@ -18,17 +18,17 @@ from time import time
 from listeners.tick import Repeat
 
 # Plugin Imports
-# Making available using db_cursor in context_manager
+# Making available using database cursor as context manager
 from .functions import db_cursor
 # Constants
-from WCSSkills.other_functions.constants import PATH_FILE_DATABASE_ADMIN
-from WCSSkills.other_functions.constants import PATH_FILE_JSON_DISCONNECTED_PLAYERS
-from WCSSkills.admin.constants import Punishment_types
-from WCSSkills.admin.constants import amount_of_players_in_history as history_count
+from ..other_functions.constants import PATH_FILE_DATABASE_ADMIN
+from ..other_functions.constants import PATH_FILE_JSON_DISCONNECTED_PLAYERS
+from ..admin.constants import Punishment_types
+from ..admin.constants import amount_of_players_in_history as history_count
 # Logger
-from WCSSkills.WCS_Logger import wcs_logger
+from ..WCS_Logger import wcs_logger
 # Punishment expire event
-from WCSSkills.events.custom_events import Punishment_expired
+from ..events.custom_events import Punishment_expired
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -40,6 +40,7 @@ __all__ = ('DB_admin',
 # =============================================================================
 # >> Classes
 # =============================================================================
+
 class _DB_admin:
     """ Class saves all punished players """
     __slots__ = ('db', 'repeat')
@@ -331,6 +332,7 @@ class _DB_admin:
         # Logging close
         wcs_logger('db', f'DB_admin closing')
 
+
 class _DC_history:
     """ Saves all disconnected players.
     • Can be iterable. Iterates over all players,
@@ -412,6 +414,7 @@ class _DC_history:
         # Saving information about players to JSON
         with open(self.path_to_settings, 'w', encoding="utf-8") as file:
             dump(self.json, file, ensure_ascii = False)
+
 
 # Singletons
 DB_admin = _DB_admin()

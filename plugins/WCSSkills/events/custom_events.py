@@ -16,7 +16,8 @@ from events.custom import CustomEvent
 
 # Plugin Imports
 # PATHs
-from WCSSkills.other_functions.constants import PATH_FOLDER_EVENTS
+from ..other_functions.constants import PATH_FOLDER_EVENTS
+
 
 # =============================================================================
 # >> Custom events
@@ -27,6 +28,7 @@ class Player_setting_changed(CustomEvent):
     code = StringVariable('Name of the setting in the code')
     name = StringVariable('Translated name')
     value = BoolVariable('New value of setting')
+
 
 class Punishment_expired(CustomEvent):
     """ Fired when player punishment expired """
@@ -40,6 +42,7 @@ class Punishment_expired(CustomEvent):
     admin_steamid = StringVariable('Admin steamID that issued punishment (if any)')
     reason = ShortVariable('Reason of punishment')
     duration = LongVariable('Length of issued punishment')
+
 
 resource_file = ResourceFile(PATH_FOLDER_EVENTS, Punishment_expired, Player_setting_changed)
 resource_file.write()

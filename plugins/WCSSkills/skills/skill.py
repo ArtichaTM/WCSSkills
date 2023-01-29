@@ -43,63 +43,61 @@ from engines.trace import ContentMasks
 from engines.trace import GameTrace
 from engines.trace import Ray
 from engines.trace import TraceFilterSimple
-# Mathlib's Vector
-from mathlib import Vector
 
 # Plugin Imports
 # Functions
 from .functions import *
-from WCSSkills.other_functions.functions import *
+from ..other_functions.functions import *
 # WCS_Player
-from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
+from ..wcs.WCSP.wcsplayer import WCS_Player
 # Effects
-from WCSSkills.other_functions.wcs_effects import effect, persistent_entity, Triggers
+from ..other_functions.wcs_effects import effect, persistent_entity, Triggers
 # Skills information
-from WCSSkills.db.wcs import Skills_info
+from ..db.wcs import Skills_info
 # Constants
-from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
-from WCSSkills.other_functions.constants import WCS_FOLDER
-from WCSSkills.other_functions.constants import weapon_translations
+from ..other_functions.constants import WCS_DAMAGE_ID
+from ..other_functions.constants import WCS_FOLDER
+from ..other_functions.constants import weapon_translations
 # Enumeratings
-from WCSSkills.other_functions.constants import DamageTypes
-from WCSSkills.other_functions.constants import ImmuneTypes
-from WCSSkills.other_functions.constants import ImmuneReactionTypes
-from WCSSkills.other_functions.constants import AffinityTypes
+from ..other_functions.constants import DamageTypes
+from ..other_functions.constants import ImmuneTypes
+from ..other_functions.constants import ImmuneReactionTypes
+from ..other_functions.constants import AffinityTypes
+
 
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
-__all__ = (
 
-# Skills
-'Heal_per_step', # Heals every step
-'Start_add_speed', # Adds speed after start of round
-'Start_set_gravity', # Adds gravity after start of round
-'Long_jump', # Boosts jump
-'Regenerate', # Default regeneration with intervals
-'Health', # Adds health after start of round
-'Slow_fall', # Slowing fall
-'Nearly_Aim', # Helps to aim, when user fires in body/legs/...
-'Trigger', # Fires when player comes into sight
-'Start_add_max_hp', # Adds max health after start of round
-'Teleport', # Teleports player
-'Aim', # Full aim from every angle, but with lower chances
-'WalkOnAir', # Allow player to walk on air and fire without distortion
-'Poison', # Poisons player with damage every second
-'Ammo_gain_on_hit', # Adds ammo on successful hit
-'Additional_percent_dmg', # Deals addition damage as magic
-'Auto_BunnyHop', # Allows players to auto jump with some limit
-'Paralyze', # Paralyze player on hit (with cd)
-'Smoke_on_wall_hit', # Instantly smoke when touch something
-'Damage_delay_defend', # Delays all physical damage
-'Toss', # Toss player in the air (with constants cd)
-'Mirror_paralyze', # Paralyze when being hit
-'Vampire_damage_percent', # Gives owner hp as percent of damage dealt
-'Drop_weapon_chance', # Drops enemy weapon with such chance
-'Screen_rotate_attack', # Rotates enemy screen with a chance
-# 'Static_Mine', # Places mine in the air
-'MiniMap', # Places minimap with player as orbs corresponding to their position
+__all__ = (
+'Heal_per_step',  # Heals every step
+'Start_add_speed',  # Adds speed after start of round
+'Start_set_gravity',  # Adds gravity after start of round
+'Long_jump' , # Boosts horizontal jump
+'Regenerate',  # Default regeneration with intervals
+'Health',  # Adds health after start of round
+'Slow_fall',  # Slowing fall
+'Nearly_Aim',  # Helps to aim, when user fires in body/legs/...
+'Trigger',  # Fires when player comes into sight
+'Start_add_max_hp',  # Adds max health after start of round
+'Teleport',  # Teleports player
+'Aim',  # Full aim from every angle, but with lower chances
+'WalkOnAir',  # Allow player to walk on air and fire without distortion
+'Poison',  # Poisons player with damage every second
+'Ammo_gain_on_hit',  # Adds ammo on successful hit
+'Additional_percent_dmg',  # Deals addition damage as magic
+'Auto_BunnyHop',  # Allows players to auto jump with some limit
+'Paralyze',  # Paralyze player on hit (with cd)
+'Smoke_on_wall_hit',  # Instantly smoke when touch something
+'Damage_delay_defend',  # Delays all physical damage
+'Toss',  # Toss player in the air (with constants cd)
+'Mirror_paralyze',  # Paralyze when being hit
+'Vampire_damage_percent',  # Gives owner hp as percent of damage dealt
+'Drop_weapon_chance',  # Drops enemy weapon with such chance
+'Screen_rotate_attack',  # Rotates enemy screen with a chance
+'MiniMap',  # Places minimap with player as orbs corresponding to their position
 )
+
 
 # =============================================================================
 # >> Skills
@@ -187,6 +185,7 @@ class BaseSkill:
     def close(self) -> None:
         pass
 
+
 class ActiveSkill(BaseSkill):
     """ Inherit this class, if u need to create ultimate/ability """
     __slots__ = ('delay', 'cd')
@@ -232,6 +231,7 @@ class ActiveSkill(BaseSkill):
     def cd_passed(self) -> None:
         self.owner.emit_sound(f'{WCS_FOLDER}/active_skill_ready')
         Delay(0, self.owner.Buttons.hud_update)
+
 
 class PeriodicSkill(BaseSkill, repeat_functions):
     """ Inherit this skill, if u need to create poison, fire, e.t.c. """
@@ -304,6 +304,7 @@ class PeriodicSkill(BaseSkill, repeat_functions):
 
         # Stop repeat
         self._repeat_stop()
+
 
 class DelaySkill(BaseSkill):
     """ Inherit this skill, if u need to create skill with cooldown """
@@ -379,43 +380,6 @@ class AuraSkill(BaseSkill, repeat_functions):
     def close(self) -> None:
         super().close()
 
-class RadiusActivate:
-    # TODO: fix formulas
-    # "TypeError: multiple bases have instance lay-out conflict"
-    # __slots__ = ('center_location', 'radius')
-
-    def __init__(self):
-        self.radius = 0
-        self.center_location = Vector()
-
-        # Error when no self.owner found
-        try: getattr(self, 'owner')
-        except AttributeError:
-            NotImplementedError('RadiusActivate should be inherited with BaseSkill')
-
-    def sphere_initialize(self):
-        """When player firstly activated skill. Calculating start values"""
-
-        # Getting center point
-        self.center_location: Vector = self.owner.eye_location
-
-        # Calculating sphere radius
-        self.radius: float = self.owner.eye_location.get_distance(self.owner.view_coordinates)
-
-    def find_point(self) -> Vector:
-        """When destination should be calculated. Pythagorean theorem"""
-
-        # Finding distance from center of sphere to player
-        player_distance: float = self.owner.eye_location.get_distance(self.center_location)
-
-        # Are we outside sphere, or inside?
-        # outside: player_distance > radius => player_distance - hypotenuse
-        # inside: player_distance < radius => radius - hypotenuse
-        multiplier: float = sqrt(abs(self.radius**2 - player_distance**2))
-
-        chord_multiplier = self.owner.view_vector.get_distance(
-            (self.center_location - self.owner.eye_location).normalized()
-        )/2
 
 class Health(BaseSkill):
     """
@@ -439,6 +403,7 @@ class Health(BaseSkill):
     @BaseSkill.efficiency.setter
     def efficiency(self, value: float) -> None:
         super().efficiency = value
+
 
 class Start_add_speed(BaseSkill):
     """
@@ -474,6 +439,7 @@ class Start_add_speed(BaseSkill):
 
         # Removing added speed
         self.owner.speed -= self.speed/100
+
 
 class Regenerate(BaseSkill, repeat_functions):
     __slots__ = ('interval', 'hp')
@@ -527,6 +493,7 @@ class Regenerate(BaseSkill, repeat_functions):
     def close(self) -> None:
         super().close()
         self._repeat_stop()
+
 
 class Heal_per_step(BaseSkill):
     """
@@ -587,6 +554,7 @@ class Heal_per_step(BaseSkill):
         # Unregister from footstep event
         event_manager.unregister_for_event('player_footstep', self.step)
 
+
 class Start_set_gravity(BaseSkill):
     """
     Skill reduces gravity at the start of round
@@ -624,6 +592,7 @@ class Start_set_gravity(BaseSkill):
 
             # Removing added gravity
             self.owner.gravity = 1
+
 
 class Long_jump(BaseSkill):
     """
@@ -672,6 +641,7 @@ class Long_jump(BaseSkill):
     def close(self) -> None:
         super().close()
         event_manager.unregister_for_event('player_jump', self.jump)
+
 
 class Slow_fall(BaseSkill, repeat_functions):
     """
@@ -753,6 +723,7 @@ class Slow_fall(BaseSkill, repeat_functions):
         super().close()
         self._repeat_stop()
 
+
 class Nearly_Aim(BaseSkill):
     """
     Some accuracy for shots. If player fired in body,
@@ -833,6 +804,7 @@ class Nearly_Aim(BaseSkill):
         super().close()
         pre_event_manager.unregister_for_event('weapon_fire', self.fire)
 
+
 class Trigger(ActiveSkill):
     __slots__ = ('cd', 'length', 'is_pressed', 'repeat')
 
@@ -879,6 +851,7 @@ class Trigger(ActiveSkill):
     def efficiency(self, value: float) -> None:
         super().efficiency = value
 
+
 class Start_add_max_hp(BaseSkill):
 
     def __init__(self, userid: int, lvl: int, settings: dict):
@@ -894,6 +867,7 @@ class Start_add_max_hp(BaseSkill):
     @BaseSkill.efficiency.setter
     def efficiency(self, value: float) -> None:
         super().efficiency = value
+
 
 class Teleport(ActiveSkill):
     __slots__ = ('position', 'cd', 'allowed_distance', 'is_pressed')
@@ -977,6 +951,7 @@ class Teleport(ActiveSkill):
     def efficiency(self, value: float) -> None:
         super().efficiency = value
 
+
 class Aim(BaseSkill):
 
     __slots__ = ('back_to_aim', 'target_loc')
@@ -1059,6 +1034,7 @@ class Aim(BaseSkill):
     def efficiency(self, value: float) -> None:
         super().efficiency = value
 
+
 class WalkOnAir(ActiveSkill):
     __slots__ = ('model', 'is_active', 'cd', 'repeat', 'entity')
 
@@ -1078,7 +1054,6 @@ class WalkOnAir(ActiveSkill):
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             ST2(f"\4[WCS]\1 Вы можете \5ходить по воздуху\1").send(self.owner.index)
-
 
     def _create_prop(self) -> None:
         self.entity = Entity.create('prop_physics')
@@ -1140,6 +1115,7 @@ class WalkOnAir(ActiveSkill):
     def efficiency(self, value: float) -> None:
         super().efficiency = value
 
+
 class Poison(PeriodicSkill):
     __slots__ = ('chance', 'dmg', 'length')
 
@@ -1184,7 +1160,6 @@ class Poison(PeriodicSkill):
 
             # Notifying owner about infect
             ST2(f"[\4[WCS]\1 Вы заразили {attacker.name}").send(self.owner.index)
-
 
     def tick(self) -> None:
         super().tick()
@@ -1296,6 +1271,7 @@ class Ammo_gain_on_hit(BaseSkill, repeat_functions):
         self._repeat_stop()
         on_take_physical_damage.remove(self.player_hurt)
 
+
 class Additional_percent_dmg(BaseSkill):
     __slots__ = ('percent',)
 
@@ -1350,6 +1326,7 @@ class Additional_percent_dmg(BaseSkill):
         super().close()
         on_take_physical_damage.remove(self.player_hurt)
 
+
 class Auto_BunnyHop(BaseSkill, repeat_functions):
     __slots__ = ('hops', 'current_hops')
 
@@ -1366,7 +1343,6 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
         # Notifying player
         if self.owner.data_info['skills_activate_notify']:
             ST2(f"\4[WCS]\1 Распрыжка на \5{self.hops}\1 прыжков").send(self.owner.index)
-
 
     def jumped(self, ev):
         if ev['userid'] == self.owner.userid:
@@ -1405,6 +1381,7 @@ class Auto_BunnyHop(BaseSkill, repeat_functions):
         super().close()
         self._repeat_stop()
         event_manager.unregister_for_event('player_jump', self.jumped)
+
 
 class Paralyze(DelaySkill):
     __slots__ = ('length',)
@@ -1510,6 +1487,7 @@ class Paralyze(DelaySkill):
         super().close()
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
 
+
 class Smoke_on_wall_hit(BaseSkill):
 
     def __init__(self, userid: int, lvl: int, settings: dict):
@@ -1541,6 +1519,7 @@ class Smoke_on_wall_hit(BaseSkill):
 
         if self.lvl != 0:
             event_manager.unregister_for_event('grenade_bounce', self.grenade_bounce)
+
 
 class Damage_delay_defend(BaseSkill):
     __slots__ = ('damage_list', 'delay_length')
@@ -1622,6 +1601,7 @@ class Damage_delay_defend(BaseSkill):
 
         # Remove from otd hook
         on_take_physical_damage.remove(self.player_hurt)
+
 
 class Toss(DelaySkill):
     __slots__ = ('chance', 'power')
@@ -1731,6 +1711,7 @@ class Toss(DelaySkill):
         # Unregistering for hurt event
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
 
+
 class Mirror_paralyze(BaseSkill):
     __slots__ = ('chance', 'length')
 
@@ -1822,6 +1803,7 @@ class Mirror_paralyze(BaseSkill):
         # Unregistering from player_hurt
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
 
+
 class Vampire_damage_percent(BaseSkill):
     __slots__ = ('vampire_percent', )
 
@@ -1865,6 +1847,7 @@ class Vampire_damage_percent(BaseSkill):
 
         # Unregister from player_hurt
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
 
 class Drop_weapon_chance(BaseSkill):
 
@@ -1945,6 +1928,7 @@ class Drop_weapon_chance(BaseSkill):
 
         # Unregister from hit
         event_manager.unregister_for_event('player_hurt', self.player_hurt)
+
 
 class Screen_rotate_attack(DelaySkill):
 
@@ -2111,6 +2095,7 @@ class HE_Bloodhound(BaseSkill):
         # Unregistering from bounce event
         event_manager.unregister_for_event('grenade_bounce', self.check)
 
+
 class Attack_dodge(BaseSkill):
 
     __slots__ = ('chance', )
@@ -2128,7 +2113,7 @@ class Attack_dodge(BaseSkill):
         if self.owner.data_info['skills_activate_notify']:
             ST2(f"\4[WCS]\1 \5{self.chance:.0f}%\1 шанс увернуться "
                  "от атаки противника").send(self.owner.index)
-        
+
     def hurt(self, victim, info) -> bool:
 
         ST2(f"Начало").send()
@@ -2137,7 +2122,7 @@ class Attack_dodge(BaseSkill):
         if victim.index != self.owner.index:
             ST2('Не наш игрок').send()
             return True
-        
+
         ST2(f"Дошёл1").send()
 
         # Abort, if chance return False
@@ -2195,6 +2180,7 @@ class Attack_dodge(BaseSkill):
         # Unregistering for dmg
         on_take_physical_damage.remove(self.hurt)
 
+
 class Weapon_give_start(BaseSkill):
 
     def __init__(self, userid: int, lvl: int, settings: dict) -> None:
@@ -2241,6 +2227,7 @@ class Weapon_give_start(BaseSkill):
     @BaseSkill.efficiency.setter
     def efficiency(self, value: float) -> None:
         super().efficiency = value
+
 
 class MiniMap(ActiveSkill, repeat_functions):
 
@@ -2413,6 +2400,7 @@ class MiniMap(ActiveSkill, repeat_functions):
     def close(self) -> None:
         super().close()
         self.deactivate_map()
+
 
 class Static_Mine(ActiveSkill):
     __slots__ = ('mine_dict', 'damage_amount')
@@ -2676,6 +2664,7 @@ class Ghost_on_Knife(BaseSkill):
 
         # Unregistering from item switch event
         event_manager.unregister_for_event('item_equip', self.event_fire)
+
 
 class Light_Aura_Regenerate(BaseSkill, repeat_functions):
     __slots__ = ('interval', 'hp', 'radius')

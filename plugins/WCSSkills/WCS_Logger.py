@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Any
 
-from WCSSkills.other_functions.constants import PATH_TO_LOG
+from .other_functions.constants import PATH_TO_LOG
+
 
 class _wcs_logger:
     __slots__ = ('file',)

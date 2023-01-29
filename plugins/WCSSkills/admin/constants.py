@@ -3,19 +3,27 @@
 # >> IMPORTS
 # =============================================================================
 # Python Imports
-from enum import Enum
-from WCSSkills.python.enumeratings import Tuple_Enum_Meta
+from enum import Enum, EnumMeta
 
 amount_of_players_in_history: int = 20
 tell_admin_about_all_demutes: bool = False
 
-class Punishment_types(Enum, metaclass = Tuple_Enum_Meta):
+
+class Tuple_Enum_Meta(EnumMeta):
+    def __call__(cls, value, *args, **kwargs):
+        for enum_variable in iter(cls):
+            if enum_variable.value[0] == value:
+                return enum_variable
+
+
+class Punishment_types(Enum, metaclass=Tuple_Enum_Meta):
     BAN = (1, 'Бан')
     MUTE = (2, 'Мут')
     KICK = (3, 'Кик')
     SKILLS = (4, 'Блок способностей')
 
-class Punishment_reasons(Enum, metaclass = Tuple_Enum_Meta):
+
+class Punishment_reasons(Enum, metaclass=Tuple_Enum_Meta):
     Nothing = (1, '—')
     AFK = (2, 'AFK')
     CHEATS = (3, 'Читы')
@@ -24,7 +32,8 @@ class Punishment_reasons(Enum, metaclass = Tuple_Enum_Meta):
     SKILL_ABUSE = (6, 'Абуз скиллов')
     AGREEMENT = (7, 'По обоюдному соглашению')
 
-class Punishment_duration(Enum, metaclass = Tuple_Enum_Meta):
+
+class Punishment_duration(Enum, metaclass=Tuple_Enum_Meta):
     Permanent = (-1, 'Навсегда')
     Seconds_30 = (30, '30 секунд')
     Minute_1 = (60, 'Минута')
@@ -37,7 +46,8 @@ class Punishment_duration(Enum, metaclass = Tuple_Enum_Meta):
     Week = (604800, 'Неделя')
     Week_2 = (1209600, '2 недели')
 
-class MoveTypes(Enum, metaclass = Tuple_Enum_Meta):
+
+class MoveTypes(Enum, metaclass=Tuple_Enum_Meta):
     NONE = (0, 'Заморозка')
     ISOMETRIC = (1, 'Изометрический')
     WALK = (2, 'Ходьба')

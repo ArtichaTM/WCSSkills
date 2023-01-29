@@ -20,13 +20,12 @@ from commands.say import unregister_say_filter
 
 # Plugin imports
 # DB
-from WCSSkills.db.wcs import Skills_info
-from WCSSkills.db.wcs import Player_settings
+from ..db.wcs import Skills_info, Player_settings
 # WCS_Player
-from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player, WCS_Players
+from ..wcs.WCSP.wcsplayer import WCS_Player, WCS_Players
 # Modified default PagedMenu
 from .radio import *
-from WCSSkills.admin.menu import AdminPlayers_player
+from ..admin.menu import AdminPlayers_player
 # Logging
 from ..WCS_Logger import wcs_logger
 #
@@ -36,7 +35,7 @@ from .functions import RMSound, KeyboardTyping
 # >> ALL DECLARATION
 # =============================================================================
 
-__all__ = ('MainMenu',)
+__all__ = ('MainMenu', 'LK')
 
 #==============================================================================
 # >> WCS

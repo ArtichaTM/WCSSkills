@@ -18,7 +18,7 @@ from players.voice import mute_manager
 from .constants import Punishment_types
 from .constants import Punishment_reasons
 # Ban DB
-from WCSSkills.db.admin import DB_admin
+from ..db.admin import DB_admin
 # Logging
 from ..WCS_Logger import wcs_logger
 

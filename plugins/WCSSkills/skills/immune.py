@@ -8,11 +8,11 @@ from messages import SayText2
 
 # Plugin Imports
 # Immune types
-from WCSSkills.other_functions.constants import ImmuneTypes
+from ..other_functions.constants import ImmuneTypes
 # Skills information
-from WCSSkills.db.wcs import Skills_info
+from ..db.wcs import Skills_info
 # WCS_Player
-from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
+from ..wcs.WCSP.wcsplayer import WCS_Player
 # chance
 from .functions import chance
 

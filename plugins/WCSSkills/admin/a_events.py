@@ -7,10 +7,10 @@ from players.entity import Player
 # SayText2
 from messages import SayText2
 # Types of punish
-from WCSSkills.admin.constants import Punishment_types
-from WCSSkills.admin.constants import tell_admin_about_all_demutes as TAAAD
+from ..admin.constants import Punishment_types
+from ..admin.constants import tell_admin_about_all_demutes as TAAAD
 # Logging
-from WCSSkills.WCS_Logger import wcs_logger
+from ..WCS_Logger import wcs_logger
 
 
 @Event('Punishment_expired')

@@ -13,16 +13,17 @@ from messages.base import SayText2
 from listeners.tick import Delay
 # Mute manager
 from players.voice import mute_manager
+# Player move types
+from entities.constants import MoveType
 
 # Plugin imports
 # Punishment types
-from WCSSkills.admin.constants import Punishment_types
-from WCSSkills.admin.constants import MoveTypes
-from entities.constants import MoveType
+from .constants import Punishment_types
+from .constants import MoveTypes
 # DB
-from WCSSkills.db.admin import DB_admin
+from ..db.admin import DB_admin
 # Logging
-from WCSSkills.WCS_Logger import wcs_logger
+from ..WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> All

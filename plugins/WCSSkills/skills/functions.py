@@ -27,13 +27,13 @@ from engines.trace import ContentMasks
 
 # Plugin Imports
 # Typing
-from WCSSkills.python.types import *
+from ..python.types import *
 # Constants
-from WCSSkills.other_functions.constants import WCS_DAMAGE_ID
-from WCSSkills.other_functions.constants import ADMIN_DAMAGE_ID
-from WCSSkills.other_functions.constants import ImmuneTypes
-from WCSSkills.other_functions.constants import ImmuneReactionTypes
-from WCSSkills.other_functions.constants import AffinityTypes
+from ..other_functions.constants import WCS_DAMAGE_ID
+from ..other_functions.constants import ADMIN_DAMAGE_ID
+from ..other_functions.constants import ImmuneTypes
+from ..other_functions.constants import ImmuneReactionTypes
+from ..other_functions.constants import AffinityTypes
 
 # =============================================================================
 # >> All
@@ -66,6 +66,7 @@ on_take_magic_damage = set()
 
 # Chance function to check if skill worked or not
 chance = lambda value1, value2 : value1 >= random.randint(0, value2)
+
 
 @EntityPreHook(EntityCondition.is_player, 'on_take_damage')
 def skills_on_take_damage(args) -> Union[None, bool]:
@@ -123,6 +124,7 @@ def skills_on_take_damage(args) -> Union[None, bool]:
                 # Then canceling hit
                 return False
 
+
 def immunes_check(victim: wcs_player_entity,
                   form: ImmuneTypes,
                   immune_type: str,
@@ -159,6 +161,7 @@ def immunes_check(victim: wcs_player_entity,
 
     # If no immunities triggered, return Passed
     return ImmuneReactionTypes.Passed
+
 
 def paralyze(
         owner: wcs_player_entity,
@@ -206,6 +209,7 @@ def paralyze(
 
     return ImmuneReactionTypes.Passed
 
+
 def active_weapon_drop(
         owner: wcs_player_entity,
         victim: wcs_player_entity,
@@ -224,6 +228,7 @@ def active_weapon_drop(
 
     # Success return
     return ImmuneReactionTypes.Passed
+
 
 def screen_angle_distortion(
         owner: wcs_player_entity,
@@ -257,6 +262,7 @@ def screen_angle_distortion(
 
     # Success return
     return ImmuneReactionTypes.Passed
+
 
 def throw_player_upwards(
         owner: wcs_player_entity,
@@ -306,6 +312,7 @@ def will_be_stuck(entity: Entity_entity, position: Vector) -> bool:
 
     # Otherwise return True
     else: return False
+
 
 def affinity_check(player, affinity: AffinityTypes) -> bool:
     """Checks for owner affinity. Return False, if owner affinity is other"""

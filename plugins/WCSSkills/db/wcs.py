@@ -17,11 +17,11 @@ from typing import Union
 # Database cursor context manager
 from .functions import db_cursor
 # Paths
-from WCSSkills.other_functions.constants import PATH_FILE_DATABASE_USERS
-from WCSSkills.other_functions.constants import PATH_FILE_JSON_SKILLS_INFO
-from WCSSkills.other_functions.constants import PATH_FILE_JSON_PLAYER_SETTINGS
+from ..other_functions.constants import PATH_FILE_DATABASE_USERS
+from ..other_functions.constants import PATH_FILE_JSON_SKILLS_INFO
+from ..other_functions.constants import PATH_FILE_JSON_PLAYER_SETTINGS
 # Logger
-from WCSSkills.WCS_Logger import wcs_logger
+from ..WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -217,11 +217,9 @@ class _Skills_info:
         """
         return self.json[skill_name]
 
-
     def get_names(self) -> tuple:
         """ :return: names of all skills """
         return tuple([value["name"] for value in self.json.values()])
-
 
     def get_name(self, skill_name: str) -> str:
         """
@@ -230,12 +228,10 @@ class _Skills_info:
         """
         return self.json[skill_name]['name']
 
-
     def get_classes(self) -> tuple:
         """ :return: Code names of all skills """
 
         return tuple([skill for skill in self.json])
-
 
     def get_min_lvl(self, skill_name: str) -> int:
         """
@@ -245,7 +241,6 @@ class _Skills_info:
 
         return self.json[skill_name]['min_player_lvl']
 
-
     def get_max_lvl(self, skill_name: str) -> int:
         """
         :param skill_name: code name of skill
@@ -254,7 +249,6 @@ class _Skills_info:
 
         return self.json[skill_name]['max_lvl']
 
-
     def get_description(self, skill_name: str) -> list:
         """
         :param skill_name: code name of skill
@@ -262,7 +256,6 @@ class _Skills_info:
         """
 
         return self.json[skill_name]['description']
-
 
     def get_settings_type(self, skill_name: str, setting: str = None) -> Union[list, str]:
         """
@@ -277,7 +270,6 @@ class _Skills_info:
         else:
             return self.json[skill_name]['settings_type'][setting]
 
-
     def get_settings_name(self, skill_name: str, setting: str = None) -> Union[list, str]:
         """
         :param skill_name: code name of skill
@@ -291,7 +283,6 @@ class _Skills_info:
         else:
             return self.json[skill_name]['settings_name'][setting]
 
-
     def get_settings_cost(self, skill_name: str, setting: str = None) -> Union[list, str]:
         """
         :param skill_name: code name of skill
@@ -304,7 +295,6 @@ class _Skills_info:
             return self.json[skill_name]['settings_cost']
         else:
             return self.json[skill_name]['settings_cost'][setting]
-
 
     def get_group_skills(self, group: str) -> list:
         """
@@ -388,6 +378,7 @@ class _Player_settings:
 
     def get_values(self, form: str = 'wcs') -> list:
         return self.json[form].keys()
+
 
 # Singletons
 DB_users = _DB_users()

@@ -10,7 +10,7 @@ from enum import auto
 
 # Source.Python Imports
 # DamageTypes
-from entities.constants import DamageTypes as DamTyp
+from entities.constants import DamageTypes as _DamageTypes
 # Plugin path
 from paths import PLUGIN_DATA_PATH
 from paths import EVENT_PATH
@@ -20,7 +20,8 @@ from paths import LOG_PATH
 
 # Plugin Imports
 # Folder name
-from WCSSkills.WCSSkills import WCS_FOLDER
+from ..WCSSkills import WCS_FOLDER
+
 
 # =============================================================================
 # >> Enumeratings
@@ -86,7 +87,6 @@ class ImmuneTypes(IntFlag):
             # Changed -> value didn't contains in enum
             else: return False
 
-
         # Item is int
         elif isinstance(item, int):
 
@@ -95,24 +95,28 @@ class ImmuneTypes(IntFlag):
             if self.value | item == self.value: return True
 
             # Changed -> value didn't contains in enum
-            else:  return False
+            else: return False
 
         # No? Then we can't compare item with enum
         else:
             raise TypeError(f"Can't compare '{type(item)}' and 'IntFlag'")
+
 
 class ImmuneReactionTypes(IntEnum):
     Passed = 0
     Immune = 1
     Deflect = 2
 
-DamTyp.__contains__ = ImmuneTypes.__contains__
-DamageTypes = DamTyp
+
+DamageTypes = _DamageTypes
+DamageTypes.__contains__ = ImmuneTypes.__contains__
+
 
 class AffinityTypes(IntEnum):
     NONE = auto()
     LIGHT = auto()
     DARK = auto()
+
 
 # =============================================================================
 # >> Constants
@@ -252,7 +256,7 @@ for local in locals().copy().items():
             # If dir doesn't exist, create
             if not parent.isdir(): parent.makedirs()
 
-# Logs
+# Logs file and directory formatting/location
 if WCSSKILLS_DEBUG:
     PATH_TO_LOG = LOG_PATH / f"{WCS_FOLDER}" / "log.log"
 else:

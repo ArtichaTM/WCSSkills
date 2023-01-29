@@ -29,24 +29,25 @@ from listeners.tick import RepeatStatus
 
 # Plugin imports
 # Admin action functions
-from WCSSkills.admin.admin_actions import *
+from .admin_actions import *
 # Other functions
-from WCSSkills.admin.functions import *
+from .functions import *
 # Left players JSON
-from WCSSkills.db.admin import DC_history
+from ..db.admin import DC_history
 # Left player class
-from WCSSkills.db.functions import Disconnected_user
+from ..db.functions import Disconnected_user
 # Punishment Enums
-from WCSSkills.admin.constants import Punishment_reasons
-from WCSSkills.admin.constants import Punishment_duration
-from WCSSkills.admin.constants import MoveTypes
+from .constants import Punishment_reasons
+from .constants import Punishment_duration
+from .constants import MoveTypes
 # WCS_Player
-from WCSSkills.wcs.WCSP.wcsplayer import WCS_Player
+from ..wcs.WCSP.wcsplayer import WCS_Player
 # Modified default PagedMenu
-from WCSSkills.menus.radio import PagedMenu
-from WCSSkills.menus.functions import RMSound
+from ..menus.radio import PagedMenu
+from ..menus.functions import RMSound
 # To receive player information
-from WCSSkills import db
+from .. import db
+
 
 # =============================================================================
 # >> Admin
@@ -365,6 +366,7 @@ def give_levels_solver(command, index, _):
     # Blocking message
     return CommandReturn.BLOCK
 
+
 def AdminPlayers_player_info(admin: WCS_Player,
          target: Union[WCS_Player, Disconnected_user]):
     menu = PagedMenu(title=f'Информация об {target.name:.10}',
@@ -487,7 +489,7 @@ def Admin_reasons_callback(_, index, choice):
     Admin_time(admin, target, command, reason)
 
 
-def Admin_time(admin, target, command, reason  = None):
+def Admin_time(admin, target, command, reason =None):
     menu = PagedMenu(title='Длительность',
                      select_callback=Admin_time_callback,
                      parent_menu=Admin_reasons,

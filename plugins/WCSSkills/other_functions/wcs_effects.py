@@ -23,7 +23,7 @@ from entities.constants import RenderMode, SolidType, EntityEffects
 from mathlib import Vector
 
 # Plugin Imports
-from WCSSkills.other_functions.constants import orb_sprites
+from ..other_functions.constants import orb_sprites
 
 # =============================================================================
 # >> All
@@ -33,6 +33,7 @@ __all__ = (
     'effect',
     'Triggers'
 )
+
 
 # =============================================================================
 # >> TempEnt creator
@@ -51,6 +52,7 @@ class temporary_entity:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.tempEnt.create(RecipientFilter(*self.users))
 
+
 class persistent_entity:
     __slots__ = ('entity',)
 
@@ -67,7 +69,9 @@ class persistent_entity:
 # >> Effects
 # =============================================================================
 
+
 class effect:
+    """Namespace for various effects"""
 
     @staticmethod
     def beam_laser(users: Iterable, # Entity indexes that receive this effect
@@ -361,6 +365,7 @@ class effect:
             Ent.radius = show_radius
             Ent.origin = origin
             return Ent
+
 
 class Triggers:
 

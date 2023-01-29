@@ -7,6 +7,7 @@
 from players.helpers import index_from_steamid
 from players.entity import Player
 
+
 # =============================================================================
 # >> Functions/Classes
 # =============================================================================
@@ -22,8 +23,9 @@ class db_cursor:
     def __exit__(self, *args):
         self._cur.close()
 
+
 class Disconnected_user:
-    """ Class that stores name, steamid and address of user """
+    """ Class that stores name, steamid and address of disconnected user """
     __slots__ = ('is_player', 'name', 'steamid', 'address')
 
     def __init__(self, name, steamid, ip):

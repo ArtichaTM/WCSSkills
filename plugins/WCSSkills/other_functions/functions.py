@@ -2,7 +2,7 @@
 """
 File with various useful functions.
 1. open_players: return player(-s), that open to first one
-2. force_buttons: force button, than returns back to normal
+2. force_buttons: force button, then returns back to normal
 3. wcs_player: returns WCS_Player if exist, else None
 4. chance: returns True if chance passed
 5. repeat_functions: class that simplifies actions with
@@ -21,7 +21,6 @@ import random
 from typing import Union, List
 
 # Source.Python imports
-from WCSSkills.WCS_Logger import wcs_logger
 from hooks.exceptions import ExceptHook
 # Entities
 from entities.entity import BaseEntity
@@ -45,8 +44,9 @@ from mathlib import Vector
 # Paths
 
 # WCS_Players
-from WCSSkills.python.types import *
-# Constants
+from ..python.types import *
+# Logging
+from ..WCS_Logger import wcs_logger
 
 # =============================================================================
 # >> ALL DECLARATION
@@ -65,7 +65,8 @@ __all__ = (
 # =============================================================================
 
 # Return all players indexes
-player_indexes = lambda : [player.index for player in PlayerIter()]
+player_indexes = lambda: [player.index for player in PlayerIter()]
+
 
 def open_players(entity: Player_entity,
                  form,
@@ -76,8 +77,9 @@ def open_players(entity: Player_entity,
 
     :param entity: Origin entity, from whom are going rays
     :param form: ImmuneType
+    :param type_of_check: String type for discovery. Anti-aim and other immunities will defend
     :param only_one: List all entity's or return on gathering one
-    :param same_team: List only entitys in seperate teams
+    :param same_team: List only entity's in separate teams
     :return: List with Entity's
     """
 
@@ -128,9 +130,10 @@ def open_players(entity: Player_entity,
     # Returns list
     return can_hit_players
 
+
 def open_entities(owner: Player_entity,
-                 only_one = False):
-    """ This function checks for entitys, that can be hit by argument entity
+                 only_one=False):
+    """ This function checks for entity's, that can be hit by argument entity
 
     :param owner: Origin entity, from whom are going rays
     :param only_one: List all entity's or return or gathering one
@@ -181,6 +184,7 @@ def open_entities(owner: Player_entity,
     # Returns list
     return can_hit_entity_list
 
+
 def force_buttons(player: Player_entity, buttons: int, once: bool = True, time: float = 0) -> Union[None, int]:
     """Forces the given buttons on the given player for the given time."""
 
@@ -199,30 +203,6 @@ def force_buttons(player: Player_entity, buttons: int, once: bool = True, time: 
         return None
     else:
         return forced_buttons
-
-
-class repeat_functions:
-    """
-    Class that MUST be implemented.
-    Creates repeat functions for class
-    """
-    # "TypeError: multiple bases have instance lay-out conflict"
-    # __slots__ = ('repeat_delay', 'repeat')
-
-    def _repeat_start(self) -> bool:
-        if self.repeat.status != RepeatStatus.RUNNING:
-            self.repeat.start(self.repeat_delay)
-            return True
-        return False
-
-    def _repeat_stop(self) -> bool:
-        if self.repeat.status == RepeatStatus.RUNNING:
-            self.repeat.stop()
-            return True
-        return False
-
-    def close(self):
-        self._repeat_stop()
 
 
 def skill_timings_calculate() -> float:
@@ -256,3 +236,27 @@ def exception_log(exc_type, _, trace_back):
     first_line = trace_back.tb_frame.f_code.co_firstlineno
     try: wcs_logger('exception', f'{exc_type.__qualname__} in "{pth}", line {first_line}')
     except ValueError: return
+
+
+class repeat_functions:
+    """
+    Class that MUST be implemented.
+    Creates repeat functions for class
+    """
+    # "TypeError: multiple bases have instance lay-out conflict"
+    # __slots__ = ('repeat_delay', 'repeat')
+
+    def _repeat_start(self) -> bool:
+        if self.repeat.status != RepeatStatus.RUNNING:
+            self.repeat.start(self.repeat_delay)
+            return True
+        return False
+
+    def _repeat_stop(self) -> bool:
+        if self.repeat.status == RepeatStatus.RUNNING:
+            self.repeat.stop()
+            return True
+        return False
+
+    def close(self):
+        self._repeat_stop()

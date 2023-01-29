@@ -6,17 +6,21 @@ This file contains:
 2. 'player_skills' skills -- returns list of player-target skills.
     Code moved to function bcz of many repeats
 """
-
 # =============================================================================
 # >> ALL DECLARATION
 # =============================================================================
+# Python imports
+# Look-like imporvements
+from functools import partial
+
+# Source.Python Imports
 from menus import PagedMenu as PagedRadioMenu
 from menus import PagedOption
 
-from WCSSkills.db.wcs import Skills_info
-
-# Sound imports
-from WCSSkills.other_functions.constants import WCS_FOLDER, VOLUME_MENU
+# Plugin imports
+from ..db.wcs import Skills_info
+# Sound and wcs folder constants
+from ..other_functions.constants import WCS_FOLDER, VOLUME_MENU
 # Entity
 from entities.entity import Entity
 
@@ -137,25 +141,30 @@ def player_skills(player, group, select_selected: bool = False):
         min_lvl = Skills_info.get_min_lvl(skill)
 
         if skill in player.skills_selected:
+
+            pagedoption = partial(
+                PagedOption,
+                value=skill,
+                selectable=select_selected,
+                highlight=select_selected
+            )
+
             if max_lvl == -1:
-                menu.append(PagedOption(f"[S] {name} [{player_lvl}/∞]", value = skill,
-                                        selectable = select_selected, highlight = select_selected))
+                menu.append(pagedoption(f"[S] {name} [{player_lvl}/∞]"))
             elif player_lvl > max_lvl:
-                menu.append(PagedOption(f"[S] {name} [{player_lvl}ур]", value = skill,
-                                        selectable = select_selected, highlight = select_selected))
+                menu.append(pagedoption(f"[S] {name} [{player_lvl}ур]"))
             else:
-                menu.append(PagedOption(f"[S] {name} [{player_lvl}/{max_lvl}]", value = skill,
-                                        selectable = select_selected, highlight = select_selected))
+                menu.append(pagedoption(f"[S] {name} [{player_lvl}/{max_lvl}]"))
         elif player.total_lvls < min_lvl:
             menu.append(PagedOption(f"{name} [{min_lvl}ур]",
-                                    selectable = False, highlight = False))
+                                    selectable=False, highlight=False))
         elif player_lvl is None:
-            menu.append(PagedOption(f"{name} [0/{max_lvl if max_lvl != -1 else '∞'}]", value = skill))
+            menu.append(PagedOption(f"{name} [0/{max_lvl if max_lvl != -1 else '∞'}]", value=skill))
         elif max_lvl == -1:
-            menu.append(PagedOption(f"{name} [{player_lvl}/∞]", value = skill))
+            menu.append(PagedOption(f"{name} [{player_lvl}/∞]", value=skill))
         elif player_lvl > max_lvl:
-            menu.append(PagedOption(f"{name} [{player_lvl}ур]", value = skill))
+            menu.append(PagedOption(f"{name} [{player_lvl}ур]", value=skill))
         else:
-            menu.append(PagedOption(f"{name} [{player_lvl}/{max_lvl}]", value = skill))
+            menu.append(PagedOption(f"{name} [{player_lvl}/{max_lvl}]", value=skill))
 
     return menu
